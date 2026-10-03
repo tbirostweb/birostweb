@@ -53,7 +53,7 @@ function asset(string $path): string {
 <link rel="stylesheet" href="<?= asset('/fonts/fonts.css') ?>">
 <link rel="manifest" href="<?= asset('/site.webmanifest') ?>">
 <script async type="module" src="<?= asset('/js/altcha.js') ?>"></script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"ProfessionalService","name":"Birostweb — Théo Birost","description":"Développeur web full-stack indépendant : sites vitrines, boutiques et applications sur-mesure, du design au déploiement.","url":"https://birostweb.fr","email":"contact@theo-birost.fr","areaServed":"FR","founder":{"@type":"Person","name":"Théo Birost"},"sameAs":["https://github.com/birostweb","https://www.linkedin.com/in/th%C3%A9o-birost-09b286429/","https://www.instagram.com/birost.web"],"priceRange":"€€"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"ProfessionalService","name":"Birostweb — Théo Birost","description":"Développeur web full-stack indépendant : sites vitrines, boutiques et applications sur-mesure, du design au déploiement.","url":"https://birostweb.fr","email":"contact@theo-birost.fr","areaServed":"FR","founder":{"@type":"Person","name":"Théo Birost"},"sameAs":["https://github.com/tbirostweb","https://www.linkedin.com/in/th%C3%A9o-birost-09b286429/","https://www.instagram.com/birost.web"],"priceRange":"€€"}</script>
 <style>
 /* ================= TOKENS ================= */
 :root{
@@ -819,7 +819,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
         </a>
         <div class="manifest">
           <div class="mrow"><span class="mk">Mail</span><span class="mv"><a href="mailto:contact@theo-birost.fr">contact@theo-birost.fr</a></span></div>
-          <div class="mrow"><span class="mk">GitHub</span><span class="mv"><a href="https://github.com/birostweb" target="_blank" rel="noopener">github.com/birostweb</a></span></div>
+          <div class="mrow"><span class="mk">GitHub</span><span class="mv"><a href="https://github.com/tbirostweb" target="_blank" rel="noopener">github.com/tbirostweb</a></span></div>
           <div class="mrow"><span class="mk">LinkedIn</span><span class="mv"><a href="https://www.linkedin.com/in/th%C3%A9o-birost-09b286429/" target="_blank" rel="noopener">linkedin.com/in/théo-birost</a></span></div>
           <!-- Remplace le handle Instagram ci-dessous par ton vrai compte une fois créé -->
           <div class="mrow"><span class="mk">Instagram</span><span class="mv"><a href="https://www.instagram.com/birost.web" target="_blank" rel="noopener">@birost.web</a></span></div>

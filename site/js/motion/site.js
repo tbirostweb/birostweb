@@ -19,7 +19,7 @@ Motion.run(function (m) {
       gsap.set(card, { autoAlpha: 1 });
       tl.fromTo(card.querySelector('.portrait'), { clipPath: 'inset(100% 0% 0% 0%)' },
         { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.2, ease: 'power4.inOut', clearProps: 'clipPath' }, .15);
-      tl.from(card.querySelector('.portrait__mono'), { autoAlpha: 0, scale: .9, duration: 1, ease: 'power3.out', clearProps: 'transform,opacity,visibility' }, .7);
+      tl.from(card.querySelector('.portrait img'), { autoAlpha: 0, scale: 1.06, duration: 1, ease: 'power3.out', clearProps: 'transform,opacity,visibility' }, .7);
       tl.from(card.querySelector('.portrait__badge'), { autoAlpha: 0, y: 14, duration: .7, ease: 'power3.out', clearProps: 'transform,opacity,visibility' }, .95);
     }
   }

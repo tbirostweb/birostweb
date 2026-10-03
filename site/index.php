@@ -415,13 +415,12 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       </div>
       <p class="hero__note">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-        Dernier projet livré : le site du Forum Hydrogen Business for Climate.
+        <span>Dernier projet livré : <a href="https://maisondubonheurstesavine.fr/" target="_blank" rel="noopener">Maison du Bonheur</a>, site de réservation pour deux logements touristiques (Vue 3, Vite, SEO).</span>
       </p>
     </div>
     <aside class="hero__card">
-      <!-- Remplace le bloc .portrait par : <div class="portrait"><img src="ta-photo.jpg" alt="Théo Birost"></div> -->
       <div class="portrait">
-        <span class="portrait__mono">TB</span>
+        <img src="<?= asset('/img/theo-birost.webp') ?>" alt="Théo Birost, développeur web" width="800" height="1000" fetchpriority="high" decoding="async">
         <div class="portrait__badge"><span>Théo Birost</span><span class="dot">● France · Remote</span></div>
       </div>
     </aside>

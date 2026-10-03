@@ -16,9 +16,12 @@ html{scroll-padding-top:88px}
 .hero h1{letter-spacing:-.045em;line-height:1.02}
 .chip{border-radius:2px;background:transparent;font-size:11px;letter-spacing:.025em}
 .hero__sub{font-size:17px}
+.hero__note svg{flex:none}
+.hero__note a{color:var(--ink);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.hero__note a:hover{color:var(--accent)}
 .hero__meta{border-top:1px solid var(--line);padding-top:18px}
 .portrait{background:var(--ink);color:var(--surface);border-color:var(--ink)}
-.portrait::before{content:'BIROSTWEB / STUDIO WEB';position:absolute;top:24px;left:24px;font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--d-dim)}
+.portrait::before{content:'BIROSTWEB / STUDIO WEB';position:absolute;top:0;left:0;right:0;padding:24px 24px 56px;background:linear-gradient(rgba(35,31,32,.62),rgba(35,31,32,0));font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--d-text);pointer-events:none}
 .portrait__mono{color:var(--accent);letter-spacing:-.08em}
 .portrait__badge{border-radius:2px;box-shadow:none;border-color:var(--d-line);background:var(--ink);color:var(--surface)}
 .portrait__badge .sub{color:var(--d-dim)}

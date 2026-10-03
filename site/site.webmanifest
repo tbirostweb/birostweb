@@ -1,0 +1,14 @@
+{
+  "name": "Birostweb — Théo Birost",
+  "short_name": "Birostweb",
+  "description": "Développeur web full-stack indépendant : sites et applications sur-mesure.",
+  "lang": "fr",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E5E2D6",
+  "theme_color": "#231F20",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/favicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,59 @@
+/* ============================================================
+   Motion — couche d'animation (chargée après studio.css).
+   Les classes .motion / .m-pending sont posées par js/motion/init.js,
+   jamais quand « réduire les animations » est actif.
+   ============================================================ */
+
+/* Haut de page masqué le temps que GSAP démarre (évite un flash). */
+.m-pending .hero__grid > div > *,
+.m-pending .hero__card,
+.m-pending .bcell{opacity:0}
+
+/* Captures de projets : l'image zoomée (survol, parallaxe) reste dans son cadre,
+   sans passer par-dessus la barre du navigateur. */
+.shot__img{overflow:hidden}
+
+/* Masques SplitText : un peu d'air pour ne pas couper jambages et approches. */
+.mw-mask,.mc-mask{padding:0 .06em .14em;margin:0 -.06em -.14em}
+
+/* Filet des en-têtes de section, tracé de gauche à droite (--rule : 0 → 1). */
+.motion .sec-head{position:relative;border-top-color:transparent}
+.motion .sec-head::before{content:"";position:absolute;left:0;right:0;top:-1px;height:1px;background:var(--line);transform:scaleX(var(--rule,1));transform-origin:left}
+.motion .section--dark .sec-head::before{background:var(--d-line)}
+/* Trait de l'eyebrow (--ln : 0 → 1). */
+.motion .eyebrow::before{transform:scaleX(var(--ln,1));transform-origin:left}
+
+/* GSAP gère les transforms des boutons : on garde des transitions de couleur. */
+.motion .btn{transition-property:background-color,border-color,color,box-shadow}
+
+@media (prefers-reduced-motion:no-preference){
+  /* Micro-interactions CTA : flèche qui avance, léger enfoncement au clic. */
+  .btn svg{transition:transform .25s cubic-bezier(.2,.7,.2,1)}
+  .btn-accent:hover svg{transform:translateX(3px)}
+  .btn:active{transform:scale(.98)}
+
+  /* Liens de navigation : soulignement qui se dessine. */
+  .nav__links a:not(.btn){background:linear-gradient(currentColor,currentColor) left bottom/0 1px no-repeat;transition:color .15s,background-size .3s cubic-bezier(.2,.7,.2,1)}
+  .nav__links a:not(.btn):hover{background-size:100% 1px}
+}
+
+@media (prefers-reduced-motion:no-preference) and (hover:hover){
+  /* Captures de projets : zoom lent et léger au survol. */
+  .shot img{transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+  .project:hover .shot img{transform:scale(1.03)}
+  .project .plink svg{transition:transform .25s}
+  .project:hover .plink svg{transform:translate(2px,-2px)}
+
+  /* Cartes tarifs : légère élévation. */
+  .offer,.plan{transition:transform .35s cubic-bezier(.2,.7,.2,1),border-color .2s}
+  .offer:hover,.plan:hover{transform:translateY(-4px)}
+  .offer:not(.offer--feat):hover,.plan:not(.plan--feat):hover{border-color:var(--ink)}
+
+  /* Autres projets : la flèche du lien suit le survol de la carte. */
+  .mini:hover .plink svg{transform:translate(2px,-2px)}
+}
+
+@media (max-width:640px){
+  /* Sur mobile, le menu déroulant garde ses séparateurs d'origine. */
+  .nav__links a:not(.btn){background:none}
+}

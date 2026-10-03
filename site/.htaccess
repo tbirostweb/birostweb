@@ -1,0 +1,75 @@
+# ============================================================
+#  birostweb.fr — durcissement Apache (site PHP)
+#  HTTPS/TLS est géré en amont par Traefik (Dokploy).
+# ============================================================
+
+# Pas de listing de répertoire
+Options -Indexes
+
+# Ne pas divulguer la version PHP
+<IfModule mod_php.c>
+    php_flag expose_php off
+</IfModule>
+
+# ---------------- En-têtes de sécurité ----------------
+<IfModule mod_headers.c>
+    # Forcer HTTPS 2 ans (ajouter "preload" seulement après soumission à hstspreload.org)
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), interest-cohort=()"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Cross-Origin-Resource-Policy "same-origin"
+    # CSP : script-src verrouillé par le hash du <script> inline (pas de 'unsafe-inline' JS)
+    Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; script-src 'self' 'sha256-MElwAQPFOXkhfYKNekzyN/4Wvo5YlDnCSGTnYthKKPc=' 'sha256-R4eRa3/WLHKJOqFKPw80xNKQkRAO79l8teDuT1Zpv2M='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests"
+    # Ne pas exposer la techno serveur
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+</IfModule>
+
+# ---------------- Cache ----------------
+<IfModule mod_headers.c>
+    # Fichiers statiques : les URL versionnées par asset() (index.php, ?v=<empreinte>)
+    # changent à chaque modification -> cache 1 an sans revalidation.
+    # Sans ?v= (icônes du manifest, liens directs…) : revalidation à chaque visite
+    # (réponse 304 légère si rien n'a changé), donc jamais de version périmée.
+    <FilesMatch "\.(css|js|webp|png|jpe?g|gif|svg|ico|pdf|webmanifest)$">
+        <If "%{QUERY_STRING} =~ /(^|&)v=/">
+            Header set Cache-Control "public, max-age=31536000, immutable"
+        </If>
+        <Else>
+            Header set Cache-Control "no-cache"
+        </Else>
+    </FilesMatch>
+    # Polices : appelées par fonts.css sans version, mais elles ne changent jamais.
+    <FilesMatch "\.woff2$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    # Le HTML PHP ne doit jamais être mis en cache
+    <FilesMatch "\.php$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+    # Pages HTML statiques (CGV, mentions, 404) : toujours revalidées
+    <FilesMatch "\.html$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>
+
+# ---------------- Fichiers sensibles : accès interdit ----------------
+<FilesMatch "^\.env">
+    Require all denied
+</FilesMatch>
+<FilesMatch "(composer\.(json|lock)|package(-lock)?\.json|\.gitignore|\.htaccess|entrypoint\.sh)$">
+    Require all denied
+</FilesMatch>
+
+# Bloquer tout le dossier vendor en accès direct
+RewriteEngine On
+RewriteRule ^vendor/ - [F,L]
+
+# Autoriser explicitement /.well-known/
+RewriteRule ^\.well-known/ - [L]
+
+# 404 personnalisée
+ErrorDocument 404 /404.html

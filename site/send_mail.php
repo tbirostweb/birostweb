@@ -162,13 +162,13 @@ function contact_spam_assessment(string $name, string $email, string $message): 
 
 /**
  * Profils SMTP disponibles, dans l'ordre de priorité.
- * Primaire = SMTP_* ; secours = SMTP2_*. On garde ceux qui sont complets.
+ * Primaire = SMTP_* uniquement ; aucun secours vers un fournisseur non vérifié.
  * @return array<int,array{host:string,user:string,pass:string,secure:string,port:int}>
  */
 function contact_smtp_profiles(): array
 {
     $profiles = [];
-    foreach (['', '2'] as $suffix) {
+    foreach ([''] as $suffix) {
         $host = contact_env("SMTP{$suffix}_HOST");
         $user = contact_env("SMTP{$suffix}_USERNAME");
         $pass = contact_env("SMTP{$suffix}_PASSWORD");
@@ -377,7 +377,7 @@ $bodyText = "Nouvelle demande depuis birostweb.fr\n\n"
     . "Hébergement : " . ($hebergement !== '' ? $hebergement : 'Non précisé') . "\n\n"
     . "Message :\n$message";
 
-// On tente chaque profil SMTP dans l'ordre : le 1er qui envoie l'emporte, sinon on bascule sur le suivant.
+// Un seul profil SMTP (aucun secours). Un échec ambigu n'est jamais rejoué automatiquement.
 $sent = false;
 $ambiguous = false;
 $usedProfile = null;
@@ -416,8 +416,8 @@ foreach ($profiles as $i => $p) {
     } catch (Exception $e) {
         $code = contact_smtp_error_code($e->getMessage());
         contact_log('send_error', ['profile' => $i, 'host' => $p['host'], 'error_code' => $code]);
-        // Secours uniquement si l'échec est certain (rien accepté) : un timeout après acceptation
-        // pourrait sinon livrer deux fois la même demande. Cas ambigu : arrêt, décision manuelle.
+        // Échec certain (rien accepté) : le quota global est libéré. Cas ambigu (ex. timeout après
+        // acceptation) : quota conservé, aucun renvoi automatique.
         if (!contact_smtp_error_is_safe_to_retry($e->getMessage())) {
             contact_log('send_ambiguous', ['profile' => $i]);
             $ambiguous = true;

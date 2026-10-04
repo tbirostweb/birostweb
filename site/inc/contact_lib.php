@@ -285,7 +285,7 @@ function contact_post_all_scalar(array $post): bool
     return true;
 }
 
-/** Classe l'erreur SMTP : true si l'échec est certain (rien accepté) donc le secours peut être tenté sans doublon. */
+/** Classe l'erreur SMTP : true si l'échec est certain (rien accepté) donc un renvoi ne créerait aucun doublon. */
 function contact_smtp_error_is_safe_to_retry(string $message): bool
 {
     foreach (['Could not connect', 'connect() failed', 'Could not authenticate', 'recipients failed', 'data not accepted', 'Invalid address', 'SMTP Error: AUTH'] as $needle) {

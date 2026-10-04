@@ -14,4 +14,6 @@ fi
 export APP_PORT="$LISTEN_PORT"
 echo "Apache écoute sur le port ${APP_PORT}"
 
+# Purge indépendante des visites et de l'utilisation du formulaire.
+(while :; do php /var/www/html/purge-contact.php >/dev/null 2>&1; sleep 3600; done) &
 exec "$@"

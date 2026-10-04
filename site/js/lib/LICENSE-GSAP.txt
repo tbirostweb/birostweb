@@ -1,0 +1,6 @@
+Notice explicative (résumé non officiel, ce n'est pas le texte intégral de la licence).
+
+Fichiers concernés : gsap.min.js, ScrollTrigger.min.js et SplitText.min.js, version 3.15.0.
+Mention embarquée dans chaque fichier : « Copyright 2026, GreenSock. All rights reserved. Subject to the terms at https://gsap.com/standard-license. »
+Texte de référence : la licence standard publiée par GreenSock/Webflow à l'adresse ci-dessus, qui seule fait foi.
+GSAP n'est pas placé sous licence MIT ni sous une autre licence open source. Conserver les notices intégrées aux fichiers et vérifier que l'usage reste dans le périmètre de cette licence (notamment ses restrictions relatives aux outils concurrents de Webflow).

@@ -420,7 +420,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
     </div>
     <aside class="hero__card">
       <div class="portrait">
-        <img src="<?= asset('/img/theo-birost.webp') ?>" alt="Théo Birost, développeur web" width="800" height="1000" fetchpriority="high" decoding="async">
+        <img src="<?= asset('/img/illustration-originale.svg') ?>" alt="Illustration schématique originale, sans capture du projet" width="800" height="1000" fetchpriority="high" decoding="async">
         <div class="portrait__badge"><span>Théo Birost</span><span class="dot">● France · Remote</span></div>
       </div>
     </aside>
@@ -450,7 +450,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="project reveal">
         <div class="shot">
           <div class="shot__bar"><i></i><i></i><i></i><span class="shot__url">maisondubonheurstesavine.fr</span></div>
-          <div class="shot__img"><img src="<?= asset('/img/maisondubonheur.webp') ?>" alt="Maison du Bonheur — site de réservation" width="1400" height="875" loading="lazy" decoding="async"></div>
+          <div class="shot__img"><img src="<?= asset('/img/illustration-originale.svg') ?>" alt="Illustration schématique originale, sans capture du projet" width="1400" height="875" loading="lazy" decoding="async"></div>
         </div>
         <div>
           <span class="project__k">Projet client · Stage</span>
@@ -469,7 +469,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="project reveal">
         <div class="shot">
           <div class="shot__bar"><i></i><i></i><i></i><span class="shot__url">hydrogenbusinessforclimate.com</span></div>
-          <div class="shot__img"><img src="<?= asset('/img/hydrogen_website.webp') ?>" alt="Site du Forum Hydrogen Business for Climate" width="1400" height="804" loading="lazy" decoding="async"></div>
+          <div class="shot__img"><img src="<?= asset('/img/illustration-originale.svg') ?>" alt="Illustration schématique originale, sans capture du projet" width="1400" height="804" loading="lazy" decoding="async"></div>
         </div>
         <div>
           <span class="project__k">Projet client · Stage</span>
@@ -488,7 +488,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="project reveal">
         <div class="shot">
           <div class="shot__bar"><i></i><i></i><i></i><span class="shot__url">generique.theo-birost.fr</span></div>
-          <div class="shot__img"><img src="<?= asset('/img/generique.webp') ?>" alt="Générique — index de cinéma" width="1400" height="875" loading="lazy" decoding="async"></div>
+          <div class="shot__img"><img src="<?= asset('/img/illustration-originale.svg') ?>" alt="Illustration schématique originale, sans capture du projet" width="1400" height="875" loading="lazy" decoding="async"></div>
         </div>
         <div>
           <span class="project__k">Application web · Full-stack</span>
@@ -507,7 +507,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="project reveal">
         <div class="shot">
           <div class="shot__bar"><i></i><i></i><i></i><span class="shot__url">clicker — jeu</span></div>
-          <div class="shot__img"><img src="<?= asset('/img/clicker_img.webp') ?>" alt="Jeu du clicker" width="1400" height="741" loading="lazy" decoding="async"></div>
+          <div class="shot__img"><img src="<?= asset('/img/illustration-originale.svg') ?>" alt="Illustration schématique originale, sans capture du projet" width="1400" height="741" loading="lazy" decoding="async"></div>
         </div>
         <div>
           <span class="project__k">Projet perso · Solo</span>
@@ -559,6 +559,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
   </div>
 </section>
 
+<p class="wrap">Prestations exclusivement destinées aux professionnels agissant pour les besoins de leur activité. Les offres et CGV sont réservées à cette clientèle.</p>
 <!-- Expériences professionnelles : missions et dates issues des conventions de stage. -->
 <section class="section section--paper" id="parcours">
   <div class="wrap">
@@ -797,7 +798,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <div class="faq__item"><button class="faq__q">Combien de temps pour créer mon site ?<span class="ic"></span></button><div class="faq__a"><p>Comptez 2 à 4 semaines pour un site vitrine, selon le nombre de pages et le contenu. Pour une application ou une boutique, le délai est cadré précisément dans le devis.</p></div></div>
       <div class="faq__item"><button class="faq__q">Je pars de zéro, vous m'accompagnez ?<span class="ic"></span></button><div class="faq__a"><p>Oui, complètement. Je vous guide sur la structure du site, le contenu et le design. Pas besoin de vous y connaître : vous décidez, je m'occupe de la technique.</p></div></div>
       <div class="faq__item"><button class="faq__q">Le devis est-il vraiment gratuit ?<span class="ic"></span></button><div class="faq__a"><p>Totalement, et sans engagement. On échange sur votre projet, et vous recevez une proposition claire avec périmètre, prix et délai sous 48h.</p></div></div>
-      <div class="faq__item"><button class="faq__q">À qui appartient le site une fois livré ?<span class="ic"></span></button><div class="faq__a"><p>Tout est à vous : le code, le contenu, le nom de domaine et l'hébergement, à votre nom. Vous n'êtes jamais coincé chez un prestataire.</p></div></div>
+      <div class="faq__item"><button class="faq__q">À qui appartient le site une fois livré ?<span class="ic"></span></button><div class="faq__a"><p>Après paiement, vous pouvez exploiter, faire évoluer et faire maintenir par le prestataire de votre choix le code original livré (licence d'utilisation non exclusive, détaillée dans les <a href="/cgv.html">CGV</a>). Vos contenus restent les vôtres, et le nom de domaine comme l'hébergement peuvent être ouverts à votre nom lorsque le devis le prévoit. Vous n'êtes jamais coincé chez un prestataire.</p></div></div>
       <div class="faq__item"><button class="faq__q">Et après la mise en ligne ?<span class="ic"></span></button><div class="faq__a"><p>Vous pouvez gérer le site vous-même, ou souscrire à la maintenance (dès 39 €/mois) : mises à jour, sécurité, sauvegardes et évolutions. Je reste joignable dans tous les cas.</p></div></div>
     </div>
   </div>

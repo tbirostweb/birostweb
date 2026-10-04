@@ -74,8 +74,8 @@ check("Altcha : 8 soumissions concurrentes => 1 acceptation (obtenu $ok)", $ok =
 
 // --- Types / SMTP ---
 check('POST tableau rejeté', contact_post_all_scalar(['name' => ['x']]) === false && contact_post_all_scalar(['name' => 'x']) === true);
-check('SMTP : timeout ambigu => pas de secours', !contact_smtp_error_is_safe_to_retry('SMTP Error: Timeout'));
-check('SMTP : connexion impossible => secours OK', contact_smtp_error_is_safe_to_retry('SMTP Error: Could not connect to SMTP host.'));
+check('SMTP : timeout ambigu => pas de renvoi', !contact_smtp_error_is_safe_to_retry('SMTP Error: Timeout'));
+check('SMTP : connexion impossible => échec certain', contact_smtp_error_is_safe_to_retry('SMTP Error: Could not connect to SMTP host.'));
 check('Code erreur stable, sans message brut', contact_smtp_error_code('SMTP Error: Could not authenticate. user@x') === 'smtp_auth');
 
 // --- Logs : pas de query, IP pseudonymisée ---

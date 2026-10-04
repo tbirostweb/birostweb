@@ -45,7 +45,7 @@ function asset(string $path): string {
 <meta name="twitter:description" content="Des sites web sur-mesure pensés pour vous rapporter des clients. Devis gratuit sous 48h.">
 <meta name="twitter:image" content="https://birostweb.fr/og-image.png">
 <!-- Favicon Birostweb (logo BW) -->
-<link rel="icon" type="image/png" sizes="512x512" href="<?= asset('/favicon.png') ?>">
+<link rel="icon" type="image/png" sizes="640x640" href="<?= asset('/favicon.png') ?>">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <!-- Polices auto-hébergées (RGPD : aucune requête vers Google) -->
 <link rel="preload" href="/fonts/ibmplexsans-400-latin.woff2" as="font" type="font/woff2" crossorigin>

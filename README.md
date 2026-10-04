@@ -62,9 +62,22 @@ Sans ces variables, la page s'affiche mais l'envoi du formulaire échoue.
 
 ```bash
 docker build -t birostweb .
-docker run --rm -p 8080:8080 -e CONTACT_FORM_SECRET=dev birostweb
+docker run --rm -p 8080:8080 -e CONTACT_FORM_SECRET=$(openssl rand -hex 32) birostweb
 # → http://localhost:8080  (l'envoi SMTP nécessite les variables ci-dessus)
 ```
+
+## Tests de régression
+
+```bash
+php tests/contact_test.php   # quotas, proxy/XFF, anti-rejeu atomique + concurrence, fail-closed, logs
+php tests/csp_test.php       # hashes CSP des scripts inline, images OG/icônes
+sh tests/http_test.sh        # send_mail.php / altcha.php via php -S (secret absent/court, stockage absent, tableaux)
+sh tests/e2e_send_test.sh    # envoi bout-en-bout vers un faux SMTP local (python3), rejeu, 2 emails
+```
+
+L'image tourne en non-root (www-data, port >= 1024), code en lecture seule : elle fonctionne avec
+`--read-only --tmpfs /tmp --tmpfs /var/run/apache2:uid=33 --tmpfs /var/lock/apache2:uid=33 --cap-drop ALL --security-opt no-new-privileges`.
+Les quotas/anti-rejeu sont dans `CONTACT_STATE_DIR` (défaut : /tmp du conteneur, éphémère ; volume si plusieurs répliques ou persistance voulue).
 
 ## Déploiement sur Dokploy
 

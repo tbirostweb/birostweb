@@ -2,57 +2,14 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/inc/contact_lib.php';
 
 // En prod (Dokploy) les variables viennent de l'environnement. En local, .env.
 try {
     Dotenv\Dotenv::createImmutable(__DIR__)->load();
 } catch (Dotenv\Exception\InvalidPathException $e) {
     // Pas de .env : normal en prod.
-}
-
-/** IP du visiteur (derrière Traefik on lit X-Forwarded-For). */
-function contact_client_ip(): string
-{
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ip = trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
-        if (filter_var($ip, FILTER_VALIDATE_IP)) {
-            return $ip;
-        }
-    }
-    return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-}
-
-/** Rate limit fichier par IP : true si la limite est dépassée. */
-function contact_rate_limited(string $ip, int $maxRequests = 5, int $windowSeconds = 3600): bool
-{
-    $dir = sys_get_temp_dir() . '/contact_form_rl';
-    if (!is_dir($dir)) {
-        mkdir($dir, 0700, true);
-    }
-    $file = $dir . '/' . hash('sha256', $ip) . '.json';
-    $handle = fopen($file, 'c+');
-    if (!$handle) {
-        return false;
-    }
-    flock($handle, LOCK_EX);
-    $timestamps = json_decode(stream_get_contents($handle) ?: '[]', true);
-    if (!is_array($timestamps)) {
-        $timestamps = [];
-    }
-    $now = time();
-    $timestamps = array_values(array_filter($timestamps, fn ($t) => $t > $now - $windowSeconds));
-    $limited = count($timestamps) >= $maxRequests;
-    if (!$limited) {
-        $timestamps[] = $now;
-        ftruncate($handle, 0);
-        rewind($handle);
-        fwrite($handle, json_encode($timestamps));
-        fflush($handle);
-    }
-    flock($handle, LOCK_UN);
-    fclose($handle);
-    return $limited;
 }
 
 /** Corps HTML de l'email de notification reçu par le propriétaire du site. */
@@ -203,106 +160,6 @@ function contact_spam_assessment(string $name, string $email, string $message): 
     ];
 }
 
-/** Lecture robuste d'une variable d'environnement (quel que soit variables_order). */
-function contact_env(string $key): ?string
-{
-    $v = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
-    return ($v === false || $v === null || $v === '') ? null : (string) $v;
-}
-
-/** Journalise un évènement du formulaire : IP réelle, User-Agent, endpoint, heure. */
-function contact_log(string $event, array $extra = []): void
-{
-    $entry = [
-        'ts'       => date('c'),
-        'event'    => $event,
-        'ip'       => contact_client_ip(),
-        'ua'       => substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? '-'), 0, 200),
-        'endpoint' => (string) ($_SERVER['REQUEST_URI'] ?? '-'),
-    ] + $extra;
-    $dir = contact_env('CONTACT_LOG_DIR') ?? sys_get_temp_dir();
-    @file_put_contents(
-        rtrim($dir, '/') . '/contact_form.log',
-        json_encode($entry, JSON_UNESCAPED_UNICODE) . "\n",
-        FILE_APPEND | LOCK_EX
-    );
-}
-
-/** Plafond global d'envois (toutes IP) sur 24 h glissantes. true si atteint. */
-function contact_global_cap_reached(int $max): bool
-{
-    if ($max <= 0) {
-        return false;
-    }
-    $file = sys_get_temp_dir() . '/contact_form_global.json';
-    $h = fopen($file, 'c+');
-    if (!$h) {
-        return false;
-    }
-    flock($h, LOCK_EX);
-    $times = json_decode(stream_get_contents($h) ?: '[]', true);
-    if (!is_array($times)) {
-        $times = [];
-    }
-    $now = time();
-    $times = array_values(array_filter($times, static fn ($t) => $t > $now - 86400));
-    $reached = count($times) >= $max;
-    if (!$reached) {
-        $times[] = $now;
-        ftruncate($h, 0);
-        rewind($h);
-        fwrite($h, json_encode($times));
-        fflush($h);
-    }
-    flock($h, LOCK_UN);
-    fclose($h);
-    return $reached;
-}
-
-/** Vérifie le payload Altcha : solution PoW + signature serveur + anti-rejeu. */
-function contact_altcha_check(string $payload, string $secret): bool
-{
-    if ($payload === '' || $secret === '') {
-        return false;
-    }
-    $data = json_decode(base64_decode($payload, true) ?: '', true);
-    if (!is_array($data)) {
-        return false;
-    }
-    $algorithm = $data['algorithm'] ?? '';
-    $challenge = (string) ($data['challenge'] ?? '');
-    $number    = $data['number'] ?? null;
-    $salt      = (string) ($data['salt'] ?? '');
-    $signature = (string) ($data['signature'] ?? '');
-
-    if ($algorithm !== 'SHA-256' || $challenge === '' || $salt === '' || $signature === '' || !is_numeric($number)) {
-        return false;
-    }
-    // Expiration (paramètre ?expires= dans le sel)
-    if (preg_match('/[?&]expires=(\d+)/', $salt, $m) && (int) $m[1] < time()) {
-        return false;
-    }
-    // La solution doit reconstituer le challenge…
-    if (!hash_equals(hash('sha256', $salt . $number), $challenge)) {
-        return false;
-    }
-    // …et le challenge doit bien avoir été signé par nous.
-    if (!hash_equals(hash_hmac('sha256', $challenge, $secret), $signature)) {
-        return false;
-    }
-    // Anti-rejeu : une même signature ne peut servir qu'une fois.
-    $dir = sys_get_temp_dir() . '/altcha_used';
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0700, true);
-    }
-    $file = $dir . '/' . hash('sha256', $signature) . '.used';
-    if (is_file($file) && filemtime($file) > time() - 3600) {
-        return false;
-    }
-    @touch($file);
-    return true;
-}
-
 /**
  * Profils SMTP disponibles, dans l'ordre de priorité.
  * Primaire = SMTP_* ; secours = SMTP2_*. On garde ceux qui sont complets.
@@ -338,11 +195,21 @@ function contact_apply_smtp(PHPMailer $m, array $p): void
     $m->Password   = $p['pass'];
     $m->SMTPSecure = $p['secure'];
     $m->Port       = $p['port'];
+    $m->Timeout    = 10; // secondes : évite de bloquer un worker sur un SMTP muet
 }
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(403);
     echo "Un problème est survenu, veuillez réessayer.";
+    exit;
+}
+
+/** Réponse 503 quand le stockage d'état est indisponible : aucun envoi (fail closed). */
+function contact_fail_storage(ContactStorageException $e): void
+{
+    contact_log('storage_error', ['error' => 'state_storage']);
+    http_response_code(503);
+    echo "Le formulaire est momentanément indisponible. Merci d'écrire directement à contact@theo-birost.fr.";
     exit;
 }
 
@@ -355,12 +222,32 @@ if (in_array($disabled, ['1', 'true', 'yes', 'on'], true)) {
     exit;
 }
 
-// --- Rate limit par IP ---
-if (contact_rate_limited(contact_client_ip())) {
-    contact_log('rate_limited');
-    http_response_code(429);
-    echo "Trop de tentatives. Merci de réessayer plus tard.";
+// --- Secret de signature obligatoire (>= 32 caractères) ---
+$formSecret = contact_env('CONTACT_FORM_SECRET');
+if (!contact_secret_valid($formSecret)) {
+    contact_log('config_error', ['error' => 'secret_missing_or_short']);
+    http_response_code(503);
+    echo "Le formulaire est momentanément indisponible. Merci d'écrire directement à contact@theo-birost.fr.";
     exit;
+}
+
+// --- Payload : uniquement des champs scalaires (pas de tableaux), avant quotas/captcha ---
+if (!contact_post_all_scalar($_POST)) {
+    http_response_code(400);
+    echo "Requête invalide. Merci de recharger la page et réessayer.";
+    exit;
+}
+
+try {
+    // --- Rate limit par IP ---
+    if (contact_rate_limited(contact_client_ip())) {
+        contact_log('rate_limited');
+        http_response_code(429);
+        echo "Trop de tentatives. Merci de réessayer plus tard.";
+        exit;
+    }
+} catch (ContactStorageException $e) {
+    contact_fail_storage($e);
 }
 
 // --- Honeypot : on répond OK sans rien envoyer ---
@@ -374,7 +261,7 @@ if (!empty($_POST['website'])) {
 // --- Jeton signé HMAC + délai minimum ---
 $ts    = $_POST['ts'] ?? '';
 $token = $_POST['token'] ?? '';
-$expectedToken = hash_hmac('sha256', (string) $ts, contact_env('CONTACT_FORM_SECRET') ?? '');
+$expectedToken = hash_hmac('sha256', (string) $ts, $formSecret);
 
 if (!ctype_digit((string) $ts) || !hash_equals($expectedToken, (string) $token)) {
     http_response_code(400);
@@ -393,15 +280,7 @@ if ($elapsed < 3) {
     exit;
 }
 
-// --- Altcha : captcha auto-hébergé (preuve de travail + signature serveur) ---
-if (!contact_altcha_check((string) ($_POST['altcha'] ?? ''), contact_env('CONTACT_FORM_SECRET') ?? '')) {
-    contact_log('altcha_fail');
-    http_response_code(400);
-    echo "Vérification anti-robot échouée. Merci de recharger la page et réessayer.";
-    exit;
-}
-
-// --- Validation des champs ---
+// --- Validation des champs (avant le captcha : une saisie invalide ne consomme pas le défi Altcha) ---
 $name    = str_replace(["\r", "\n"], '', strip_tags(trim($_POST["name"] ?? '')));
 $email   = filter_var(trim($_POST["email"] ?? ''), FILTER_SANITIZE_EMAIL);
 $message = trim($_POST["message"] ?? '');
@@ -452,13 +331,16 @@ if ($spam['block']) {
     exit;
 }
 
-// --- Plafond global d'e-mails / 24 h (garde-fou anti-abus, toutes IP confondues) ---
-$dailyCap = (int) (contact_env('CONTACT_FORM_DAILY_CAP') ?? '30');
-if (contact_global_cap_reached($dailyCap)) {
-    contact_log('cap_reached', ['cap' => $dailyCap]);
-    http_response_code(429);
-    echo "Le formulaire a atteint sa limite d'envois pour aujourd'hui. Merci d'écrire directement à contact@theo-birost.fr.";
-    exit;
+// --- Altcha : captcha auto-hébergé (preuve de travail + signature serveur, usage unique atomique) ---
+try {
+    if (!contact_altcha_check((string) ($_POST['altcha'] ?? ''), $formSecret)) {
+        contact_log('altcha_fail');
+        http_response_code(400);
+        echo "Vérification anti-robot échouée. Merci de recharger la page et réessayer.";
+        exit;
+    }
+} catch (ContactStorageException $e) {
+    contact_fail_storage($e);
 }
 
 $profiles = contact_smtp_profiles();
@@ -467,6 +349,19 @@ if (empty($profiles)) {
     http_response_code(500);
     echo "Le message n'a pas pu être envoyé. Merci de réessayer ou d'écrire directement à contact@theo-birost.fr.";
     exit;
+}
+
+// --- Plafond global d'e-mails / 24 h (créneau réservé ici, libéré si aucun email ne part) ---
+$dailyCap = (int) (contact_env('CONTACT_FORM_DAILY_CAP') ?? '30');
+try {
+    if (contact_global_cap_reached($dailyCap)) {
+        contact_log('cap_reached', ['cap' => $dailyCap]);
+        http_response_code(429);
+        echo "Le formulaire a atteint sa limite d'envois pour aujourd'hui. Merci d'écrire directement à contact@theo-birost.fr.";
+        exit;
+    }
+} catch (ContactStorageException $e) {
+    contact_fail_storage($e);
 }
 
 // Destinataire des notifications (par défaut la boîte OVH ; surchargeable via CONTACT_TO).
@@ -484,6 +379,7 @@ $bodyText = "Nouvelle demande depuis birostweb.fr\n\n"
 
 // On tente chaque profil SMTP dans l'ordre : le 1er qui envoie l'emporte, sinon on bascule sur le suivant.
 $sent = false;
+$ambiguous = false;
 $usedProfile = null;
 foreach ($profiles as $i => $p) {
     try {
@@ -515,15 +411,25 @@ foreach ($profiles as $i => $p) {
 
         $sent = true;
         $usedProfile = $p;
-        contact_log('sent', ['profile' => $i, 'host' => $p['host'], 'offre' => $offre, 'maintenance' => $maintenance, 'spam_flag' => $spam['flag']]);
+        contact_log('sent', ['profile' => $i, 'spam_flag' => $spam['flag']]);
         break;
     } catch (Exception $e) {
-        contact_log('send_error', ['profile' => $i, 'host' => $p['host'], 'error' => substr($e->getMessage(), 0, 200)]);
-        // Échec : on tente le profil de secours suivant.
+        $code = contact_smtp_error_code($e->getMessage());
+        contact_log('send_error', ['profile' => $i, 'host' => $p['host'], 'error_code' => $code]);
+        // Secours uniquement si l'échec est certain (rien accepté) : un timeout après acceptation
+        // pourrait sinon livrer deux fois la même demande. Cas ambigu : arrêt, décision manuelle.
+        if (!contact_smtp_error_is_safe_to_retry($e->getMessage())) {
+            contact_log('send_ambiguous', ['profile' => $i]);
+            $ambiguous = true;
+            break;
+        }
     }
 }
 
 if (!$sent) {
+    if (!$ambiguous) {
+        contact_global_cap_release();
+    }
     http_response_code(500);
     echo "Le message n'a pas pu être envoyé. Merci de réessayer ou d'écrire directement à contact@theo-birost.fr.";
     exit;
@@ -563,6 +469,7 @@ HTML;
     $ack->send();
 } catch (Exception $e) {
     // Ignoré : la notification principale, elle, est bien partie.
+    contact_log('ack_error', ['error_code' => contact_smtp_error_code($e->getMessage())]);
 }
 
 http_response_code(200);

@@ -13,6 +13,11 @@
    sans passer par-dessus la barre du navigateur. */
 .shot__img{overflow:hidden}
 
+/* Curseur « Voir le projet » (souris uniquement, voir site.js). */
+.m-cursor{position:fixed;top:0;left:0;z-index:80;pointer-events:none;display:flex;align-items:center;gap:8px;padding:11px 14px;border-radius:var(--r);background:var(--ink);color:var(--surface);font-family:var(--fm);font-size:11px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;visibility:hidden}
+.m-cursor svg{width:13px;height:13px;color:var(--accent)}
+.m-cursor-on .project .shot{cursor:none}
+
 /* Masques SplitText : un peu d'air pour ne pas couper jambages et approches. */
 .mw-mask,.mc-mask{padding:0 .06em .14em;margin:0 -.06em -.14em}
 
@@ -39,9 +44,12 @@
 
 @media (prefers-reduced-motion:no-preference) and (hover:hover){
   /* Captures de projets : zoom lent et léger au survol. */
-  .shot img{transition:transform .9s cubic-bezier(.2,.7,.2,1)}
-  .project:hover .shot img{transform:scale(1.03)}
-  .project .plink svg{transition:transform .25s}
+  /* (si le curseur JS est actif, GSAP pilote le zoom de la capture : voir site.js) */
+  html:not(.m-cursor-on) .shot img{transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+  html:not(.m-cursor-on) .project:hover .shot img{transform:scale(1.03)}
+  /* Cartes projets : filet sombre + ombre portée douce au survol. */
+  .project{transition:border-color .3s,box-shadow .5s cubic-bezier(.2,.7,.2,1)}
+  .project:hover{border-color:var(--ink);box-shadow:0 34px 60px -42px rgba(35,31,32,.5)}
   .project:hover .plink svg{transform:translate(2px,-2px)}
 
   /* Cartes tarifs : légère élévation. */

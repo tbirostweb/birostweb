@@ -559,7 +559,6 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
   </div>
 </section>
 
-<p class="wrap">Prestations exclusivement destinées aux professionnels agissant pour les besoins de leur activité. Les offres et CGV sont réservées à cette clientèle.</p>
 <!-- Expériences professionnelles : missions et dates issues des conventions de stage. -->
 <section class="section section--paper" id="parcours">
   <div class="wrap">

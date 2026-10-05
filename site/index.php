@@ -80,7 +80,7 @@ img{max-width:100%;display:block}
 ::selection{background:var(--accent);color:#fff}
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .wrap{width:100%;max-width:var(--max);margin:0 auto;padding:0 24px}
-.section{padding:clamp(64px,9vw,120px) 0}
+.section{padding:clamp(48px,6.5vw,88px) 0}
 .section--paper{background:var(--paper)}
 .section--dark{background:var(--d-bg);color:var(--d-text)}
 
@@ -91,7 +91,7 @@ img{max-width:100%;display:block}
 .h2{font-family:var(--fd);font-weight:700;line-height:1.02;font-size:clamp(30px,4.6vw,50px);letter-spacing:-.01em}
 .lead{font-size:clamp(16.5px,1.7vw,19px);color:var(--gray);max-width:56ch;margin-top:14px}
 .section--dark .lead{color:var(--d-dim)}
-.sec-head{margin-bottom:clamp(34px,5vw,54px)}
+.sec-head{margin-bottom:clamp(28px,4vw,40px)}
 .sec-head .eyebrow{margin-bottom:16px}
 .accent{color:var(--accent)}
 
@@ -317,7 +317,7 @@ img{max-width:100%;display:block}
 .project__links{display:flex;flex-wrap:wrap;gap:12px 22px}
 
 /* ===== Autres projets (mini-grid) ===== */
-.subhead{font-family:var(--fm);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);margin:clamp(38px,5vw,56px) 0 22px;display:flex;align-items:center;gap:14px}
+.subhead{font-family:var(--fm);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gray);margin:clamp(32px,4vw,44px) 0 18px;display:flex;align-items:center;gap:14px}
 .subhead::after{content:"";flex:1;height:1px;background:var(--line)}
 .mini-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
 .mini{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:clamp(22px,2.4vw,28px);display:flex;flex-direction:column;transition:border-color .2s}

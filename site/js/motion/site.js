@@ -33,7 +33,7 @@ Motion.run(function (m) {
 
   /* ---------- Réalisations ---------- */
   m.$$('.project').forEach(function (p) {
-    var ptl = gsap.timeline({ scrollTrigger: { trigger: p, start: 'top 82%', once: true } });
+    var ptl = gsap.timeline({ scrollTrigger: { trigger: p, start: 'top 82%', toggleActions: 'play none none none' } });
     m.add(ptl, m.fadeUp(p, { trigger: false, y: 36, duration: 1 }), 0);
     var img = p.querySelector('.shot__img');
     if (img) ptl.from(img, { scale: 1.06, duration: 1.4, ease: 'power3.out', clearProps: 'transform' }, 0);
@@ -66,11 +66,15 @@ Motion.run(function (m) {
     if (nav) m.fadeUp(nav, { y: 12, duration: .6, start: 'top 88%' });
     var firstPanel = visiblePanel();
     if (firstPanel) {
+      m.track([firstPanel]); // couvert par le filet « déjà dépassé » de core.js
       gsap.set(firstPanel, { autoAlpha: 0 });
-      m.ScrollTrigger.create({ trigger: tabs, start: 'top 80%', once: true, onEnter: function () {
+      var played = false;
+      var playFirst = function () {
+        if (played) return; played = true;
         gsap.set(firstPanel, { autoAlpha: 1 });
         playPanel(firstPanel, true);
-      } });
+      };
+      m.ScrollTrigger.create({ trigger: tabs, start: 'top 80%', once: true, onEnter: playFirst, onLeave: playFirst });
     }
 
     // Changement d'onglet (clic sur un onglet ou bouton « Choisir… »).
@@ -97,7 +101,7 @@ Motion.run(function (m) {
   var cta = document.querySelector('.cta');
   if (cta) {
     var col = cta.querySelector('.cta__grid > div');
-    var ctl = gsap.timeline({ scrollTrigger: { trigger: cta, start: 'top 75%', once: true } });
+    var ctl = gsap.timeline({ scrollTrigger: { trigger: cta, start: 'top 75%', toggleActions: 'play none none none' } });
     if (col) {
       m.add(ctl, m.fadeUp(col.querySelector('.eyebrow'), { trigger: false, x: -8, y: 0, duration: .6 }), 0);
       m.add(ctl, m.words(col.querySelector('.h2'), { trigger: false, stagger: .04 }), .1);

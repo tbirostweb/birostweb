@@ -29,6 +29,13 @@
   var MOTION_OK = '(prefers-reduced-motion: no-preference)';
   var EASE = 'power3.out';
   var CLEAR = 'transform,opacity,visibility,transition';
+  // Apparitions au scroll : `toggleActions` sans `once`. L'animation joue à l'entrée,
+  // ou d'emblée si le défilement est déjà au-delà (ancre, scroll restauré au
+  // rechargement), et ne recule jamais. Pas de `once` : ScrollTrigger rafraîchit les
+  // timelines en différé, en cascade ; un déclencheur `once` déjà dépassé se supprime
+  // au milieu de cette cascade, ce qui fait planter le refresh (« reading 'end' ») et
+  // laisse la suite à opacity 0 (ex. la dernière carte projet, ou la page rechargée plus bas).
+  var TA = 'play none none none';
 
   function $$(sel, ctx) {
     if (!sel) return [];
@@ -43,7 +50,7 @@
     function track(els) { animated.push.apply(animated, els); return els; }
     function st(o, trigger) {
       if (o.trigger === false) return undefined;
-      return { trigger: o.trigger || trigger, start: o.start || 'top 85%', once: true };
+      return { trigger: o.trigger || trigger, start: o.start || 'top 85%', toggleActions: TA };
     }
 
     // Apparition simple : fondu + translation (stagger si plusieurs cibles).
@@ -131,7 +138,7 @@
     function sectionHead(head, o) {
       o = o || {};
       head = $$(head)[0]; if (!head) return null;
-      var tl = gsap.timeline({ scrollTrigger: { trigger: head, start: o.start || 'top 82%', once: true } });
+      var tl = gsap.timeline({ scrollTrigger: { trigger: head, start: o.start || 'top 82%', toggleActions: TA } });
       tl.fromTo(head, { '--rule': 0 }, { '--rule': 1, duration: 1.1, ease: 'power3.inOut' }, 0);
       var eb = head.querySelector('.eyebrow');
       if (eb) {
@@ -181,24 +188,63 @@
   //  - pointer : effets souris (magnétisme, curseur, tilt).
   // `desktop` et `pointer` s'activent/se retirent selon le contexte
   // (redimensionnement, tablette…) sans rejouer les apparitions.
+  // Filet de sécurité « déjà dépassé » : toute apparition dont le déclencheur est
+  // derrière le défilement courant finit visible, quelle que soit la façon dont on
+  // est arrivé là (scroll restauré par le navigateur au rechargement, ancre, saut).
+  //  - élément entièrement au-dessus de l'écran : état final immédiat (progress(1)) ;
+  //  - élément à l'écran, déclencheur franchi : l'apparition est lancée si elle dort ;
+  //  - élément suivi (lots, onglets) resté masqué au-dessus de l'écran : styles retirés.
+  // Les animations « scrub » suivent le défilement d'elles-mêmes : on n'y touche pas.
+  function settle(animated) {
+    try {
+      ST.getAll().forEach(function (t) {
+        var a = t.animation;
+        if (!a || t.vars.scrub || t.pin || !t.enabled || t.end == null) return;
+        var y = t.scroll();
+        if (y < t.start) return;
+        if (y >= t.end) { if (a.progress() < 1) a.progress(1); }
+        else if (a.progress() < 1 && !a.isActive()) a.play();
+      });
+      animated.forEach(function (el) {
+        if (!el.isConnected || !el.getClientRects().length || gsap.isTweening(el)) return;
+        if (el.getBoundingClientRect().bottom > 0) return;
+        var cs = w.getComputedStyle(el);
+        if (cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.99) gsap.set(el, { clearProps: CLEAR });
+      });
+    } catch (e) { /* le filet ne doit jamais casser la page */ }
+  }
+
   function run(setup, extra) {
     extra = extra || {};
     var mm = gsap.matchMedia();
 
     mm.add(MOTION_OK, function (ctx) {
-      var cleanups = [], animated = [];
+      var cleanups = [], animated = [], failed = null;
       var reveals = $$('.reveal');
       reveals.forEach(function (el) { el.classList.remove('reveal'); });
       root.classList.add('motion');
 
       var api = createApi(ctx, cleanups, animated);
-      setup(api);
+      try {
+        setup(api);
 
-      // Filet de sécurité : un .reveal sans animation dédiée reçoit un fondu.
-      reveals.forEach(function (el) {
-        var handled = animated.some(function (a) { return a === el || el.contains(a); });
-        if (!handled) api.fadeUp(el);
-      });
+        // Filet de sécurité : un .reveal sans animation dédiée reçoit un fondu.
+        reveals.forEach(function (el) {
+          var handled = animated.some(function (a) { return a === el || el.contains(a); });
+          if (!handled) api.fadeUp(el);
+        });
+      } catch (e) { failed = e; }
+
+      // Une erreur au montage laisserait la suite de la page à opacity 0 :
+      // on annule toutes les animations et le contenu reste visible.
+      if (failed) {
+        if (w.console) console.warn('Motion désactivé :', failed);
+        setTimeout(function () {
+          try { mm.revert(); } catch (e) { /* rien */ }
+          gsap.set(animated, { clearProps: CLEAR });
+          root.classList.remove('motion'); unlock();
+        }, 0);
+      }
 
       // Hauteurs qui changent (onglets, FAQ, formulaire) : on recalcule.
       var t, ro = w.ResizeObserver && new ResizeObserver(function () {
@@ -206,10 +252,34 @@
       });
       if (ro) ro.observe(d.body);
 
+      // Après `load` (images, polices : positions définitives), puis pendant la
+      // restauration du défilement par le navigateur, qui peut arriver plus tard :
+      // recalcul des positions et filet « déjà dépassé ».
+      var st2, stopAt = 0;
+      var settleSoon = function () { clearTimeout(st2); st2 = setTimeout(function () { settle(animated); }, 120); };
+      var onScroll = function () {
+        if (Date.now() > stopAt) { w.removeEventListener('scroll', onScroll); return; }
+        settleSoon();
+      };
+      var onLoad = function () {
+        ST.refresh();
+        settle(animated);
+        stopAt = Date.now() + 3000;
+        w.addEventListener('scroll', onScroll, { passive: true });
+        setTimeout(function () { settle(animated); }, 800);
+      };
+      var onShow = function (e) { if (e.persisted) { ST.refresh(); settle(animated); } };
+      if (d.readyState === 'complete') setTimeout(onLoad, 0);
+      else w.addEventListener('load', onLoad);
+      w.addEventListener('pageshow', onShow);
+
       unlock();
       return function () {
-        clearTimeout(t);
+        clearTimeout(t); clearTimeout(st2);
         if (ro) ro.disconnect();
+        w.removeEventListener('load', onLoad);
+        w.removeEventListener('scroll', onScroll);
+        w.removeEventListener('pageshow', onShow);
         cleanups.forEach(function (fn) { fn(); });
         root.classList.remove('motion');
       };

@@ -420,7 +420,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
     </div>
     <aside class="hero__card">
       <div class="portrait">
-        <img src="<?= asset('/img/illustration-originale.svg') ?>" alt="Illustration schématique originale, sans capture du projet" width="800" height="1000" fetchpriority="high" decoding="async">
+        <img src="<?= asset('/img/theo-birost.webp') ?>" alt="Théo Birost, développeur web" width="800" height="1000" fetchpriority="high" decoding="async">
         <div class="portrait__badge"><span>Théo Birost</span><span class="dot">● France · Remote</span></div>
       </div>
     </aside>
@@ -450,7 +450,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="project reveal">
         <div class="shot">
           <div class="shot__bar"><i></i><i></i><i></i><span class="shot__url">maisondubonheurstesavine.fr</span></div>
-          <div class="shot__img"><img src="<?= asset('/img/illustration-originale.svg') ?>" alt="Illustration schématique originale, sans capture du projet" width="1400" height="875" loading="lazy" decoding="async"></div>
+          <div class="shot__img"><img src="<?= asset('/img/maisondubonheur.webp') ?>" alt="Maison du Bonheur — site de réservation" width="1400" height="875" loading="lazy" decoding="async"></div>
         </div>
         <div>
           <span class="project__k">Projet client · Stage</span>
@@ -469,7 +469,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="project reveal">
         <div class="shot">
           <div class="shot__bar"><i></i><i></i><i></i><span class="shot__url">hydrogenbusinessforclimate.com</span></div>
-          <div class="shot__img"><img src="<?= asset('/img/illustration-originale.svg') ?>" alt="Illustration schématique originale, sans capture du projet" width="1400" height="804" loading="lazy" decoding="async"></div>
+          <div class="shot__img"><img src="<?= asset('/img/hydrogen_website.webp') ?>" alt="Site du Forum Hydrogen Business for Climate" width="1400" height="804" loading="lazy" decoding="async"></div>
         </div>
         <div>
           <span class="project__k">Projet client · Stage</span>
@@ -488,7 +488,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="project reveal">
         <div class="shot">
           <div class="shot__bar"><i></i><i></i><i></i><span class="shot__url">generique.theo-birost.fr</span></div>
-          <div class="shot__img"><img src="<?= asset('/img/illustration-originale.svg') ?>" alt="Illustration schématique originale, sans capture du projet" width="1400" height="875" loading="lazy" decoding="async"></div>
+          <div class="shot__img"><img src="<?= asset('/img/generique.webp') ?>" alt="Générique — index de cinéma" width="1400" height="875" loading="lazy" decoding="async"></div>
         </div>
         <div>
           <span class="project__k">Application web · Full-stack</span>
@@ -507,7 +507,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="project reveal">
         <div class="shot">
           <div class="shot__bar"><i></i><i></i><i></i><span class="shot__url">clicker — jeu</span></div>
-          <div class="shot__img"><img src="<?= asset('/img/illustration-originale.svg') ?>" alt="Illustration schématique originale, sans capture du projet" width="1400" height="741" loading="lazy" decoding="async"></div>
+          <div class="shot__img"><img src="<?= asset('/img/clicker_img.webp') ?>" alt="Jeu du clicker" width="1400" height="741" loading="lazy" decoding="async"></div>
         </div>
         <div>
           <span class="project__k">Projet perso · Solo</span>

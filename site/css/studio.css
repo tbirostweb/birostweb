@@ -8,8 +8,12 @@ html{scroll-padding-top:88px}
 .brand b::before{content:'BW';color:var(--surface);font-size:18px;letter-spacing:-.1em;padding-right:2px}
 .nav__links a{font-family:var(--fb);font-size:14px}
 .btn{font-family:var(--fb);font-weight:500;border-width:1px;min-height:44px;padding:13px 20px}
+.btn{transition:background-color .18s ease,color .18s ease,border-color .18s ease}
 .btn:hover{transform:none}
-.btn-ghost:hover{background:var(--paper)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn-ghost:hover,.btn-ghost:focus-visible{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.section--dark .btn-ghost:hover,.section--dark .btn-ghost:focus-visible{background:var(--d-text);color:var(--ink);border-color:var(--d-text)}
+.offer--feat .btn-ghost:hover{background:var(--accent-d);color:#fff;border-color:var(--accent-d)}
 .eyebrow{letter-spacing:.065em}
 .h2{letter-spacing:-.035em}
 .hero{background:var(--surface);border-bottom:1px solid var(--line)}

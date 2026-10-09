@@ -72,6 +72,10 @@ RewriteEngine On
 RewriteCond %{HTTP_HOST} ^www\.birostweb\.fr$ [NC]
 RewriteRule ^(.*)$ https://birostweb.fr/$1 [R=301,L]
 
+# Forcer le slash final sur /admin en HTTPS. Sans ça, Apache (derrière Traefik,
+# sur le port interne 8080) génère une redirection cassée vers http://…:8080/admin/.
+RewriteRule ^admin$ https://%{HTTP_HOST}/admin/ [R=301,L]
+
 # Bloquer tout le dossier vendor en accès direct
 RewriteRule ^vendor/ - [F,L]
 

@@ -83,9 +83,13 @@ altcha-widget{--altcha-border-radius:3px;--altcha-color-base:var(--surface);--al
 }
 
 /* Offre indisponible : carte affichée mais grisée, CTA désactivé */
-.offer.is-unavailable,.plan.is-unavailable{background:#F1EFE8}
-.is-unavailable>*:not(.stock-badge){opacity:.5;filter:grayscale(1)}
-.stock-badge{position:absolute;top:-12px;right:22px;z-index:2;font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--surface);padding:5px 12px;border-radius:var(--r);opacity:1}
-.btn.is-disabled,.btn.is-disabled:hover{background:transparent;color:var(--gray);border-color:var(--line);cursor:default;pointer-events:none;user-select:none}
-.offer.is-unavailable.offer--feat,.plan.is-unavailable.plan--feat{border-color:var(--line);border-top:3px solid var(--gray)}
+/* --- Etat « indisponible » : carte « en pause », lisible, volontaire --- */
+.offer.is-unavailable,.plan.is-unavailable,.offer.is-unavailable.offer--feat,.plan.is-unavailable.plan--feat{border:1px dashed var(--line);box-shadow:none;background:repeating-linear-gradient(-45deg,var(--surface),var(--surface) 11px,#F6F4EC 11px,#F6F4EC 22px)}
+.is-unavailable .offer__badge,.is-unavailable .plan__badge{background:var(--gray);color:var(--surface)}
+.is-unavailable .offer__price .amt,.is-unavailable .plan__price,.is-unavailable .plan__price .price-now,.is-unavailable .offer__price .amt .price-now{color:var(--gray)}
+.is-unavailable .plan__list li::before{border-color:var(--line)}
+.is-unavailable .promo-tag{color:var(--gray);border-color:var(--line)}
+.stock-badge{position:absolute;top:-12px;right:22px;z-index:2;display:inline-flex;align-items:center;gap:7px;font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;line-height:1.2;background:var(--surface);color:var(--ink);border:1px solid var(--ink);padding:4px 11px;border-radius:var(--r)}
+.stock-badge::before{content:"";width:6px;height:6px;border-radius:50%;border:1.5px solid var(--accent-d);box-sizing:border-box;flex:none}
+.btn.is-disabled,.btn.is-disabled:hover,.offer.is-unavailable .btn.is-disabled,.plan.is-unavailable .btn.is-disabled{background:transparent;color:var(--gray);border:1px dashed var(--line);font-family:var(--fm);font-size:12px;letter-spacing:.1em;text-transform:uppercase;justify-content:center;cursor:default;pointer-events:none;user-select:none}
 @media(max-width:640px){.stock-badge{right:16px}}

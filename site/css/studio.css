@@ -90,6 +90,5 @@ altcha-widget{--altcha-border-radius:3px;--altcha-color-base:var(--surface);--al
 .is-unavailable .plan__list li::before{border-color:var(--line)}
 .is-unavailable .promo-tag{color:var(--gray);border-color:var(--line)}
 .stock-badge{position:absolute;top:-12px;right:22px;z-index:2;display:inline-flex;align-items:center;gap:7px;font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;line-height:1.2;background:var(--surface);color:var(--ink);border:1px solid var(--ink);padding:4px 11px;border-radius:var(--r)}
-.stock-badge::before{content:"";width:6px;height:6px;border-radius:50%;border:1.5px solid var(--accent-d);box-sizing:border-box;flex:none}
 .btn.is-disabled,.btn.is-disabled:hover,.offer.is-unavailable .btn.is-disabled,.plan.is-unavailable .btn.is-disabled{background:transparent;color:var(--gray);border:1px dashed var(--line);font-family:var(--fm);font-size:12px;letter-spacing:.1em;text-transform:uppercase;justify-content:center;cursor:default;pointer-events:none;user-select:none}
 @media(max-width:640px){.stock-badge{right:16px}}

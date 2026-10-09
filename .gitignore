@@ -10,3 +10,6 @@ vendor/
 # Données applicatives du back-office (contenu des offres, médias) :
 # jamais committées (contiennent le contenu éditable, pas des secrets).
 site/data/
+
+.idea/
+/GUIDE-SEO-birostweb.md

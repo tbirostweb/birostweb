@@ -1,0 +1,389 @@
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/_bootstrap.php';
+admin_require_login();
+
+$base = admin_base();
+
+/* --- Contraintes d'upload image --- */
+const GALLERY_MAX_BYTES = 8 * 1024 * 1024;      // 8 Mo / image
+const GALLERY_MAX_DIM   = 2000;                  // px : bord max après ré-encodage GD
+const GALLERY_MAX_IMAGES = 40;                   // garde-fou par item
+const GALLERY_ALLOWED = [
+    'image/jpeg' => 'jpg',
+    'image/png'  => 'png',
+    'image/webp' => 'webp',
+];
+
+/**
+ * Valide un fichier uploadé comme image réelle et renvoie
+ * ['mime'=>..., 'ext'=>...] ou lève MediaException.
+ * Contrôle : upload PHP réel, taille, type MIME réel (finfo + getimagesize),
+ * jamais l'extension fournie par le client.
+ */
+function admin_validate_image(array $file): array
+{
+    $err = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($err !== UPLOAD_ERR_OK) {
+        throw new MediaException('Upload incomplet (code ' . $err . ').');
+    }
+    $tmp = (string) ($file['tmp_name'] ?? '');
+    if ($tmp === '' || !is_uploaded_file($tmp)) {
+        throw new MediaException('Fichier non reçu via un upload HTTP valide.');
+    }
+    $size = (int) ($file['size'] ?? 0);
+    if ($size <= 0 || $size > GALLERY_MAX_BYTES) {
+        throw new MediaException('Fichier trop volumineux ou vide (max 8 Mo).');
+    }
+    // MIME réel via finfo (contenu, pas extension).
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = (string) $finfo->file($tmp);
+    if (!isset(GALLERY_ALLOWED[$mime])) {
+        throw new MediaException('Type non autorisé : ' . ($mime ?: 'inconnu') . ' (JPEG, PNG ou WebP uniquement).');
+    }
+    // Double contrôle : getimagesize doit reconnaître l'image et correspondre au MIME.
+    $info = @getimagesize($tmp);
+    if ($info === false || !isset($info['mime']) || $info['mime'] !== $mime) {
+        throw new MediaException('Le fichier n\'est pas une image valide.');
+    }
+    return ['mime' => $mime, 'ext' => GALLERY_ALLOWED[$mime]];
+}
+
+/**
+ * Ré-encode l'image via GD si possible (strip metadata + downscale au besoin) vers
+ * un fichier temporaire, renvoyé. Si GD est indisponible/échoue, renvoie le chemin
+ * original (stockage tel quel). Renvoie [chemin, bool ré-encodé].
+ */
+function admin_reencode_image(string $srcTmp, string $mime): array
+{
+    if (!function_exists('imagecreatefromstring')) {
+        return [$srcTmp, false];
+    }
+    $raw = @file_get_contents($srcTmp);
+    if ($raw === false) {
+        return [$srcTmp, false];
+    }
+    $img = @imagecreatefromstring($raw);
+    if ($img === false) {
+        return [$srcTmp, false];
+    }
+    $w = imagesx($img);
+    $h = imagesy($img);
+    $scale = 1.0;
+    if ($w > GALLERY_MAX_DIM || $h > GALLERY_MAX_DIM) {
+        $scale = GALLERY_MAX_DIM / max($w, $h);
+    }
+    if ($scale < 1.0) {
+        $nw = max(1, (int) round($w * $scale));
+        $nh = max(1, (int) round($h * $scale));
+        $dst = imagecreatetruecolor($nw, $nh);
+        // Préserve la transparence pour PNG/WebP.
+        imagealphablending($dst, false);
+        imagesavealpha($dst, true);
+        imagecopyresampled($dst, $img, 0, 0, 0, 0, $nw, $nh, $w, $h);
+        imagedestroy($img);
+        $img = $dst;
+    }
+    $out = tempnam(sys_get_temp_dir(), 'bwimg_');
+    if ($out === false) {
+        imagedestroy($img);
+        return [$srcTmp, false];
+    }
+    $ok = false;
+    if ($mime === 'image/jpeg') {
+        $ok = imagejpeg($img, $out, 85);
+    } elseif ($mime === 'image/png') {
+        $ok = imagepng($img, $out, 6);
+    } elseif ($mime === 'image/webp' && function_exists('imagewebp')) {
+        $ok = imagewebp($img, $out, 82);
+    }
+    imagedestroy($img);
+    if (!$ok) {
+        @unlink($out);
+        return [$srcTmp, false];
+    }
+    return [$out, true];
+}
+
+$id = (string) ($_GET['id'] ?? ($_POST['id'] ?? ''));
+
+try {
+    $content = admin_store()->get();
+} catch (\Throwable $e) {
+    $content = cs_default_content();
+}
+$item = cs_find_gallery_item($content, $id);
+
+if ($item === null) {
+    http_response_code(404);
+    admin_head('Introuvable');
+    admin_topbar('gallery');
+    echo '<div class="card"><h1>Item introuvable</h1><p><a href="' . e($base) . '/gallery.php">Retour à la galerie</a></p></div>';
+    admin_foot();
+    exit;
+}
+
+$err = '';
+$notices = [];
+
+/* ============================================================
+ *  Enregistrement
+ * ============================================================ */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!admin_csrf_check()) {
+        http_response_code(400);
+        admin_head('Erreur');
+        admin_topbar('gallery');
+        echo '<div class="card"><h1>Requête invalide</h1><p class="muted">Jeton CSRF manquant ou invalide.</p>'
+            . '<p><a href="' . e($base) . '/gallery.php">Retour</a></p></div>';
+        admin_foot();
+        exit;
+    }
+
+    // --- Champs scalaires ---
+    $item['title'] = mb_substr(trim((string) ($_POST['title'] ?? '')), 0, 160);
+    $item['description'] = mb_substr(trim((string) ($_POST['description'] ?? '')), 0, 1200);
+    $item['sort'] = (int) ($_POST['sort'] ?? ($item['sort'] ?? 0));
+    $item['active'] = !empty($_POST['active']);
+    $type = in_array(($_POST['type'] ?? ''), CS_GALLERY_TYPES, true) ? (string) $_POST['type'] : ($item['type'] ?? 'carousel');
+    $item['type'] = $type;
+    if ($type === 'video') {
+        // Champs posés pour la phase 2 (conservés mais non exploités ici).
+        $item['videoId'] = $item['videoId'] ?? '';
+        $item['poster'] = $item['poster'] ?? '';
+    }
+
+    $uploader = cs_make_media_uploader();
+
+    // --- Images existantes : mise à jour alt/sort + suppressions ---
+    $existing = cs_gallery_item_images($item);
+    $keptByPath = [];
+    $postPaths = isset($_POST['img_path']) && is_array($_POST['img_path']) ? $_POST['img_path'] : [];
+    $postAlt   = isset($_POST['img_alt']) && is_array($_POST['img_alt']) ? $_POST['img_alt'] : [];
+    $postSort  = isset($_POST['img_sort']) && is_array($_POST['img_sort']) ? $_POST['img_sort'] : [];
+    $postDel   = isset($_POST['img_delete']) && is_array($_POST['img_delete']) ? $_POST['img_delete'] : [];
+
+    // On indexe les champs postés PAR CHEMIN (le formulaire renvoie un champ par image).
+    // Puis on itère sur les images RÉELLEMENT stockées (source d'autorité) : une image
+    // n'est supprimée que si sa case « Supprimer » est cochée — jamais par simple absence
+    // dans le POST (évite une perte de données / des fichiers orphelins sur un POST partiel).
+    $delByPath = [];
+    $altByPath = [];
+    $sortByPath = [];
+    foreach ($postPaths as $k => $p) {
+        $p = (string) $p;
+        if ($p === '') {
+            continue;
+        }
+        if (!empty($postDel[$k])) {
+            $delByPath[$p] = true;
+        }
+        if (isset($postAlt[$k])) {
+            $altByPath[$p] = (string) $postAlt[$k];
+        }
+        if (isset($postSort[$k])) {
+            $sortByPath[$p] = (int) $postSort[$k];
+        }
+    }
+    $newImages = [];
+    foreach ($existing as $img) {
+        $p = (string) ($img['path'] ?? '');
+        if ($p === '') {
+            continue;
+        }
+        if (!empty($delByPath[$p])) {
+            // Suppression explicite : on retire le fichier et on n'ajoute pas l'image.
+            try {
+                $uploader->delete($p);
+            } catch (\Throwable $e) {
+                $notices[] = 'Fichier non supprimé (' . e($p) . ') : ' . $e->getMessage();
+            }
+            continue;
+        }
+        if (array_key_exists($p, $altByPath)) {
+            $img['alt'] = mb_substr(trim($altByPath[$p]), 0, 240);
+        }
+        if (array_key_exists($p, $sortByPath)) {
+            $img['sort'] = $sortByPath[$p];
+        }
+        $newImages[] = $img;
+    }
+
+    // --- Nouveaux fichiers uploadés ---
+    $maxSort = 0;
+    foreach ($newImages as $img) {
+        $maxSort = max($maxSort, (int) ($img['sort'] ?? 0));
+    }
+    if (!empty($_FILES['images']) && is_array($_FILES['images']['tmp_name'])) {
+        $files = $_FILES['images'];
+        $count = count($files['tmp_name']);
+        for ($i = 0; $i < $count; $i++) {
+            if ((int) ($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+                continue; // champ vide
+            }
+            if (count($newImages) >= GALLERY_MAX_IMAGES) {
+                $notices[] = 'Limite de ' . GALLERY_MAX_IMAGES . ' images atteinte : fichiers suivants ignorés.';
+                break;
+            }
+            $one = [
+                'error'    => $files['error'][$i] ?? UPLOAD_ERR_NO_FILE,
+                'tmp_name' => $files['tmp_name'][$i] ?? '',
+                'size'     => $files['size'][$i] ?? 0,
+            ];
+            try {
+                $meta = admin_validate_image($one);
+            } catch (\Throwable $e) {
+                $notices[] = 'Image refusée : ' . $e->getMessage();
+                continue;
+            }
+            [$uploadPath, $reencoded] = admin_reencode_image((string) $one['tmp_name'], $meta['mime']);
+            $name = bin2hex(random_bytes(8)) . '.' . $meta['ext'];
+            $destPath = 'gallery/' . $id . '/' . $name;
+            try {
+                $url = $uploader->upload($uploadPath, $destPath, $meta['mime']);
+            } catch (\Throwable $e) {
+                if ($reencoded) {
+                    @unlink($uploadPath);
+                }
+                $notices[] = 'Échec de l\'enregistrement d\'une image : ' . $e->getMessage();
+                continue;
+            }
+            if ($reencoded) {
+                @unlink($uploadPath);
+            }
+            $maxSort += 10;
+            $newImages[] = [
+                'path' => $destPath,
+                'url'  => $url,
+                'alt'  => mb_substr($item['title'] ?? '', 0, 240),
+                'sort' => $maxSort,
+            ];
+        }
+    }
+
+    // Réindexe les sort pour rester propres (10, 20, …).
+    usort($newImages, static fn ($a, $b) => ((int) ($a['sort'] ?? 0)) <=> ((int) ($b['sort'] ?? 0)));
+    $s = 0;
+    foreach ($newImages as &$img) {
+        $s += 10;
+        $img['sort'] = $s;
+    }
+    unset($img);
+    $item['images'] = $newImages;
+
+    // --- Persiste ---
+    $items = cs_gallery($content);
+    foreach ($items as &$it) {
+        if (($it['id'] ?? '') === $id) {
+            $it = $item;
+            break;
+        }
+    }
+    unset($it);
+    $content['gallery'] = $items;
+
+    try {
+        admin_store()->save($content);
+        if (!$notices) {
+            header('Location: ' . $base . '/gallery_edit.php?id=' . rawurlencode($id) . '&saved=1');
+            exit;
+        }
+    } catch (\Throwable $e) {
+        $err = 'Échec de l\'enregistrement : ' . $e->getMessage();
+    }
+}
+
+/* ============================================================
+ *  Formulaire
+ * ============================================================ */
+$type = (string) ($item['type'] ?? 'carousel');
+$images = cs_gallery_item_images($item);
+$flash = (string) ($_GET['saved'] ?? '');
+
+admin_head('Modifier · ' . (string) ($item['title'] ?? ''));
+admin_topbar('gallery');
+
+echo '<span class="eyebrow">Galerie · ' . e($type) . '</span>';
+echo '<h1>' . e((string) ($item['title'] ?? 'Item')) . '</h1>';
+echo '<p class="muted">Identifiant : <code>' . e($id) . '</code> · <a href="' . e($base) . '/gallery.php">← Retour à la galerie</a></p>';
+
+if ($flash === '1') {
+    echo '<div class="alert alert--ok" style="margin-top:18px">Item enregistré.</div>';
+}
+if ($err !== '') {
+    echo '<div class="alert" style="margin-top:18px">' . e($err) . '</div>';
+}
+foreach ($notices as $nt) {
+    echo '<div class="alert" style="margin-top:12px">' . $nt . '</div>';
+}
+
+echo '<form method="post" action="' . e($base) . '/gallery_edit.php?id=' . rawurlencode($id) . '" enctype="multipart/form-data">';
+echo admin_csrf_field();
+echo '<input type="hidden" name="id" value="' . e($id) . '">';
+
+echo '<div class="card">';
+echo '<label for="f_title">Titre</label>';
+echo '<input type="text" id="f_title" name="title" maxlength="160" value="' . e((string) ($item['title'] ?? '')) . '">';
+echo '<label for="f_desc">Description (affichée sous le carrousel)</label>';
+echo '<textarea id="f_desc" name="description" style="min-height:110px">' . e((string) ($item['description'] ?? '')) . '</textarea>';
+echo '<div class="grid2">';
+echo '<div><label for="f_type">Type</label>'
+    . '<select id="f_type" name="type" style="width:100%;font-family:var(--fb);font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">'
+    . '<option value="carousel"' . ($type === 'carousel' ? ' selected' : '') . '>Carrousel d\'images</option>'
+    . '<option value="video"' . ($type === 'video' ? ' selected' : '') . '>Vidéo (à venir — phase 2)</option>'
+    . '</select></div>';
+echo '<div><label for="f_sort">Ordre (sort)</label>'
+    . '<input type="text" id="f_sort" name="sort" value="' . e((string) ((int) ($item['sort'] ?? 0))) . '"></div>';
+echo '</div>';
+echo '<div class="check" style="margin-top:14px"><input type="checkbox" id="f_active" name="active" value="1"' . (!empty($item['active']) ? ' checked' : '') . '><label for="f_active">Actif (visible sur /galerie)</label></div>';
+echo '</div>'; // card
+
+if ($type === 'video') {
+    echo '<div class="card"><h2 style="margin-top:0">Vidéo — à venir</h2>'
+        . '<p class="muted">La gestion vidéo (Bunny Stream) arrive en phase 2. Cet item s\'affiche pour l\'instant comme un emplacement « Vidéo — bientôt » sur la page publique.</p></div>';
+} else {
+    // --- Images existantes ---
+    echo '<div class="card"><h2 style="margin-top:0">Images</h2>';
+    if (!$images) {
+        echo '<p class="muted">Aucune image. Ajoutez-en ci-dessous.</p>';
+    } else {
+        echo '<p class="muted">Modifiez le texte alternatif, l\'ordre (ou les flèches), ou cochez « Supprimer ».</p>';
+        echo '<div class="imggrid" id="imggrid">';
+        foreach ($images as $k => $img) {
+            $path = (string) ($img['path'] ?? '');
+            $url = (string) ($img['url'] ?? '');
+            echo '<div class="imgcard" data-row>';
+            echo '<img class="thumb" src="' . e($url) . '" alt="" loading="lazy">';
+            echo '<input type="hidden" name="img_path[' . $k . ']" value="' . e($path) . '">';
+            echo '<label style="margin-top:10px">Texte alternatif</label>';
+            echo '<input type="text" name="img_alt[' . $k . ']" value="' . e((string) ($img['alt'] ?? '')) . '" maxlength="240">';
+            echo '<div style="display:flex;gap:8px;align-items:center;margin-top:8px">';
+            echo '<div style="flex:1"><label style="margin:0 0 4px">Ordre</label>'
+                . '<input type="text" name="img_sort[' . $k . ']" data-sort value="' . e((string) ((int) ($img['sort'] ?? 0))) . '" style="width:100%"></div>';
+            echo '<button type="button" class="btn btn--ghost btn--sm" data-move="up" title="Monter">↑</button>';
+            echo '<button type="button" class="btn btn--ghost btn--sm" data-move="down" title="Descendre">↓</button>';
+            echo '</div>';
+            echo '<div class="check" style="margin-top:8px"><input type="checkbox" id="del_' . $k . '" name="img_delete[' . $k . ']" value="1"><label for="del_' . $k . '">Supprimer</label></div>';
+            echo '</div>';
+        }
+        echo '</div>';
+    }
+
+    // --- Ajout d'images ---
+    echo '<label for="f_files" style="margin-top:20px">Ajouter des images (JPEG, PNG, WebP · max 8 Mo/image)</label>';
+    echo '<input type="file" id="f_files" name="images[]" accept="image/jpeg,image/png,image/webp" multiple '
+        . 'style="width:100%;font-family:var(--fb);font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">';
+    echo '<p class="muted" style="margin-top:8px">Les fichiers sont renommés côté serveur et ré-encodés (métadonnées supprimées, redimensionnés à ' . GALLERY_MAX_DIM . ' px max).</p>';
+    echo '</div>'; // card
+}
+
+echo '<div style="margin-top:22px;display:flex;gap:10px">';
+echo '<button class="btn" type="submit">Enregistrer</button>';
+echo '<a class="btn btn--ghost" href="' . e($base) . '/gallery.php">Retour</a>';
+echo '</div>';
+echo '</form>';
+
+echo '<script src="/js/admin-gallery.js" defer></script>';
+admin_foot();

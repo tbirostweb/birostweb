@@ -309,12 +309,38 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outli
 .fieldset{border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-top:18px}
 .fieldset>legend{font-family:var(--fm);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);padding:0 6px}
 form.inline{display:inline}
+.navlink{font-family:var(--fm);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--gray);padding:5px 2px;border-bottom:1.5px solid transparent}
+.navlink:hover{color:var(--ink)}
+.navlink.is-active{color:var(--ink);border-bottom-color:var(--accent)}
+.thumb{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--line-2);border:1px solid var(--line);border-radius:var(--r);display:block}
+.imgcard{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:12px}
+.imggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-top:12px}
+.badge-type{display:inline-block;font-family:var(--fm);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:2px;border:1px solid var(--line);color:var(--gray)}
+.badge-type--video{color:var(--accent);border-color:var(--accent)}
 @media(max-width:620px){.grid2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
 HTML;
+}
+
+/**
+ * Barre supérieure commune : marque + navigation (Offres / Galerie) +
+ * lien « Voir le site » + bouton de déconnexion. $current ∈ {'offers','gallery'}.
+ */
+function admin_topbar(string $current = ''): void
+{
+    $base = e(admin_base());
+    echo '<div class="topbar">';
+    echo '<span class="brand"><b>BW</b> Admin</span>';
+    echo '<span class="actions">';
+    echo '<a class="navlink' . ($current === 'offers' ? ' is-active' : '') . '" href="' . $base . '/">Offres</a> ';
+    echo '<a class="navlink' . ($current === 'gallery' ? ' is-active' : '') . '" href="' . $base . '/gallery.php">Galerie</a> ';
+    echo '<a class="muted" href="/" target="_blank" rel="noopener">Voir le site ↗</a> ';
+    echo '<form class="inline" method="post" action="' . $base . '/logout.php">' . admin_csrf_field()
+        . '<button class="btn btn--ghost btn--sm" type="submit">Déconnexion</button></form>';
+    echo '</span></div>';
 }
 
 function admin_foot(): void

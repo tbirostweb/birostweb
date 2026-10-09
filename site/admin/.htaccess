@@ -17,3 +17,20 @@ Options -Indexes
 <FilesMatch "^_">
     Require all denied
 </FilesMatch>
+
+# ============================================================
+#  Relâchement des limites d'upload — UNIQUEMENT pour /admin.
+#  Le reste du site garde les limites strictes (uploads coupés).
+#  mod_php est actif : php_value/php_flag sont pris en compte ici.
+#  NB : file_uploads est PHP_INI_SYSTEM (non modifiable en .htaccess) ; il
+#  reste donc activé globalement. On relâche ici les directives PERDIR
+#  (upload_max_filesize, post_max_size) + LimitRequestBody.
+# ============================================================
+<IfModule mod_php.c>
+
+    php_value upload_max_filesize 10M
+    php_value post_max_size 25M
+</IfModule>
+
+# Corps de requête autorisé relevé (mod_core) : 25 Mo.
+LimitRequestBody 26214400

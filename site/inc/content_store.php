@@ -420,46 +420,267 @@ function cs_make_store(): ContentStore
 }
 
 /* ============================================================
- *  Abstraction média (posée pour la galerie à venir — non utilisée ici)
+ *  Abstraction média (galerie — upload d'images)
  * ============================================================ */
 
-interface MediaUploader
+/** Échec d'opération média : l'admin doit le remonter (fail-closed). */
+class MediaException extends RuntimeException
 {
-    /** Stocke le fichier local et renvoie son nom/identifiant de stockage. */
-    public function put(string $localPath, string $destName): string;
-
-    /** URL publique d'un média stocké. */
-    public function url(string $name): string;
 }
 
-/** Uploader local minimal (non utilisé dans la phase Offres). */
+/**
+ * Stockage des fichiers médias (images de la galerie).
+ *
+ * Un « destPath » est un chemin relatif propre dans le stockage, p.ex.
+ *   gallery/{itemId}/{nomGenere}.webp
+ * Les segments sont contrôlés côté serveur (jamais le nom fourni par le client).
+ */
+interface MediaUploader
+{
+    /**
+     * Stocke le fichier local $localTmpPath à l'emplacement $destPath et
+     * renvoie son URL publique (CDN en prod, chemin local servi en dev).
+     * Lève MediaException en cas d'échec.
+     */
+    public function upload(string $localTmpPath, string $destPath, string $contentType): string;
+
+    /** Supprime l'objet $destPath du stockage. Tolère l'absence. Lève MediaException sur erreur dure. */
+    public function delete(string $destPath): void;
+
+    /** URL publique d'un objet déjà stocké (sans accès réseau). */
+    public function publicUrl(string $destPath): string;
+}
+
+/** Normalise/valide un destPath : segments [a-z0-9._-], pas de '..', pas de slash initial. */
+function cs_media_safe_path(string $destPath): string
+{
+    $destPath = str_replace('\\', '/', $destPath);
+    $destPath = ltrim($destPath, '/');
+    $segments = [];
+    foreach (explode('/', $destPath) as $seg) {
+        if ($seg === '' || $seg === '.' || $seg === '..') {
+            throw new MediaException('Chemin média invalide : ' . $destPath);
+        }
+        if (!preg_match('/^[A-Za-z0-9._-]+$/', $seg)) {
+            throw new MediaException('Segment de chemin média invalide : ' . $seg);
+        }
+        $segments[] = $seg;
+    }
+    if (!$segments) {
+        throw new MediaException('Chemin média vide.');
+    }
+    return implode('/', $segments);
+}
+
+/**
+ * Uploader local : écrit les fichiers sous MEDIA_DIR (défaut site/media) et
+ * renvoie une URL locale servie par le site (base '/media/'). Permet de tester
+ * toute l'UX galerie sans Bunny.
+ */
 final class LocalMediaUploader implements MediaUploader
 {
     private string $dir;
     private string $base;
 
-    public function __construct(?string $dir = null, string $baseUrl = '/media/')
+    public function __construct(?string $dir = null, ?string $baseUrl = null)
     {
-        $dir = $dir ?? (cs_env('MEDIA_DIR') ?? (dirname(__DIR__) . '/data/media'));
+        $dir = $dir ?? (cs_env('MEDIA_DIR') ?? (dirname(__DIR__) . '/media'));
         $this->dir  = rtrim($dir, '/');
-        $this->base = '/' . trim($baseUrl, '/') . '/';
+        $base = $baseUrl ?? (cs_env('MEDIA_BASE_URL') ?? '/media/');
+        $this->base = '/' . trim($base, '/') . '/';
     }
 
-    public function put(string $localPath, string $destName): string
+    public function upload(string $localTmpPath, string $destPath, string $contentType): string
     {
-        if (!is_dir($this->dir) && !@mkdir($this->dir, 0700, true) && !is_dir($this->dir)) {
-            throw new ContentStoreException('MEDIA_DIR non créable : ' . $this->dir);
+        $rel  = cs_media_safe_path($destPath);
+        $full = $this->dir . '/' . $rel;
+        $sub  = dirname($full);
+        if (!is_dir($sub) && !@mkdir($sub, 0755, true) && !is_dir($sub)) {
+            throw new MediaException('Dossier média non créable : ' . $sub);
         }
-        $name = basename($destName);
-        if (!@copy($localPath, $this->dir . '/' . $name)) {
-            throw new ContentStoreException('Copie média impossible : ' . $name);
+        if (!@copy($localTmpPath, $full)) {
+            throw new MediaException('Copie média impossible : ' . $rel);
         }
-        return $name;
+        @chmod($full, 0644);
+        return $this->publicUrl($rel);
     }
 
-    public function url(string $name): string
+    public function delete(string $destPath): void
     {
-        return $this->base . rawurlencode(basename($name));
+        $rel  = cs_media_safe_path($destPath);
+        $full = $this->dir . '/' . $rel;
+        if (is_file($full) && !@unlink($full)) {
+            throw new MediaException('Suppression média impossible : ' . $rel);
+        }
+        // Nettoyage best-effort du dossier de l'item s'il est vide.
+        $sub = dirname($full);
+        if (is_dir($sub) && $sub !== $this->dir) {
+            @rmdir($sub);
+        }
+    }
+
+    public function publicUrl(string $destPath): string
+    {
+        $rel = cs_media_safe_path($destPath);
+        // On encode chaque segment mais on préserve les slashes.
+        $parts = array_map('rawurlencode', explode('/', $rel));
+        return $this->base . implode('/', $parts);
+    }
+}
+
+/**
+ * Uploader Bunny Storage.
+ *
+ * Même modèle que BunnyStore :
+ *   - PUT   https://{BUNNY_STORAGE_ENDPOINT}/{BUNNY_STORAGE_ZONE}/{destPath}
+ *           en-tête AccessKey: {BUNNY_STORAGE_KEY}, corps = fichier (201 = OK).
+ *   - DELETE même URL (200/204 = OK, 404 toléré).
+ * L'URL publique renvoyée pointe sur la Pull Zone CDN : https://{BUNNY_CDN_HOST}/{destPath}.
+ *
+ * NB prod : BUNNY_STORAGE_ENDPOINT DOIT être un hôte https. Le schéma http n'est
+ * toléré que pour un hôte de test local (comme BunnyStore).
+ */
+final class BunnyMediaUploader implements MediaUploader
+{
+    private string $zone;
+    private string $key;
+    private string $endpoint;
+    private string $cdnHost;
+
+    public function __construct()
+    {
+        $this->zone     = cs_env('BUNNY_STORAGE_ZONE', '') ?? '';
+        $this->key      = cs_env('BUNNY_STORAGE_KEY', '') ?? '';
+        $this->endpoint = rtrim(cs_env('BUNNY_STORAGE_ENDPOINT', 'storage.bunnycdn.com') ?? 'storage.bunnycdn.com', '/');
+        $this->cdnHost  = rtrim(cs_env('BUNNY_CDN_HOST', '') ?? '', '/');
+    }
+
+    private function isLocalTestHost(string $endpoint): bool
+    {
+        $host = strtolower(explode(':', $endpoint, 2)[0]);
+        return $host === '127.0.0.1'
+            || $host === 'localhost'
+            || $host === '::1'
+            || substr($host, -10) === '.localhost'
+            || substr($host, -5) === '.test';
+    }
+
+    /** URL de l'objet sur l'API Storage. */
+    private function storageUrl(string $rel): string
+    {
+        $scheme = $this->isLocalTestHost($this->endpoint) ? 'http' : 'https';
+        $parts  = array_map('rawurlencode', explode('/', $rel));
+        return $scheme . '://' . $this->endpoint . '/' . rawurlencode($this->zone) . '/' . implode('/', $parts);
+    }
+
+    public function publicUrl(string $destPath): string
+    {
+        $rel = cs_media_safe_path($destPath);
+        if ($this->cdnHost === '') {
+            throw new MediaException('BUNNY_CDN_HOST manquant : URL publique indisponible.');
+        }
+        $scheme = $this->isLocalTestHost($this->cdnHost) ? 'http' : 'https';
+        $parts  = array_map('rawurlencode', explode('/', $rel));
+        return $scheme . '://' . $this->cdnHost . '/' . implode('/', $parts);
+    }
+
+    public function upload(string $localTmpPath, string $destPath, string $contentType): string
+    {
+        if ($this->zone === '' || $this->key === '') {
+            throw new MediaException('Bunny mal configuré : BUNNY_STORAGE_ZONE / BUNNY_STORAGE_KEY manquant.');
+        }
+        $rel = cs_media_safe_path($destPath);
+        $fh  = @fopen($localTmpPath, 'rb');
+        if ($fh === false) {
+            throw new MediaException('Fichier source illisible : ' . $localTmpPath);
+        }
+        $size = @filesize($localTmpPath);
+        $ch   = curl_init($this->storageUrl($rel));
+        if ($ch === false) {
+            fclose($fh);
+            throw new MediaException('curl_init a échoué.');
+        }
+        $ct = $contentType !== '' ? $contentType : 'application/octet-stream';
+        curl_setopt_array($ch, [
+            CURLOPT_CUSTOMREQUEST  => 'PUT',
+            CURLOPT_UPLOAD         => true,
+            CURLOPT_INFILE         => $fh,
+            CURLOPT_INFILESIZE     => $size !== false ? $size : 0,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_HTTPHEADER     => [
+                'AccessKey: ' . $this->key,
+                'Content-Type: ' . $ct,
+            ],
+        ]);
+        $resp = curl_exec($ch);
+        if ($resp === false) {
+            $err = curl_error($ch) ?: 'curl error';
+            curl_close($ch);
+            fclose($fh);
+            throw new MediaException('Upload Bunny impossible (réseau) : ' . $err);
+        }
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+        fclose($fh);
+        if ($status === 201 || $status === 200) {
+            return $this->publicUrl($rel);
+        }
+        if ($status === 401) {
+            throw new MediaException('Upload Bunny refusé (401) : AccessKey invalide.');
+        }
+        throw new MediaException('Upload Bunny échoué : HTTP ' . $status . '.');
+    }
+
+    public function delete(string $destPath): void
+    {
+        if ($this->zone === '' || $this->key === '') {
+            throw new MediaException('Bunny mal configuré : BUNNY_STORAGE_ZONE / BUNNY_STORAGE_KEY manquant.');
+        }
+        $rel = cs_media_safe_path($destPath);
+        $ch  = curl_init($this->storageUrl($rel));
+        if ($ch === false) {
+            throw new MediaException('curl_init a échoué.');
+        }
+        curl_setopt_array($ch, [
+            CURLOPT_CUSTOMREQUEST  => 'DELETE',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT        => 20,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_HTTPHEADER     => ['AccessKey: ' . $this->key],
+        ]);
+        $resp = curl_exec($ch);
+        if ($resp === false) {
+            $err = curl_error($ch) ?: 'curl error';
+            curl_close($ch);
+            throw new MediaException('Suppression Bunny impossible (réseau) : ' . $err);
+        }
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+        // 200/204 = supprimé ; 404 = déjà absent (toléré).
+        if ($status === 200 || $status === 204 || $status === 404) {
+            return;
+        }
+        if ($status === 401) {
+            throw new MediaException('Suppression Bunny refusée (401) : AccessKey invalide.');
+        }
+        throw new MediaException('Suppression Bunny échouée : HTTP ' . $status . '.');
+    }
+}
+
+/** Fabrique l'uploader média selon CONTENT_BACKEND (local par défaut). */
+function cs_make_media_uploader(): MediaUploader
+{
+    $backend = strtolower(cs_env('CONTENT_BACKEND', 'local') ?? 'local');
+    switch ($backend) {
+        case 'bunny':
+            return new BunnyMediaUploader();
+        case 'local':
+        default:
+            return new LocalMediaUploader();
     }
 }
 
@@ -525,14 +746,77 @@ function cs_promo_active(array $offer): bool
     return $ts === false ? false : ($ts >= time());
 }
 
+/* ============================================================
+ *  Helpers métier Galerie
+ * ============================================================ */
+
+/** Types de galerie reconnus. La vidéo est posée (phase 2) mais non implémentée. */
+const CS_GALLERY_TYPES = ['carousel', 'video'];
+
+/** Liste brute des items de galerie (défaut vide si absent — rétro-compatible). */
+function cs_gallery(array $content): array
+{
+    return isset($content['gallery']) && is_array($content['gallery']) ? $content['gallery'] : [];
+}
+
+/** Retrouve un item de galerie par id (ou null). */
+function cs_find_gallery_item(array $content, string $id): ?array
+{
+    foreach (cs_gallery($content) as $it) {
+        if (($it['id'] ?? null) === $id) {
+            return $it;
+        }
+    }
+    return null;
+}
+
+/**
+ * Items de galerie, triés par `sort` croissant.
+ * @param bool        $activeOnly  ne garder que les items actifs.
+ * @param string|null $type        filtrer par type ('carousel'|'video'), ou null pour tous.
+ */
+function cs_gallery_items(array $content, bool $activeOnly = false, ?string $type = null): array
+{
+    $items = [];
+    foreach (cs_gallery($content) as $it) {
+        if (!is_array($it)) {
+            continue;
+        }
+        if ($activeOnly && empty($it['active'])) {
+            continue;
+        }
+        if ($type !== null && ($it['type'] ?? '') !== $type) {
+            continue;
+        }
+        $items[] = $it;
+    }
+    usort($items, static function ($a, $b) {
+        return ((int) ($a['sort'] ?? 0)) <=> ((int) ($b['sort'] ?? 0));
+    });
+    return $items;
+}
+
+/** Images d'un item carousel, triées par `sort` croissant (liste vide sinon). */
+function cs_gallery_item_images(array $item): array
+{
+    $imgs = (isset($item['images']) && is_array($item['images'])) ? $item['images'] : [];
+    $imgs = array_values(array_filter($imgs, 'is_array'));
+    usort($imgs, static function ($a, $b) {
+        return ((int) ($a['sort'] ?? 0)) <=> ((int) ($b['sort'] ?? 0));
+    });
+    return $imgs;
+}
+
 /**
  * Seed par défaut : reproduit EXACTEMENT les offres codées en dur dans index.php
  * (onglets Création / Hébergement / Maintenance de la section #offres).
+ * `gallery` démarre vide (les items sont créés depuis l'admin).
  */
 function cs_default_content(): array
 {
     return [
         'version' => 1,
+        'gallery' => [],
         'offers' => [
             /* ---------- Onglet Création ---------- */
             [

@@ -176,12 +176,7 @@ $flash   = (string) ($_GET['saved'] ?? '');
 $tabNames = ['crea' => 'Création de site', 'heb' => 'Hébergement', 'maint' => 'Maintenance'];
 
 admin_head('Offres');
-echo '<div class="topbar">';
-echo '<span class="brand"><b>BW</b> Admin</span>';
-echo '<span class="actions"><a class="muted" href="/" target="_blank" rel="noopener">Voir le site ↗</a> '
-    . '<form class="inline" method="post" action="' . e(admin_base()) . '/logout.php">' . admin_csrf_field()
-    . '<button class="btn btn--ghost btn--sm" type="submit">Déconnexion</button></form></span>';
-echo '</div>';
+admin_topbar('offers');
 
 echo '<span class="eyebrow">Back-office</span><h1>Offres &amp; promos</h1>';
 echo '<p class="muted">Modifiez prix, descriptions, caractéristiques et promos. Les changements sont visibles immédiatement sur le site public.</p>';

@@ -402,6 +402,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
     <a href="#top" class="brand"><b></b>Birostweb</a>
     <nav class="nav__links" id="menu">
       <a href="#realisations">Réalisations</a>
+      <a href="/galerie">Galerie</a>
       <a href="#offres">Offres</a>
       <a href="#approche">Approche</a>
       <a href="#faq">FAQ</a>
@@ -816,7 +817,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
     <div class="footer__in">
       <span class="footer__b">Théo Birost — Développeur web full-stack</span>
       <nav class="footer__l">
-        <a href="#realisations">Réalisations</a><a href="#offres">Offres</a><a href="#approche">Approche</a><a href="#faq">FAQ</a><a href="#contact">Contact</a><a href="/mentions-legales.html">Mentions légales</a><a href="/cgv.html">CGV</a><a href="#top">↑ Haut</a>
+        <a href="#realisations">Réalisations</a><a href="/galerie">Galerie</a><a href="#offres">Offres</a><a href="#approche">Approche</a><a href="#faq">FAQ</a><a href="#contact">Contact</a><a href="/mentions-legales.html">Mentions légales</a><a href="/cgv.html">CGV</a><a href="#top">↑ Haut</a>
       </nav>
     </div>
     <div class="footer__meta"><span>© 2026 Théo Birost · France · Full remote</span><span>Micro-entreprise · Développement web sur-mesure</span></div>

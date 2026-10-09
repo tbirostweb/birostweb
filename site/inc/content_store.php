@@ -120,44 +120,220 @@ final class LocalFileStore implements ContentStoreBackend
 }
 
 /**
- * Backend Bunny Storage — SQUELETTE.
+ * Backend Bunny Storage.
  *
- * En prod, le contenu vivra dans une Storage Zone Bunny (pas de volume Docker).
- * On lira/écrira content.json via l'API HTTP Bunny Storage.
- * Rien n'est implémenté ici volontairement : à brancher lors de la phase prod.
+ * Le contenu vit dans une Storage Zone Bunny (pas de volume Docker : le conteneur
+ * est jetable). On lit/écrit un objet JSON (défaut `data/content.json`) via l'API
+ * HTTP Bunny Storage :
+ *   - Base  : https://{BUNNY_STORAGE_ENDPOINT}/{BUNNY_STORAGE_ZONE}/{path}
+ *   - Auth  : en-tête  AccessKey: {BUNNY_STORAGE_KEY}
+ *   - GET lit (200) / PUT écrit, corps = contenu (201) / 404 si absent / 401 si clé invalide.
+ *
+ * Deux mécanismes protègent le rendu public :
+ *   - CACHE disque court (TTL) : évite de taper Bunny à chaque visite.
+ *   - ANTI-PANNE en lecture : si Bunny est injoignable (réseau/401/5xx), on sert
+ *     le dernier cache (même périmé), sinon null (le ContentStore amorcera le seed).
+ *     read() ne lève JAMAIS — le site public ne doit pas casser.
+ *
+ * En écriture (admin), au contraire, un échec lève ContentStoreException : l'admin
+ * doit savoir que sa sauvegarde n'a PAS été persistée.
+ *
+ * NB prod : BUNNY_STORAGE_ENDPOINT DOIT être un hôte https (ex. storage.bunnycdn.com).
+ * Le schéma http n'est utilisé que pour un hôte de test local (127.0.0.1, localhost,
+ * ::1, *.localhost, *.test) — jamais en prod.
  */
 final class BunnyStore implements ContentStoreBackend
 {
     private string $zone;
     private string $key;
-    private string $host;
+    private string $endpoint;
     private string $object;
+    private string $cacheFile;
+    private int $cacheTtl;
 
     public function __construct()
     {
-        $this->zone   = cs_env('BUNNY_STORAGE_ZONE', '') ?? '';
-        $this->key    = cs_env('BUNNY_STORAGE_KEY', '') ?? '';
-        $this->host   = cs_env('BUNNY_CDN_HOST', 'storage.bunnycdn.com') ?? 'storage.bunnycdn.com';
-        $this->object = 'content.json';
+        $this->zone     = cs_env('BUNNY_STORAGE_ZONE', '') ?? '';
+        $this->key      = cs_env('BUNNY_STORAGE_KEY', '') ?? '';
+        // Hôte de base de l'API Storage (région). Défaut : Main (Frankfurt).
+        $this->endpoint = rtrim(cs_env('BUNNY_STORAGE_ENDPOINT', 'storage.bunnycdn.com') ?? 'storage.bunnycdn.com', '/');
+        // Chemin de l'objet dans la zone, configurable. Défaut : data/content.json.
+        $this->object   = ltrim(cs_env('BUNNY_CONTENT_PATH', 'data/content.json') ?? 'data/content.json', '/');
+
+        $cacheDir = rtrim(cs_env('CONTENT_CACHE_DIR') ?? sys_get_temp_dir(), '/');
+        // Clé de cache dérivée de la zone + chemin (évite les collisions entre zones).
+        $tag = substr(sha1($this->endpoint . '|' . $this->zone . '|' . $this->object), 0, 12);
+        $this->cacheFile = $cacheDir . '/bw_content_cache_' . $tag . '.json';
+        $this->cacheTtl  = max(0, (int) (cs_env('CONTENT_CACHE_TTL', '60') ?? '60'));
     }
 
+    /** True si l'hôte est un hôte de test local (http toléré) ; sinon prod → https obligatoire. */
+    private function isLocalTestHost(string $endpoint): bool
+    {
+        $host = strtolower(explode(':', $endpoint, 2)[0]);
+        return $host === '127.0.0.1'
+            || $host === 'localhost'
+            || $host === '::1'
+            || substr($host, -10) === '.localhost'
+            || substr($host, -5) === '.test';
+    }
+
+    /** URL complète de l'objet (https en prod, http uniquement pour un hôte de test local). */
+    private function url(): string
+    {
+        $scheme = $this->isLocalTestHost($this->endpoint) ? 'http' : 'https';
+        // On préserve les slashes du chemin (segments déjà « propres »).
+        return $scheme . '://' . $this->endpoint . '/' . rawurlencode($this->zone) . '/' . $this->object;
+    }
+
+    /**
+     * Exécute une requête cURL vers Bunny.
+     * @return array{status:int, body:string, error:?string}
+     */
+    private function request(string $method, ?string $body = null): array
+    {
+        $ch = curl_init($this->url());
+        if ($ch === false) {
+            return ['status' => 0, 'body' => '', 'error' => 'curl_init failed'];
+        }
+        $headers = ['AccessKey: ' . $this->key, 'Accept: application/json'];
+        $opts = [
+            CURLOPT_CUSTOMREQUEST  => $method,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_TIMEOUT        => 8,
+            CURLOPT_FOLLOWLOCATION => false,
+        ];
+        if ($body !== null) {
+            $opts[CURLOPT_POSTFIELDS] = $body;
+            $headers[] = 'Content-Type: application/json';
+        }
+        $opts[CURLOPT_HTTPHEADER] = $headers;
+        curl_setopt_array($ch, $opts);
+
+        $resp = curl_exec($ch);
+        if ($resp === false) {
+            $err = curl_error($ch) ?: 'curl error';
+            curl_close($ch);
+            return ['status' => 0, 'body' => '', 'error' => $err];
+        }
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+        return ['status' => $status, 'body' => (string) $resp, 'error' => null];
+    }
+
+    /** Journalise un warning (logger du formulaire si dispo, sinon error_log). */
+    private function warn(string $message): void
+    {
+        if (function_exists('contact_log')) {
+            // @phpstan-ignore-next-line — fonction définie dans contact_lib.php
+            contact_log('content_store_bunny_warning', ['message' => $message]);
+            return;
+        }
+        error_log('[BunnyStore] ' . $message);
+    }
+
+    /** Lit le cache disque brut, ou null s'il n'existe pas / illisible. */
+    private function cacheRead(): ?string
+    {
+        if (!is_file($this->cacheFile)) {
+            return null;
+        }
+        $raw = @file_get_contents($this->cacheFile);
+        return ($raw === false || $raw === '') ? null : $raw;
+    }
+
+    /** True si le cache existe et est plus récent que le TTL. */
+    private function cacheFresh(): bool
+    {
+        if ($this->cacheTtl <= 0 || !is_file($this->cacheFile)) {
+            return false;
+        }
+        $mtime = @filemtime($this->cacheFile);
+        return $mtime !== false && ($mtime > time() - $this->cacheTtl);
+    }
+
+    /** Écrit le cache de façon atomique et tolérante (ne lève jamais). */
+    private function cacheWrite(string $json): void
+    {
+        $dir = dirname($this->cacheFile);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0700, true);
+        }
+        $tmp = $dir . '/.bw_content.' . bin2hex(random_bytes(6)) . '.tmp';
+        if (@file_put_contents($tmp, $json, LOCK_EX) === false) {
+            @unlink($tmp);
+            return; // cache best-effort : on continue sans planter
+        }
+        @chmod($tmp, 0600);
+        if (!@rename($tmp, $this->cacheFile)) {
+            @unlink($tmp);
+        }
+    }
+
+    /**
+     * Lecture résiliente :
+     *   1) cache frais (< TTL)         -> servi sans appeler Bunny ;
+     *   2) GET Bunny 200               -> rafraîchit le cache + renvoie le corps ;
+     *   3) GET Bunny 404               -> null (le ContentStore amorcera le seed via write) ;
+     *   4) réseau / 401 / 5xx / autre  -> cache périmé si présent, sinon null (seed).
+     * Ne lève JAMAIS : le rendu public doit toujours aboutir.
+     */
     public function read(): ?string
     {
-        // TODO(prod) : GET https://{host}/{zone}/{object}
-        //   En-tête : "AccessKey: {$this->key}".
-        //   200 -> renvoyer le corps ; 404 -> null ; autre -> ContentStoreException.
-        //   Utiliser cURL avec timeouts courts + gestion d'erreur réseau.
-        throw new ContentStoreException('BunnyStore::read() non implémenté (phase prod).');
+        if ($this->cacheFresh()) {
+            $cached = $this->cacheRead();
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+
+        $res = $this->request('GET');
+        $status = $res['status'];
+
+        if ($status === 200) {
+            $this->cacheWrite($res['body']);
+            return $res['body'];
+        }
+        if ($status === 404) {
+            // Fichier pas encore créé : le ContentStore écrira le seed (init).
+            return null;
+        }
+
+        // Échec (réseau, 401, 5xx, …) : anti-panne.
+        $reason = $res['error'] !== null ? ('réseau: ' . $res['error']) : ('HTTP ' . $status);
+        $stale = $this->cacheRead();
+        if ($stale !== null) {
+            $this->warn('lecture Bunny échouée (' . $reason . ') — service du cache périmé.');
+            return $stale;
+        }
+        $this->warn('lecture Bunny échouée (' . $reason . ') — aucun cache, repli sur le seed.');
+        return null;
     }
 
+    /**
+     * Écriture (admin) : PUT du JSON vers Bunny. En cas d'échec, lève
+     * ContentStoreException (l'admin doit savoir que ça n'a pas persisté).
+     * Après un PUT réussi, met immédiatement le cache local à jour (cohérence).
+     */
     public function write(string $json): void
     {
-        // TODO(prod) : PUT https://{host}/{zone}/{object}
-        //   En-têtes : "AccessKey: {$this->key}", "Content-Type: application/json".
-        //   Corps : $json. Vérifier le code HTTP (201/200). Pas d'atomicité côté
-        //   Bunny : envisager un objet temporaire + remplacement, ou accepter le
-        //   PUT direct (petit fichier). Lever ContentStoreException si échec.
-        throw new ContentStoreException('BunnyStore::write() non implémenté (phase prod).');
+        if ($this->zone === '' || $this->key === '') {
+            throw new ContentStoreException('Bunny mal configuré : BUNNY_STORAGE_ZONE / BUNNY_STORAGE_KEY manquant.');
+        }
+        $res = $this->request('PUT', $json);
+        $status = $res['status'];
+        if ($status === 201 || $status === 200) {
+            $this->cacheWrite($json);
+            return;
+        }
+        if ($res['error'] !== null) {
+            throw new ContentStoreException('Sauvegarde Bunny impossible (réseau) : ' . $res['error']);
+        }
+        if ($status === 401) {
+            throw new ContentStoreException('Sauvegarde Bunny refusée (401) : clé AccessKey invalide.');
+        }
+        throw new ContentStoreException('Sauvegarde Bunny échouée : HTTP ' . $status . '.');
     }
 }
 

@@ -48,6 +48,12 @@ html{scroll-padding-top:88px}
 .offer--feat,.plan--feat{box-shadow:none;border-top:3px solid var(--accent)}
 .offer__price .amt{font-size:42px;letter-spacing:-.045em}
 .offer__badge,.plan__badge{letter-spacing:.04em}
+/* Promos : prix barré + prix promo + étiquette (DA studio, filets fins) */
+.price-was{color:var(--gray);text-decoration:line-through;text-decoration-thickness:1px;font-weight:400}
+.offer__price .amt .price-was{font-size:.56em}
+.price-now{color:var(--accent)}
+.promo-tag{display:inline-block;vertical-align:middle;font-family:var(--fm);font-size:11px;line-height:1;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--surface);border:1px solid var(--accent);border-radius:2px;padding:4px 7px;margin-left:4px}
+.offer__price .amt .promo-tag{font-size:12px}
 .addon{border-style:solid}
 .custom{border-left:3px solid var(--accent)}
 .step{border-top:1px solid var(--d-line);padding-top:24px}

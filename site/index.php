@@ -11,6 +11,15 @@ $contactFormTs    = time();
 $contactSecret    = $_ENV['CONTACT_FORM_SECRET'] ?? $_SERVER['CONTACT_FORM_SECRET'] ?? getenv('CONTACT_FORM_SECRET') ?: '';
 $contactFormToken = hash_hmac('sha256', (string) $contactFormTs, $contactSecret);
 
+// Contenu dynamique des offres (ContentStore). Lecture résiliente : en cas de
+// souci de stockage, on retombe sur le seed en mémoire (le site ne casse pas).
+require __DIR__ . '/inc/offers_render.php';
+try {
+    $offersByTab = cs_offers_by_tab(cs_make_store()->get());
+} catch (\Throwable $e) {
+    $offersByTab = cs_offers_by_tab(cs_default_content());
+}
+
 // Cache-busting : ajoute ?v=<empreinte du contenu> aux fichiers statiques.
 // Le .htaccess met ces URL versionnées en cache 1 an : dès qu'un fichier
 // change, son empreinte (donc son URL) change et le navigateur le recharge.
@@ -608,33 +617,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <div class="tabs__panel" id="panel-crea">
     <div class="offers">
 
-      <article class="offer offer--feat">
-        <span class="offer__badge">Le plus demandé</span>
-        <div class="offer__top"><span class="offer__n">OFFRE 01</span><span class="tag">Site vitrine</span></div>
-        <h3>Site vitrine</h3>
-        <p class="offer__promise">Un site propre et rapide pour présenter votre activité et donner confiance. Codé sur-mesure ou sur un outil que vous pourrez mettre à jour vous-même : on choisit ensemble ce qui vous convient le mieux.</p>
-        <div class="offer__inc"><b>Inclus</b>Design, intégration responsive, référencement de base et mise en ligne. Le périmètre exact est détaillé dans le devis.</div>
-        <div class="offer__price"><div class="lbl">À partir de</div><div class="amt">999 €</div><div class="note">Version multilingue ou à gérer soi-même : sur devis</div></div>
-        <a href="#contact" class="btn btn-ghost" data-step="offre" data-label="Site vitrine" data-oneoff="999" data-form="Offre 1 — Site vitrine" data-next="tab-heb">Choisir le site vitrine</a>
-      </article>
-
-      <article class="offer">
-        <div class="offer__top"><span class="offer__n">OFFRE 02</span><span class="tag">Boutique en ligne</span></div>
-        <h3>Boutique en ligne</h3>
-        <p class="offer__promise">Une boutique claire et rapide, où vos clients trouvent et commandent sans se compliquer la vie. Sur une base e-commerce solide ou entièrement sur-mesure, selon vos besoins.</p>
-        <div class="offer__inc"><b>Inclus</b>Catalogue, paiement sécurisé et parcours d'achat, avec un back-office simple à gérer. Le détail est calé dans le devis.</div>
-        <div class="offer__price"><div class="lbl">À partir de</div><div class="amt">1 899 €</div><div class="note">Version 100 % sur-mesure : sur devis</div></div>
-        <a href="#contact" class="btn btn-ghost" data-step="offre" data-label="Boutique en ligne" data-oneoff="1899" data-form="Offre 2 — Boutique en ligne" data-next="tab-heb">Choisir la boutique</a>
-      </article>
-
-      <article class="offer">
-        <div class="offer__top"><span class="offer__n">OFFRE 03</span><span class="tag">Application · Full-stack</span></div>
-        <h3>Application web</h3>
-        <p class="offer__promise">Quand un simple site ne suffit plus : un outil construit autour de votre façon de travailler, pour vous faire gagner du temps au quotidien.</p>
-        <div class="offer__inc"><b>Inclus</b>Cadrage du besoin, design, développement et mise en ligne. Le périmètre précis est défini ensemble dans le devis.</div>
-        <div class="offer__price"><div class="lbl">À partir de</div><div class="amt">2 999 €</div><div class="note">Chiffré précisément selon le périmètre</div></div>
-        <a href="#contact" class="btn btn-ghost" data-step="offre" data-label="Application web" data-oneoff="2999" data-form="Offre 3 — Application web" data-next="tab-heb">Choisir l'application</a>
-      </article>
+<?= offers_render_tab($offersByTab['crea'], 'crea') ?>
 
     </div>
 
@@ -659,48 +642,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       </div>
       <div class="hosting">
 
-        <article class="plan">
-          <div class="plan__name">Votre hébergement</div>
-          <div class="plan__price">Gratuit</div>
-          <div class="plan__for">Vous gardez la main</div>
-          <ul class="plan__list">
-            <li>Déployé sur votre VPS ou votre hébergeur</li>
-            <li>Vous en êtes 100 % propriétaire</li>
-            <li>Vous payez votre hébergeur directement (~5 à 15 €/mois)</li>
-            <li>Aucun abonnement chez moi</li>
-            <li>Maintenance en option (39 €/mois)</li>
-          </ul>
-          <a href="#contact" class="btn btn-ghost" data-step="heb" data-label="Sur mon propre hébergement" data-mo="0" data-form="Sur mon propre serveur / hébergeur" data-next="tab-maint">Choisir cette option</a>
-        </article>
-
-        <article class="plan plan--feat">
-          <span class="plan__badge">Le plus simple</span>
-          <div class="plan__name">Essentiel · VPS-1</div>
-          <div class="plan__price">45 €<span> / mois</span></div>
-          <div class="plan__for">Site vitrine · tout compris</div>
-          <ul class="plan__list">
-            <li>Serveur 2 vCœurs · 4 Go RAM · 40 Go SSD</li>
-            <li>Mise en ligne, configuration &amp; HTTPS</li>
-            <li>Mises à jour &amp; sécurité</li>
-            <li>Sauvegardes quotidiennes &amp; supervision</li>
-            <li>Support par email</li>
-            <li>Tout compris — rien d'autre à payer</li>
-          </ul>
-          <a href="#contact" class="btn btn-ghost" data-step="heb" data-label="Essentiel · VPS-1 (tout compris)" data-mo="45" data-form="Essentiel · VPS-1 (45 €/mois)" data-included="1">Choisir Essentiel</a>
-        </article>
-
-        <article class="plan">
-          <div class="plan__name">Pro · VPS-2</div>
-          <div class="plan__price">69 €<span> / mois</span></div>
-          <div class="plan__for">Boutique &amp; applications · tout compris</div>
-          <ul class="plan__list">
-            <li>Serveur 4 vCœurs · 8 Go RAM · 75 Go SSD</li>
-            <li>Tout ce qui est inclus dans Essentiel</li>
-            <li>Ressources pour un trafic plus élevé</li>
-            <li>Support prioritaire</li>
-          </ul>
-          <a href="#contact" class="btn btn-ghost" data-step="heb" data-label="Pro · VPS-2 (tout compris)" data-mo="69" data-form="Pro · VPS-2 (69 €/mois)" data-included="1">Choisir Pro</a>
-        </article>
+<?= offers_render_tab($offersByTab['heb'], 'heb') ?>
 
       </div>
       <p class="maint__note"><span>Les offres <b>Essentiel</b> et <b>Pro</b> sont <b>tout compris</b> : hébergement, mises à jour, sécurité, sauvegardes et support, sans surcoût. Si vous préférez héberger vous-même, la maintenance reste en option (onglet Maintenance).</span></p>
@@ -714,38 +656,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       </div>
       <div class="plans">
 
-        <article class="plan plan--feat">
-          <span class="plan__badge">Recommandé</span>
-          <div class="plan__name">Suivi mensuel</div>
-          <div class="plan__price">39 €<span> / mois</span></div>
-          <div class="plan__for">Un site à jour, sûr et toujours en ligne</div>
-          <ul class="plan__list">
-            <li>Mises à jour &amp; sécurité</li>
-            <li>Sauvegardes automatiques</li>
-            <li>Surveillance de disponibilité</li>
-            <li>Petites corrections incluses</li>
-            <li>Support par email</li>
-          </ul>
-          <a href="#contact" class="btn btn-ghost" data-maint="suivi" data-step="maint" data-label="Suivi mensuel (39 €/mois)" data-mo="39" data-form="Suivi mensuel (39 €/mois)">Choisir le suivi mensuel</a>
-        </article>
-
-        <article class="plan">
-          <div class="plan__name">Pack d'heures</div>
-          <div class="plan__price">39 €<span> / heure</span></div>
-          <div class="plan__for">Des modifs &amp; évolutions quand vous voulez</div>
-          <ul class="plan__list">
-            <li>Modifications, contenu &amp; nouvelles pages</li>
-            <li>Corrections et petits développements</li>
-            <li>Sans abonnement, à la carte</li>
-            <li>+ toutes les options du suivi mensuel</li>
-          </ul>
-          <div class="plan__packs">
-            <span class="pk-lbl">Packs dégressifs</span>
-            <div class="plan__pack"><span class="a">Pack 5 h</span><span class="b">175 €<small>35 €/h</small></span></div>
-            <div class="plan__pack"><span class="a">Pack 10 h</span><span class="b">320 €<small>32 €/h</small></span></div>
-          </div>
-          <a href="#contact" class="btn btn-ghost" data-maint="heures" data-step="maint" data-label="Pack d'heures" data-mo="0" data-form="Pack d'heures">Choisir le pack d'heures</a>
-        </article>
+<?= offers_render_tab($offersByTab['maint'], 'maint') ?>
 
       </div>
       <p class="maint__note">Sans engagement — le suivi mensuel s'arrête quand vous voulez, et les heures d'un pack restent valables 24 mois.</p>

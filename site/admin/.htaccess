@@ -1,0 +1,19 @@
+# ============================================================
+#  Back-office /admin — durcissement
+#  HTTPS/TLS géré en amont par Traefik (Dokploy).
+# ============================================================
+
+Options -Indexes
+
+<IfModule mod_headers.c>
+    # Jamais indexé par les moteurs de recherche.
+    Header always set X-Robots-Tag "noindex, nofollow, noarchive"
+    # Ne jamais mettre en cache les pages d'administration.
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header always set Pragma "no-cache"
+</IfModule>
+
+# Ne jamais servir les fichiers internes (_bootstrap.php, etc.).
+<FilesMatch "^_">
+    Require all denied
+</FilesMatch>

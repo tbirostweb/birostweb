@@ -217,6 +217,9 @@ foreach ($tabNames as $tab => $label) {
         echo empty($o['active'])
             ? '<span class="pill pill--off">Inactive</span>'
             : '<span class="pill pill--on">Active</span>';
+        if (array_key_exists('available', $o) && empty($o['available'])) {
+            echo '<span class="pill pill--indispo">Indispo</span>';
+        }
         if ($promoOn) {
             echo '<span class="pill pill--promo">Promo ' . e((string) ($o['promo']['label'] ?? '')) . '</span>';
         }

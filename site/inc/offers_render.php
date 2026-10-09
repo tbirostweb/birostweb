@@ -48,11 +48,35 @@ function offers_price_html(array $offer, string $unitHtml): string
     return $html;
 }
 
+/** Offre disponible ? (champ `available` absent = disponible, rétro-compatible). */
+function offers_is_available(array $o): bool
+{
+    return !array_key_exists('available', $o) || !empty($o['available']);
+}
+
+/** Badge « Indisponible » + CTA désactivé (HTML), selon l'état de l'offre. */
+function offers_soldout_badge(): string
+{
+    return '<span class="stock-badge">Indisponible</span>';
+}
+
+function offers_cta_html(array $o, string $indent): string
+{
+    if (!offers_is_available($o)) {
+        return $indent . '<span class="btn btn-ghost is-disabled" aria-disabled="true" role="link">Indisponible</span>' . "\n";
+    }
+    return $indent . '<a href="#contact" class="btn btn-ghost"' . offers_cta_attrs($o) . '>'
+        . oe((string) ($o['cta_label'] ?? '')) . '</a>' . "\n";
+}
+
 /** Carte "offer" (onglet Création). */
 function offers_render_offer(array $o): string
 {
-    $cls = 'offer' . (!empty($o['feat']) ? ' offer--feat' : '');
+    $cls = 'offer' . (!empty($o['feat']) ? ' offer--feat' : '') . (offers_is_available($o) ? '' : ' is-unavailable');
     $h = '      <article class="' . $cls . '">' . "\n";
+    if (!offers_is_available($o)) {
+        $h .= '        ' . offers_soldout_badge() . "\n";
+    }
     if (!empty($o['badge'])) {
         $h .= '        <span class="offer__badge">' . oe((string) $o['badge']) . '</span>' . "\n";
     }
@@ -64,8 +88,7 @@ function offers_render_offer(array $o): string
     $h .= '        <div class="offer__price"><div class="lbl">' . oe((string) ($o['price_label'] ?? ''))
         . '</div><div class="amt">' . offers_price_html($o, '')
         . '</div><div class="note">' . oe((string) ($o['price_note'] ?? '')) . '</div></div>' . "\n";
-    $h .= '        <a href="#contact" class="btn btn-ghost"' . offers_cta_attrs($o) . '>'
-        . oe((string) ($o['cta_label'] ?? '')) . '</a>' . "\n";
+    $h .= offers_cta_html($o, '        ');
     $h .= '      </article>';
     return $h;
 }
@@ -73,13 +96,16 @@ function offers_render_offer(array $o): string
 /** Carte "plan" (onglets Hébergement / Maintenance). */
 function offers_render_plan(array $o): string
 {
-    $cls = 'plan' . (!empty($o['feat']) ? ' plan--feat' : '');
+    $cls = 'plan' . (!empty($o['feat']) ? ' plan--feat' : '') . (offers_is_available($o) ? '' : ' is-unavailable');
     $unit = '';
     $u = (string) ($o['price_unit'] ?? '');
     if ($u !== '') {
         $unit = '<span>' . oe($u) . '</span>';
     }
     $h = '        <article class="' . $cls . '">' . "\n";
+    if (!offers_is_available($o)) {
+        $h .= '          ' . offers_soldout_badge() . "\n";
+    }
     if (!empty($o['badge'])) {
         $h .= '          <span class="plan__badge">' . oe((string) $o['badge']) . '</span>' . "\n";
     }
@@ -101,8 +127,7 @@ function offers_render_plan(array $o): string
         }
         $h .= '          </div>' . "\n";
     }
-    $h .= '          <a href="#contact" class="btn btn-ghost"' . offers_cta_attrs($o) . '>'
-        . oe((string) ($o['cta_label'] ?? '')) . '</a>' . "\n";
+    $h .= offers_cta_html($o, '          ');
     $h .= '        </article>';
     return $h;
 }

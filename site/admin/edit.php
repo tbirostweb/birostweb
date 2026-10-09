@@ -105,6 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $offer['sort'] = (int) ($_POST['sort'] ?? ($offer['sort'] ?? 0));
     $offer['active'] = !empty($_POST['active']);
     $offer['feat'] = !empty($_POST['feat']);
+    // Case « Indisponible » cochée => available = false
+    $offer['available'] = empty($_POST['unavailable']);
 
     // Promo
     $until = trim((string) ($_POST['promo_until'] ?? ''));
@@ -193,6 +195,7 @@ echo '<div><label for="f_sort">Ordre (sort)</label>'
     . '<input type="text" id="f_sort" name="sort" value="' . e((string) ((int) ($offer['sort'] ?? 0))) . '"></div>';
 echo '<div style="display:flex;flex-direction:column;justify-content:flex-end;gap:10px">';
 echo '<div class="check"><input type="checkbox" id="f_active" name="active" value="1"' . (!empty($offer['active']) ? ' checked' : '') . '><label for="f_active">Offre active (visible sur le site)</label></div>';
+echo '<div class="check"><input type="checkbox" id="f_unavail" name="unavailable" value="1"' . ((array_key_exists('available', $offer) && empty($offer['available'])) ? ' checked' : '') . '><label for="f_unavail">Indisponible (carte grisée sur le site)</label></div>';
 echo '<div class="check"><input type="checkbox" id="f_feat" name="feat" value="1"' . (!empty($offer['feat']) ? ' checked' : '') . '><label for="f_feat">Mise en avant (bordure accent)</label></div>';
 echo '</div>';
 echo '</div>';

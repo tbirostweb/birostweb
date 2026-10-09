@@ -295,6 +295,7 @@ input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outli
 .pill{display:inline-block;font-family:var(--fm);font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:2px;border:1px solid var(--line);color:var(--gray)}
 .pill--on{color:#15803d;border-color:#15803d}
 .pill--off{color:var(--gray)}
+.pill--indispo{color:#fff;background:var(--ink);border-color:var(--ink)}
 .pill--promo{color:var(--accent);border-color:var(--accent)}
 .offer-line{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:16px 18px;margin-top:12px}
 .offer-line .t{font-weight:600}

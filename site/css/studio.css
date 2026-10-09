@@ -81,3 +81,11 @@ altcha-widget{--altcha-border-radius:3px;--altcha-color-base:var(--surface);--al
  .offer,.plan{padding:28px 22px}
  .sticky-cta{background:rgba(251,250,246,.97)}
 }
+
+/* Offre indisponible : carte affichée mais grisée, CTA désactivé */
+.offer.is-unavailable,.plan.is-unavailable{background:#F1EFE8}
+.is-unavailable>*:not(.stock-badge){opacity:.5;filter:grayscale(1)}
+.stock-badge{position:absolute;top:-12px;right:22px;z-index:2;font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--surface);padding:5px 12px;border-radius:var(--r);opacity:1}
+.btn.is-disabled,.btn.is-disabled:hover{background:transparent;color:var(--gray);border-color:var(--line);cursor:default;pointer-events:none;user-select:none}
+.offer.is-unavailable.offer--feat,.plan.is-unavailable.plan--feat{border-color:var(--line);border-top:3px solid var(--gray)}
+@media(max-width:640px){.stock-badge{right:16px}}

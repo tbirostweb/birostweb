@@ -20,12 +20,9 @@ html{scroll-padding-top:88px}
 .hero h1{letter-spacing:-.045em;line-height:1.02}
 .chip{border-radius:2px;background:transparent;font-size:11px;letter-spacing:.025em}
 .hero__sub{font-size:17px}
-.hero__note svg{flex:none}
-.hero__note a{color:var(--ink);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
-.hero__note a:hover{color:var(--accent)}
 .hero__meta{border-top:1px solid var(--line);padding-top:18px}
 .portrait{background:var(--ink);color:var(--surface);border-color:var(--ink)}
-.portrait::before{content:'BIROSTWEB / STUDIO WEB';position:absolute;top:0;left:0;right:0;padding:24px 24px 56px;background:linear-gradient(rgba(35,31,32,.62),rgba(35,31,32,0));font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--d-text);pointer-events:none}
+.portrait::before{content:'BIROSTWEB / STUDIO WEB';position:absolute;top:24px;left:24px;font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--d-dim)}
 .portrait__mono{color:var(--accent);letter-spacing:-.08em}
 .portrait__badge{border-radius:2px;box-shadow:none;border-color:var(--d-line);background:var(--ink);color:var(--surface)}
 .portrait__badge .sub{color:var(--d-dim)}
@@ -34,11 +31,6 @@ html{scroll-padding-top:88px}
 .projects{gap:24px}
 .project{padding:clamp(20px,3vw,36px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
 .project h3{letter-spacing:-.025em}
-/* Lien « Voir le projet » : la flèche se décale vers le haut-droite (2px) en 200ms,
-   courbe standard (.4,0,.2,1), au survol du lien ; au survol de la carte, voir motion.css. */
-.plink svg{transition:transform .2s cubic-bezier(.4,0,.2,1),translate .2s cubic-bezier(.4,0,.2,1)}
-.plink:hover svg{translate:2px -2px}
-@media (prefers-reduced-motion:reduce){.plink svg{transition:none}}
 .shot{border-radius:2px}
 .shot__bar{background:var(--paper)}
 .tag,.offer__badge,.plan__badge{border-radius:2px}

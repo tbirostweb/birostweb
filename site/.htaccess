@@ -64,12 +64,26 @@ Options -Indexes
     Require all denied
 </FilesMatch>
 
-# Bloquer tout le dossier vendor en accès direct
+# ---------------- Réécritures ----------------
 RewriteEngine On
+
+# Rediriger www -> non-www (301), en conservant HTTPS et le chemin.
+# HTTPS est forcé en amont par Traefik ; on reconstruit donc l'URL en https.
+RewriteCond %{HTTP_HOST} ^www\.birostweb\.fr$ [NC]
+RewriteRule ^(.*)$ https://birostweb.fr/$1 [R=301,L]
+
+# Bloquer tout le dossier vendor en accès direct
 RewriteRule ^vendor/ - [F,L]
 
 # Autoriser explicitement /.well-known/
 RewriteRule ^\.well-known/ - [L]
+
+# ---------------- Compression ----------------
+# Brotli si le module est présent (meilleure compression que gzip sur le texte).
+# Encadré par IfModule : aucun impact si mod_brotli est absent.
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/css text/xml application/javascript application/json application/xml application/rss+xml image/svg+xml application/manifest+json
+</IfModule>
 
 # 404 personnalisée
 ErrorDocument 404 /404.html

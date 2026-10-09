@@ -9,7 +9,12 @@ Motion.run(function (m) {
     var tl = gsap.timeline({ delay: .1 });
     m.add(tl, m.fadeUp('.hero .chip', { trigger: false, y: 10, duration: .6 }), 0);
     m.add(tl, m.words('.hero h1', { trigger: false, stagger: .035, duration: 1 }), .1);
-    m.add(tl, m.fadeUp('.hero__sub', { trigger: false, y: 16 }), .45);
+    /* Sous-titre = LCP : glissement seul, sans partir d'opacity:0 (peint dès le 1er rendu). */
+    var sub = hero.querySelector('.hero__sub');
+    if (sub) {
+      m.track([sub]);
+      tl.fromTo(sub, { y: 16 }, { y: 0, duration: .8, ease: 'power3.out', clearProps: 'transform,transition' }, .45);
+    }
     m.add(tl, m.fadeUp('.hero__cta > *', { trigger: false, y: 14, stagger: .08, duration: .7 }), .6);
     m.add(tl, m.fadeUp('.hero__note', { trigger: false, y: 10, duration: .6 }), .8);
 
@@ -33,7 +38,7 @@ Motion.run(function (m) {
 
   /* ---------- Réalisations ---------- */
   m.$$('.project').forEach(function (p) {
-    var ptl = gsap.timeline({ scrollTrigger: { trigger: p, start: 'top 82%', toggleActions: 'play none none none' } });
+    var ptl = gsap.timeline({ scrollTrigger: { trigger: p, start: 'top 82%', once: true } });
     m.add(ptl, m.fadeUp(p, { trigger: false, y: 36, duration: 1 }), 0);
     var img = p.querySelector('.shot__img');
     if (img) ptl.from(img, { scale: 1.06, duration: 1.4, ease: 'power3.out', clearProps: 'transform' }, 0);
@@ -66,15 +71,11 @@ Motion.run(function (m) {
     if (nav) m.fadeUp(nav, { y: 12, duration: .6, start: 'top 88%' });
     var firstPanel = visiblePanel();
     if (firstPanel) {
-      m.track([firstPanel]); // couvert par le filet « déjà dépassé » de core.js
       gsap.set(firstPanel, { autoAlpha: 0 });
-      var played = false;
-      var playFirst = function () {
-        if (played) return; played = true;
+      m.ScrollTrigger.create({ trigger: tabs, start: 'top 80%', once: true, onEnter: function () {
         gsap.set(firstPanel, { autoAlpha: 1 });
         playPanel(firstPanel, true);
-      };
-      m.ScrollTrigger.create({ trigger: tabs, start: 'top 80%', once: true, onEnter: playFirst, onLeave: playFirst });
+      } });
     }
 
     // Changement d'onglet (clic sur un onglet ou bouton « Choisir… »).
@@ -101,7 +102,7 @@ Motion.run(function (m) {
   var cta = document.querySelector('.cta');
   if (cta) {
     var col = cta.querySelector('.cta__grid > div');
-    var ctl = gsap.timeline({ scrollTrigger: { trigger: cta, start: 'top 75%', toggleActions: 'play none none none' } });
+    var ctl = gsap.timeline({ scrollTrigger: { trigger: cta, start: 'top 75%', once: true } });
     if (col) {
       m.add(ctl, m.fadeUp(col.querySelector('.eyebrow'), { trigger: false, x: -8, y: 0, duration: .6 }), 0);
       m.add(ctl, m.words(col.querySelector('.h2'), { trigger: false, stagger: .04 }), .1);
@@ -109,47 +110,5 @@ Motion.run(function (m) {
     }
     m.add(ctl, m.fadeUp(cta.querySelector('.form'), { trigger: false, y: 30, duration: 1 }), .25);
     m.batch('.mrow', { x: -10, y: 0, stagger: .06, duration: .6 });
-  }
-}, {
-
-  /* ---------- Souris : curseur « Voir le projet » ---------- */
-  pointer: function (m) {
-    var gsap = m.gsap, root = document.documentElement;
-
-    // Curseur « Voir le projet » au survol des captures (clic = ouvre le projet).
-    var shots = m.$$('.project .shot');
-    if (!shots.length) return;
-    var cursor = document.createElement('div');
-    cursor.className = 'm-cursor';
-    cursor.setAttribute('aria-hidden', 'true');
-    cursor.innerHTML = 'Voir le projet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>';
-    document.body.appendChild(cursor);
-    root.classList.add('m-cursor-on');
-    gsap.set(cursor, { xPercent: -50, yPercent: -50, scale: 0, autoAlpha: 0 });
-    var cx = gsap.quickTo(cursor, 'x', { duration: .35, ease: 'power3.out' });
-    var cy = gsap.quickTo(cursor, 'y', { duration: .35, ease: 'power3.out' });
-    m.on(window, 'pointermove', function (e) { cx(e.clientX); cy(e.clientY); }, { passive: true });
-
-    shots.forEach(function (shot) {
-      var project = shot.closest('.project');
-      var link = project && project.querySelector('.plink');
-      var img = shot.querySelector('.shot__img img');
-      m.on(shot, 'pointerenter', function (e) {
-        gsap.set(cursor, { x: e.clientX, y: e.clientY });
-        gsap.to(cursor, { scale: 1, autoAlpha: 1, duration: .35, ease: 'back.out(2)', overwrite: 'auto' });
-        if (img) gsap.to(img, { scale: 1.06, duration: .9, ease: 'power3.out', overwrite: 'auto' });
-      });
-      m.on(shot, 'pointerleave', function () {
-        gsap.to(cursor, { scale: 0, autoAlpha: 0, duration: .25, ease: 'power2.in', overwrite: 'auto' });
-        if (img) gsap.to(img, { scale: 1, duration: .9, ease: 'power3.out', overwrite: 'auto' });
-      });
-      if (link) m.on(shot, 'click', function () { window.open(link.href, '_blank', 'noopener'); });
-    });
-
-    m.onCleanup(function () {
-      cursor.remove();
-      root.classList.remove('m-cursor-on');
-      gsap.set(m.$$('.project .shot__img img'), { clearProps: 'transform' });
-    });
   }
 });

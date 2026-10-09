@@ -25,7 +25,7 @@ function asset(string $path): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Théo Birost — Développeur web full-stack · Sites qui convertissent</title>
-<meta name="description" content="Développeur web indépendant, en télétravail partout en France. Je crée des sites et applications sur-mesure, soignés et rapides, du premier échange à la mise en ligne. Devis gratuit sous 48h.">
+<meta name="description" content="Développeur web freelance en France. Je crée des sites et applications sur-mesure, soignés et rapides, pensés pour convertir. Devis gratuit sous 48h.">
 <link rel="canonical" href="https://birostweb.fr/">
 <meta name="robots" content="index, follow">
 <meta name="author" content="Théo Birost">
@@ -39,6 +39,9 @@ function asset(string $path): string {
 <meta property="og:url" content="https://birostweb.fr/">
 <meta property="og:site_name" content="Théo Birost">
 <meta property="og:image" content="https://birostweb.fr/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Théo Birost, développeur web freelance — sites sur-mesure qui convertissent">
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Théo Birost — Développeur web full-stack">
@@ -53,7 +56,8 @@ function asset(string $path): string {
 <link rel="stylesheet" href="<?= asset('/fonts/fonts.css') ?>">
 <link rel="manifest" href="<?= asset('/site.webmanifest') ?>">
 <script async type="module" src="<?= asset('/js/altcha.js') ?>"></script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"ProfessionalService","name":"Birostweb — Théo Birost","description":"Développeur web full-stack indépendant : sites vitrines, boutiques et applications sur-mesure, du design au déploiement.","url":"https://birostweb.fr","email":"contact@theo-birost.fr","areaServed":"FR","founder":{"@type":"Person","name":"Théo Birost"},"sameAs":["https://github.com/tbirostweb","https://www.linkedin.com/in/th%C3%A9o-birost-09b286429/","https://www.instagram.com/birost.web"],"priceRange":"€€"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"ProfessionalService","name":"Birostweb — Théo Birost","description":"Développeur web full-stack indépendant : sites vitrines, boutiques et applications sur-mesure, du design au déploiement.","url":"https://birostweb.fr/","email":"contact@theo-birost.fr","telephone":"+33659753908","address":{"@type":"PostalAddress","addressLocality":"Troyes","postalCode":"10000","addressRegion":"Grand Est","addressCountry":"FR"},"areaServed":["France","Troyes","Aube"],"logo":"https://birostweb.fr/favicon.png","image":"https://birostweb.fr/og-image.png","founder":{"@type":"Person","name":"Théo Birost"},"sameAs":["https://github.com/tbirostweb","https://www.linkedin.com/in/th%C3%A9o-birost-09b286429/"],"priceRange":"€€"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Combien de temps pour créer mon site ?","acceptedAnswer":{"@type":"Answer","text":"Comptez 2 à 4 semaines pour un site vitrine, selon le nombre de pages et le contenu. Pour une application ou une boutique, le délai est cadré précisément dans le devis."}},{"@type":"Question","name":"Je pars de zéro, vous m'accompagnez ?","acceptedAnswer":{"@type":"Answer","text":"Oui, complètement. Je vous guide sur la structure du site, le contenu et le design. Pas besoin de vous y connaître : vous décidez, je m'occupe de la technique."}},{"@type":"Question","name":"Le devis est-il vraiment gratuit ?","acceptedAnswer":{"@type":"Answer","text":"Totalement, et sans engagement. On échange sur votre projet, et vous recevez une proposition claire avec périmètre, prix et délai sous 48h."}},{"@type":"Question","name":"À qui appartient le site une fois livré ?","acceptedAnswer":{"@type":"Answer","text":"Après paiement, vous pouvez exploiter, faire évoluer et faire maintenir par le prestataire de votre choix le code original livré (licence d'utilisation non exclusive, détaillée dans les CGV). Vos contenus restent les vôtres, et le nom de domaine comme l'hébergement peuvent être ouverts à votre nom lorsque le devis le prévoit. Vous n'êtes jamais coincé chez un prestataire."}},{"@type":"Question","name":"Et après la mise en ligne ?","acceptedAnswer":{"@type":"Answer","text":"Vous pouvez gérer le site vous-même, ou souscrire à la maintenance (dès 39 €/mois) : mises à jour, sécurité, sauvegardes et évolutions. Je reste joignable dans tous les cas."}}]}</script>
 <style>
 /* ================= TOKENS ================= */
 :root{
@@ -592,9 +596,9 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
     </div>
 
     <div class="tabs">
-      <input type="radio" name="offtab" id="tab-crea" checked>
-      <input type="radio" name="offtab" id="tab-heb">
-      <input type="radio" name="offtab" id="tab-maint">
+      <input type="radio" name="offtab" id="tab-crea" aria-label="Création de site" checked>
+      <input type="radio" name="offtab" id="tab-heb" aria-label="Hébergement">
+      <input type="radio" name="offtab" id="tab-maint" aria-label="Maintenance">
       <div class="tabs__nav">
         <label for="tab-crea">Création de site</label>
         <label for="tab-heb">Hébergement</label>
@@ -811,7 +815,6 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
         <span class="eyebrow" style="margin-bottom:16px">Contact</span>
         <h2 class="h2">Parlons de votre projet.</h2>
         <p class="lead">Un site à créer ou à refondre, une appli à construire, ou juste une question ? Écrivez-moi, même si votre idée est encore floue. Je réponds vite : sous 48h, sans engagement.</p>
-        <!-- ⚠️ À COMPLÉTER : remplace l'URL par ton vrai lien de réservation (Cal.com ou Calendly) -->
         <a href="https://cal.com/birostweb" target="_blank" rel="noopener" class="btn btn-ghost" style="margin:4px 0 4px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v3M16 2v3M3.5 9h17M5 5h14a1.5 1.5 0 011.5 1.5v13A1.5 1.5 0 0119 21H5a1.5 1.5 0 01-1.5-1.5v-13A1.5 1.5 0 015 5z"/></svg>
           Ou réservez un appel de 15 min
@@ -820,8 +823,6 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
           <div class="mrow"><span class="mk">Mail</span><span class="mv"><a href="mailto:contact@theo-birost.fr">contact@theo-birost.fr</a></span></div>
           <div class="mrow"><span class="mk">GitHub</span><span class="mv"><a href="https://github.com/tbirostweb" target="_blank" rel="noopener">github.com/tbirostweb</a></span></div>
           <div class="mrow"><span class="mk">LinkedIn</span><span class="mv"><a href="https://www.linkedin.com/in/th%C3%A9o-birost-09b286429/" target="_blank" rel="noopener">linkedin.com/in/théo-birost</a></span></div>
-          <!-- Remplace le handle Instagram ci-dessous par ton vrai compte une fois créé -->
-          <div class="mrow"><span class="mk">Instagram</span><span class="mv"><a href="https://www.instagram.com/birost.web" target="_blank" rel="noopener">@birost.web</a></span></div>
           <div class="mrow"><span class="mk">Zone</span><span class="mv">France entière · Full remote</span></div>
         </div>
       </div>

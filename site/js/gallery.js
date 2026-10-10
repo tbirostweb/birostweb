@@ -41,31 +41,41 @@
     });
   });
 
-  /* ---- Façade vidéo : au clic, on injecte l'iframe Bunny Stream ---- */
-  /* Tant qu'on ne clique pas, aucune iframe n'est chargée (page rapide). */
-  document.querySelectorAll('[data-video-embed]').forEach(function (trigger) {
-    trigger.addEventListener('click', function () {
-      var url = trigger.getAttribute('data-video-embed');
-      if (!url) { return; }
-      var media = trigger.closest('.gal-card__media');
-      if (!media) { return; }
-      var iframe = document.createElement('iframe');
-      iframe.className = 'gal-video-frame';
-      iframe.setAttribute('src', url);
-      iframe.setAttribute('title', trigger.getAttribute('aria-label') || 'Vidéo');
-      iframe.setAttribute('loading', 'lazy');
-      iframe.setAttribute('allow', 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;');
-      iframe.setAttribute('allowfullscreen', '');
-      // Remplace la façade (bouton + vignette) par le lecteur.
-      trigger.remove();
-      media.appendChild(iframe);
+  /* ---- Vidéo : lecteur Bunny injecté seulement à l'ouverture de la lightbox ----
+     Les liens .gal-video-trigger / « Lire la vidéo » pointent vers #lbv-ID (CSS :target,
+     fonctionne au clavier). Ici on charge l'iframe à l'ouverture et on la retire à la
+     fermeture (stoppe la lecture, rien de chargé dans la grille). */
+  function syncVideoPlayers() {
+    var openId = location.hash.indexOf('#lbv-') === 0 ? location.hash.slice(1) : '';
+    document.querySelectorAll('.lightbox--video').forEach(function (lb) {
+      var box = lb.querySelector('[data-video-player]');
+      if (!box) { return; }
+      var frame = box.querySelector('iframe');
+      if (lb.id === openId) {
+        if (!frame) {
+          var url = box.getAttribute('data-video-player');
+          if (!url) { return; }
+          frame = document.createElement('iframe');
+          frame.setAttribute('src', url);
+          frame.setAttribute('title', box.getAttribute('data-video-title') || 'Vidéo');
+          frame.setAttribute('allow', 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;');
+          frame.setAttribute('allowfullscreen', '');
+          box.appendChild(frame);
+        }
+        var close = lb.querySelector('.lightbox__close');
+        if (close) { close.focus({ preventScroll: true }); }
+      } else if (frame) {
+        frame.remove();
+      }
     });
-  });
+  }
+  window.addEventListener('hashchange', syncVideoPlayers);
+  syncVideoPlayers();
 
   /* ---- Échap ferme la lightbox ouverte (:target) ---- */
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') { return; }
-    if (location.hash && location.hash.indexOf('#lb-') === 0) {
+    if (location.hash && (location.hash.indexOf('#lb-') === 0 || location.hash.indexOf('#lbv-') === 0)) {
       // Revient à l'ancre galerie sans empiler d'historique superflu.
       location.hash = '#gal';
     }

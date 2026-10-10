@@ -222,7 +222,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 bunny_stream_upload_video($guid, $tmp);
 
                 $item['videoId'] = $guid;
-                $item['poster']  = bunny_stream_thumbnail_url($guid);
+                if (($item['posterPath'] ?? '') === '') {
+                    $item['poster'] = bunny_stream_thumbnail_url($guid); // pas de couverture perso
+                }
 
                 if ($oldGuid !== '' && $oldGuid !== $guid) {
                     try {
@@ -238,12 +240,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $err = 'Vidéo refusée : ' . $e->getMessage();
             }
         }
-        // En mode dégradé sans vignette (pas de BUNNY_STREAM_HOST), on autorise un
-        // poster manuel (URL) pour pouvoir tester le rendu de la façade.
-        if (isset($_POST['poster'])) {
-            $posterIn = trim((string) $_POST['poster']);
-            if ($posterIn === '' || preg_match('#^https?://#i', $posterIn) || str_starts_with($posterIn, '/')) {
-                $item['poster'] = mb_substr($posterIn, 0, 500);
+        /* --- Image de couverture personnalisée (Bunny Storage via MediaUploader) ---
+         * `posterPath` = chemin de stockage (pour suppression), `poster` = URL publique.
+         * Sans couverture perso, la page publique retombe sur la vignette auto Bunny. */
+        $item['posterPath'] = (string) ($item['posterPath'] ?? '');
+
+        if (!empty($_POST['cover_reset'])) {
+            if ($item['posterPath'] !== '') {
+                try {
+                    $uploader->delete($item['posterPath']);
+                } catch (\Throwable $e) {
+                    $notices[] = 'Ancienne couverture non supprimée (' . e($item['posterPath']) . ') : ' . e($e->getMessage());
+                }
+            }
+            $item['posterPath'] = '';
+            $item['poster'] = '';
+        }
+
+        $hasCover = !empty($_FILES['cover']['tmp_name'])
+            && (int) ($_FILES['cover']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+        if ($hasCover && $err === '') {
+            try {
+                $meta = admin_validate_image($_FILES['cover']);
+                [$uploadPath, $reencoded] = admin_reencode_image((string) $_FILES['cover']['tmp_name'], $meta['mime']);
+                $destPath = 'gallery/' . $id . '/cover-' . bin2hex(random_bytes(6)) . '.' . $meta['ext'];
+                try {
+                    $url = $uploader->upload($uploadPath, $destPath, $meta['mime']);
+                } finally {
+                    if ($reencoded) {
+                        @unlink($uploadPath);
+                    }
+                }
+                $oldPath = $item['posterPath'];
+                $item['posterPath'] = $destPath;
+                $item['poster'] = $url;
+                if ($oldPath !== '' && $oldPath !== $destPath) {
+                    try {
+                        $uploader->delete($oldPath);
+                    } catch (\Throwable $e) {
+                        $notices[] = 'Ancienne couverture non supprimée (' . e($oldPath) . ') : ' . e($e->getMessage());
+                    }
+                }
+            } catch (\Throwable $e) {
+                $err = 'Image de couverture refusée : ' . $e->getMessage();
             }
         }
     } else {
@@ -440,30 +479,38 @@ if ($type === 'video') {
     $poster  = (string) ($item['poster'] ?? '');
     $enabled = bunny_stream_enabled();
 
+    $posterPath = (string) ($item['posterPath'] ?? '');
+    $custom = $posterPath !== '' && $poster !== '';
+    $preview = $poster !== '' ? $poster : ($videoId !== '' ? bunny_stream_thumbnail_url($videoId) : '');
+
     echo '<div class="card"><h2 style="margin-top:0">Vidéo (Bunny Stream)</h2>';
 
     if ($videoId === '') {
         echo '<p class="muted">Aucune vidéo pour le moment. Téléversez un fichier ci-dessous : il est envoyé à Bunny Stream, puis lu sans marque sur la page publique.</p>';
     } else {
         echo '<p class="muted">Vidéo associée · identifiant <code>' . e($videoId) . '</code>.</p>';
-        echo '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;margin-top:12px">';
-        if ($poster !== '') {
-            echo '<div style="max-width:280px"><img class="thumb" src="' . e($poster) . '" alt="Aperçu de la vidéo" loading="lazy">'
-                . '<p class="muted" style="margin-top:6px">Si la vignette est vide, l\'encodage Bunny est encore en cours — réessayez dans un instant.</p></div>';
-        } else {
-            echo '<p class="muted">Vignette indisponible pour l\'instant';
-            echo $enabled
-                ? ' : l\'encodage Bunny peut prendre un moment, la vignette apparaîtra ensuite.'
-                : ' (mode local sans Bunny). Renseignez un poster de test ci-dessous.';
-            echo '</p>';
-        }
-        echo '</div>';
     }
-
     if (!$enabled) {
         echo '<div class="alert" style="margin-top:14px">Mode local (CONTENT_BACKEND ≠ bunny ou clés absentes) : les vidéos sont simulées (aucun appel réseau). L\'upload réel se fera en production avec les clés Bunny.</div>';
-        echo '<label for="f_poster" style="margin-top:14px">Poster de test (URL d\'image — local/dev uniquement)</label>';
-        echo '<input type="text" id="f_poster" name="poster" value="' . e($poster) . '" placeholder="/img/generique.webp" maxlength="500">';
+    }
+
+    echo '<h3 style="margin:22px 0 6px">Image de couverture</h3>';
+    echo '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;margin-top:8px">';
+    if ($preview !== '') {
+        echo '<div style="max-width:280px"><img class="thumb" src="' . e($preview) . '" alt="Aperçu de la couverture" loading="lazy">'
+            . '<p class="muted" style="margin-top:6px">' . ($custom
+                ? 'Couverture personnalisée.'
+                : 'Vignette automatique Bunny (image choisie au hasard dans la vidéo ; peut être vide pendant l\'encodage).') . '</p></div>';
+    } else {
+        echo '<p class="muted">Aucune couverture : la page publique affichera un fond neutre avec le bouton lecture.</p>';
+    }
+    echo '</div>';
+    echo '<label for="f_cover" style="margin-top:14px">' . ($custom ? 'Remplacer la couverture' : 'Choisir une image de couverture') . ' (JPEG, PNG ou WebP · max 8 Mo)</label>';
+    echo '<input type="file" id="f_cover" name="cover" accept="image/jpeg,image/png,image/webp" '
+        . 'style="width:100%;font-family:var(--fb);font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">';
+    echo '<p class="muted" style="margin-top:8px">Format conseillé 4/3 (ex. 1200×900). L\'image est ré-encodée côté serveur puis stockée sur Bunny Storage.</p>';
+    if ($custom) {
+        echo '<div class="check" style="margin-top:10px"><input type="checkbox" id="f_cover_reset" name="cover_reset" value="1"><label for="f_cover_reset">Utiliser la vignette automatique (supprime la couverture personnalisée)</label></div>';
     }
 
     echo '<label for="f_video" style="margin-top:18px">' . ($videoId === '' ? 'Téléverser une vidéo' : 'Remplacer la vidéo') . ' (MP4, WebM ou MOV · max 200 Mo)</label>';

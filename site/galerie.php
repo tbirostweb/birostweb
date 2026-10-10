@@ -131,14 +131,16 @@ a.gal-card__media:hover img{transform:scale(1.03)}
 .gal-card__count{position:absolute;bottom:10px;right:10px;font-family:var(--fm);font-size:11px;background:rgba(35,31,32,.78);color:#fff;padding:4px 9px;border-radius:2px}
 .gal-card__body{padding:16px 18px;display:flex;flex-direction:column;gap:6px}
 .gal-card__body h3{font-family:var(--fd);font-weight:700;font-size:20px;line-height:1.1;letter-spacing:-.02em}
-.gal-card__body p{font-size:14.5px;color:var(--gray);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.gal-card__hint{font-family:var(--fm);font-size:11.5px;color:var(--accent);margin-top:2px}
+.gal-card__body p{font-size:14.5px;color:var(--gray);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.gal-card__hint{font-family:var(--fm);font-size:11.5px;color:var(--accent);margin-top:2px;align-self:flex-start}
+a.gal-card__hint{padding:6px 0;min-height:32px;display:inline-flex;align-items:center}
+a.gal-card__hint:hover{text-decoration:underline;text-underline-offset:3px}
 /* placeholder vidéo (sans videoId) */
 .gal-card--video .gal-video-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ink);color:var(--d-dim);text-align:center;font-family:var(--fm);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
 .gal-video-ph svg{width:34px;height:34px;color:var(--accent);margin:0 auto 10px}
 /* façade vidéo : vignette + bouton play ; l'iframe n'est injectée qu'au clic */
 .gal-card__media--video{background:var(--ink)}
-.gal-video-trigger{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;cursor:pointer;background:var(--ink);display:block;overflow:hidden}
+.gal-video-trigger{position:absolute;inset:0;text-decoration:none;width:100%;height:100%;padding:0;border:0;cursor:pointer;background:var(--ink);display:block;overflow:hidden}
 .gal-video-trigger img{width:100%;height:100%;object-fit:cover;transition:transform .3s ease}
 .gal-video-trigger:hover img{transform:scale(1.03)}
 .gal-video-bg{position:absolute;inset:0;background:linear-gradient(135deg,#2c2724,var(--ink))}
@@ -150,6 +152,12 @@ a.gal-card__media:hover img{transform:scale(1.03)}
 /* ===== Lightbox (:target) ===== */
 .lightbox{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:clamp(12px,3vw,40px)}
 .lightbox:target{display:flex}
+.lightbox--video .lightbox__panel{overflow-y:auto}
+.lightbox__player{position:relative;aspect-ratio:16/9;background:#000;flex:none}
+.lightbox__player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.lightbox__fallback{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-family:var(--fm);font-size:13px}
+.lightbox__fallback a{text-decoration:underline;text-underline-offset:3px}
+.lightbox--video .lightbox__desc{overflow:visible}
 .lightbox__backdrop{position:absolute;inset:0;background:rgba(20,17,18,.86);backdrop-filter:blur(2px)}
 .lightbox__panel{position:relative;z-index:1;width:min(1000px,100%);max-height:92vh;background:var(--surface);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)}
 .lightbox__close{position:absolute;top:10px;right:12px;z-index:3;width:40px;height:40px;display:grid;place-items:center;font-size:26px;line-height:1;color:#fff;background:rgba(35,31,32,.6);border-radius:50%}
@@ -163,7 +171,7 @@ a.gal-card__media:hover img{transform:scale(1.03)}
 .nav-arrow:hover{background:var(--accent);color:#fff}
 .nav-arrow.prev{left:12px}
 .nav-arrow.next{right:12px}
-.lightbox__desc{padding:18px 22px;overflow-y:auto}
+.lightbox__desc{padding:18px 22px;overflow-y:auto;flex:0 1 auto;min-height:0}
 .lightbox__desc h3{font-family:var(--fd);font-weight:700;font-size:22px;letter-spacing:-.02em;margin-bottom:6px}
 .lightbox__desc p{font-size:15px;color:var(--gray);line-height:1.6;white-space:pre-line}
 /* ===== Footer ===== */
@@ -196,9 +204,10 @@ a.gal-card__media:hover img{transform:scale(1.03)}
     <a href="/" class="brand"><b></b>Birostweb</a>
     <nav class="nav__links" id="menu">
       <a href="/#realisations">Réalisations</a>
-      <a href="/#offres">Offres</a>
       <a href="/galerie" aria-current="page">Galerie</a>
+      <a href="/#offres">Offres</a>
       <a href="/#approche">Approche</a>
+      <a href="/#faq">FAQ</a>
       <a href="/#contact" class="btn btn-accent">Devis gratuit</a>
     </nav>
     <button class="nav__toggle" id="toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
@@ -234,20 +243,22 @@ a.gal-card__media:hover img{transform:scale(1.03)}
         $vid    = (string) ($it['videoId'] ?? '');
         $poster = (string) ($it['poster'] ?? '');
         $embed  = $vid !== '' ? bunny_stream_embed_url($vid) : '';
+        // Couverture choisie par le client, sinon vignette auto Bunny (si configurée).
+        $cover  = $poster !== '' ? $poster : ($vid !== '' ? bunny_stream_thumbnail_url($vid) : '');
     ?>
       <article class="gal-card gal-card--video" data-type="video">
         <div class="gal-card__media gal-card__media--video">
 <?php if ($embed !== ''): ?>
-          <button type="button" class="gal-video-trigger" data-video-embed="<?= ge($embed) ?>" aria-label="Lire la vidéo : <?= ge($title) ?>">
-<?php if ($poster !== ''): ?>
-            <img src="<?= ge($poster) ?>" alt="<?= ge($title) ?>" loading="lazy" decoding="async">
+          <a class="gal-video-trigger" href="#lbv-<?= ge($iid) ?>" data-video-open aria-label="Lire la vidéo : <?= ge($title) ?>">
+<?php if ($cover !== ''): ?>
+            <img src="<?= ge($cover) ?>" alt="" loading="lazy" decoding="async">
 <?php else: ?>
             <span class="gal-video-bg" aria-hidden="true"></span>
 <?php endif; ?>
             <span class="gal-play" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="8 5 19 12 8 19 8 5"></polygon></svg>
             </span>
-          </button>
+          </a>
 <?php else: ?>
           <div class="gal-video-ph">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -259,7 +270,7 @@ a.gal-card__media:hover img{transform:scale(1.03)}
         <div class="gal-card__body">
           <h3><?= ge($title) ?></h3>
           <?php if (($it['description'] ?? '') !== ''): ?><p><?= ge((string) $it['description']) ?></p><?php endif; ?>
-<?php if ($embed !== ''): ?>          <span class="gal-card__hint">Lire la vidéo →</span><?php endif; ?>
+<?php if ($embed !== ''): ?>          <a class="gal-card__hint" href="#lbv-<?= ge($iid) ?>" data-video-open>Lire la vidéo →</a><?php endif; ?>
         </div>
       </article>
 <?php else:
@@ -290,6 +301,31 @@ a.gal-card__media:hover img{transform:scale(1.03)}
 <?php
 // Lightbox par carrousel (en fin de body pour :target).
 foreach ($items as $it):
+    if (($it['type'] ?? '') === 'video' && (string) ($it['videoId'] ?? '') !== ''):
+        $iid   = (string) ($it['id'] ?? '');
+        $title = (string) ($it['title'] ?? '');
+        $embed = bunny_stream_embed_url((string) $it['videoId'], ['autoplay' => 'true']);
+        if ($embed === '') {
+            continue;
+        }
+?>
+<div class="lightbox lightbox--video" id="lbv-<?= ge($iid) ?>" role="dialog" aria-modal="true" aria-label="<?= ge($title) ?>">
+  <a class="lightbox__backdrop" href="#gal" aria-label="Fermer"></a>
+  <div class="lightbox__panel">
+    <a class="lightbox__close" href="#gal" aria-label="Fermer" role="button">×</a>
+    <div class="lightbox__player" data-video-player="<?= ge($embed) ?>" data-video-title="<?= ge($title) ?>">
+      <noscript><span class="lightbox__fallback"><a href="<?= ge($embed) ?>" target="_blank" rel="noopener">Ouvrir la vidéo</a></span></noscript>
+    </div>
+    <div class="lightbox__desc">
+      <h3><?= ge($title) ?></h3>
+<?php if (($it['description'] ?? '') !== ''): ?>      <p><?= ge((string) $it['description']) ?></p>
+<?php endif; ?>
+    </div>
+  </div>
+</div>
+<?php
+        continue;
+    endif;
     if (($it['type'] ?? '') !== 'carousel') {
         continue;
     }
@@ -330,7 +366,7 @@ foreach ($items as $it):
     <div class="footer__in">
       <span class="footer__b">Théo Birost — Développeur web full-stack</span>
       <nav class="footer__l">
-        <a href="/#realisations">Réalisations</a><a href="/galerie">Galerie</a><a href="/#offres">Offres</a><a href="/#contact">Contact</a><a href="/mentions-legales.html">Mentions légales</a><a href="/cgv.html">CGV</a><a href="#top">↑ Haut</a>
+        <a href="/#realisations">Réalisations</a><a href="/galerie">Galerie</a><a href="/#offres">Offres</a><a href="/#faq">FAQ</a><a href="/#contact">Contact</a><a href="/mentions-legales.html">Mentions légales</a><a href="/cgv.html">CGV</a><a href="#top">↑ Haut</a>
       </nav>
     </div>
     <div class="footer__meta"><span>© 2026 Théo Birost · France · Full remote</span><span>Micro-entreprise · Développement web sur-mesure</span></div>

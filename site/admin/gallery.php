@@ -109,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Champs posés pour la phase 2 (non gérés ici).
                     $item['videoId'] = '';
                     $item['poster'] = '';
+                    $item['posterPath'] = '';
                 }
                 $items[] = $item;
                 $content['gallery'] = $items;
@@ -153,6 +154,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         } catch (\Throwable $e) {
                             // On continue : la suppression de l'item prime.
                         }
+                    }
+                }
+                // Couverture personnalisée d'un item vidéo (best-effort).
+                if ((string) ($target['posterPath'] ?? '') !== '') {
+                    try {
+                        $uploader->delete((string) $target['posterPath']);
+                    } catch (\Throwable $e) {
                     }
                 }
                 // Item vidéo : supprime aussi la vidéo côté Bunny Stream (best-effort).

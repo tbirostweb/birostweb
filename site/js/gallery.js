@@ -41,6 +41,27 @@
     });
   });
 
+  /* ---- Façade vidéo : au clic, on injecte l'iframe Bunny Stream ---- */
+  /* Tant qu'on ne clique pas, aucune iframe n'est chargée (page rapide). */
+  document.querySelectorAll('[data-video-embed]').forEach(function (trigger) {
+    trigger.addEventListener('click', function () {
+      var url = trigger.getAttribute('data-video-embed');
+      if (!url) { return; }
+      var media = trigger.closest('.gal-card__media');
+      if (!media) { return; }
+      var iframe = document.createElement('iframe');
+      iframe.className = 'gal-video-frame';
+      iframe.setAttribute('src', url);
+      iframe.setAttribute('title', trigger.getAttribute('aria-label') || 'Vidéo');
+      iframe.setAttribute('loading', 'lazy');
+      iframe.setAttribute('allow', 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;');
+      iframe.setAttribute('allowfullscreen', '');
+      // Remplace la façade (bouton + vignette) par le lecteur.
+      trigger.remove();
+      media.appendChild(iframe);
+    });
+  });
+
   /* ---- Échap ferme la lightbox ouverte (:target) ---- */
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') { return; }

@@ -21,6 +21,7 @@ try {
 }
 
 require __DIR__ . '/inc/content_store.php';
+require __DIR__ . '/inc/bunny_stream.php';
 
 try {
     $content = cs_make_store()->get();
@@ -132,10 +133,19 @@ a.gal-card__media:hover img{transform:scale(1.03)}
 .gal-card__body h3{font-family:var(--fd);font-weight:700;font-size:20px;line-height:1.1;letter-spacing:-.02em}
 .gal-card__body p{font-size:14.5px;color:var(--gray);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .gal-card__hint{font-family:var(--fm);font-size:11.5px;color:var(--accent);margin-top:2px}
-/* placeholder vidéo */
-.gal-card--video .gal-card__media{display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--d-dim)}
-.gal-video-ph{text-align:center;font-family:var(--fm);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+/* placeholder vidéo (sans videoId) */
+.gal-card--video .gal-video-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ink);color:var(--d-dim);text-align:center;font-family:var(--fm);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
 .gal-video-ph svg{width:34px;height:34px;color:var(--accent);margin:0 auto 10px}
+/* façade vidéo : vignette + bouton play ; l'iframe n'est injectée qu'au clic */
+.gal-card__media--video{background:var(--ink)}
+.gal-video-trigger{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;cursor:pointer;background:var(--ink);display:block;overflow:hidden}
+.gal-video-trigger img{width:100%;height:100%;object-fit:cover;transition:transform .3s ease}
+.gal-video-trigger:hover img{transform:scale(1.03)}
+.gal-video-bg{position:absolute;inset:0;background:linear-gradient(135deg,#2c2724,var(--ink))}
+.gal-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:62px;height:62px;border-radius:50%;background:rgba(240,69,30,.92);color:#fff;display:grid;place-items:center;transition:.18s ease;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.gal-play svg{width:26px;height:26px;margin-left:3px}
+.gal-video-trigger:hover .gal-play,.gal-video-trigger:focus-visible .gal-play{background:var(--accent);transform:translate(-50%,-50%) scale(1.08)}
+.gal-video-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
 .gal-empty{border:1px dashed var(--line);border-radius:var(--r);padding:40px 24px;text-align:center;color:var(--gray);font-family:var(--fm);font-size:14px}
 /* ===== Lightbox (:target) ===== */
 .lightbox{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:clamp(12px,3vw,40px)}
@@ -200,7 +210,7 @@ a.gal-card__media:hover img{transform:scale(1.03)}
     <div class="sec-head" id="gal">
       <span class="eyebrow">Galerie</span>
       <h2 class="h2">Des projets en images.</h2>
-      <p class="lead">Quelques réalisations en détail&nbsp;: parcourez les carrousels pour voir les écrans clés de chaque projet. Les vidéos arrivent bientôt.</p>
+      <p class="lead">Quelques réalisations en détail&nbsp;: parcourez les carrousels pour voir les écrans clés de chaque projet, et lancez les vidéos pour les voir en mouvement.</p>
     </div>
 
 <?php if (!$items): ?>
@@ -220,19 +230,36 @@ a.gal-card__media:hover img{transform:scale(1.03)}
     $iid   = (string) ($it['id'] ?? '');
     $itype = (string) ($it['type'] ?? 'carousel');
     $title = (string) ($it['title'] ?? '');
-    if ($itype === 'video'): ?>
+    if ($itype === 'video'):
+        $vid    = (string) ($it['videoId'] ?? '');
+        $poster = (string) ($it['poster'] ?? '');
+        $embed  = $vid !== '' ? bunny_stream_embed_url($vid) : '';
+    ?>
       <article class="gal-card gal-card--video" data-type="video">
-        <div class="gal-card__media">
+        <div class="gal-card__media gal-card__media--video">
+<?php if ($embed !== ''): ?>
+          <button type="button" class="gal-video-trigger" data-video-embed="<?= ge($embed) ?>" aria-label="Lire la vidéo : <?= ge($title) ?>">
+<?php if ($poster !== ''): ?>
+            <img src="<?= ge($poster) ?>" alt="<?= ge($title) ?>" loading="lazy" decoding="async">
+<?php else: ?>
+            <span class="gal-video-bg" aria-hidden="true"></span>
+<?php endif; ?>
+            <span class="gal-play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="8 5 19 12 8 19 8 5"></polygon></svg>
+            </span>
+          </button>
+<?php else: ?>
           <div class="gal-video-ph">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            Vidéo — bientôt
+            Vidéo bientôt disponible
           </div>
+<?php endif; ?>
           <span class="gal-card__tag">Vidéo</span>
         </div>
         <div class="gal-card__body">
           <h3><?= ge($title) ?></h3>
           <?php if (($it['description'] ?? '') !== ''): ?><p><?= ge((string) $it['description']) ?></p><?php endif; ?>
-          <span class="gal-card__hint">Lecture disponible prochainement</span>
+<?php if ($embed !== ''): ?>          <span class="gal-card__hint">Lire la vidéo →</span><?php endif; ?>
         </div>
       </article>
 <?php else:

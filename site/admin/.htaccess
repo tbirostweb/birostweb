@@ -28,9 +28,12 @@ Options -Indexes
 # ============================================================
 <IfModule mod_php.c>
 
-    php_value upload_max_filesize 10M
-    php_value post_max_size 25M
+    # Vidéos de la galerie (phase 2) : upload médié par le serveur vers Bunny Stream.
+    php_value upload_max_filesize 200M
+    php_value post_max_size 210M
+    # Transfert serveur -> Bunny : laisse le temps pour un clip de ~200 Mo.
+    php_value max_execution_time 300
 </IfModule>
 
-# Corps de requête autorisé relevé (mod_core) : 25 Mo.
-LimitRequestBody 26214400
+# Corps de requête autorisé relevé (mod_core) : ~220 Mo (couvre post_max_size + overhead).
+LimitRequestBody 220000000

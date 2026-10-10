@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/_bootstrap.php';
+require_once dirname(__DIR__) . '/inc/bunny_stream.php';
 admin_require_login();
 
 $base = admin_base();
@@ -154,6 +155,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
                 }
+                // Item vidéo : supprime aussi la vidéo côté Bunny Stream (best-effort).
+                if (($target['type'] ?? '') === 'video' && ($target['videoId'] ?? '') !== '') {
+                    try {
+                        bunny_stream_delete_video((string) $target['videoId']);
+                    } catch (\Throwable $e) {
+                        // On continue : la suppression de l'item prime.
+                    }
+                }
                 $items = array_values(array_filter($items, static fn ($it) => ($it['id'] ?? '') !== $id));
                 $content['gallery'] = $items;
                 admin_store()->save($content);
@@ -203,7 +212,7 @@ echo '<div><label for="g_title">Titre</label>'
 echo '<div><label for="g_type">Type</label>'
     . '<select id="g_type" name="type" style="width:100%;font-family:var(--fb);font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">'
     . '<option value="carousel">Carrousel d\'images</option>'
-    . '<option value="video">Vidéo (à venir — phase 2)</option>'
+    . '<option value="video">Vidéo (Bunny Stream)</option>'
     . '</select></div>';
 echo '</div>';
 echo '<div style="margin-top:16px"><button class="btn" type="submit">Créer l\'item</button></div>';

@@ -18,11 +18,13 @@ Options -Indexes
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "DENY"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Permissions-Policy "accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), interest-cohort=()"
+    # autoplay/fullscreen/encrypted-media ouverts au lecteur Bunny Stream (galerie vidéo),
+    # pour que la lecture démarre au clic sur la façade (iframe mediadelivery.net).
+    Header always set Permissions-Policy "accelerometer=(), autoplay=(self \"https://iframe.mediadelivery.net\"), camera=(), display-capture=(), encrypted-media=(self \"https://iframe.mediadelivery.net\"), fullscreen=(self \"https://iframe.mediadelivery.net\"), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), interest-cohort=()"
     Header always set Cross-Origin-Opener-Policy "same-origin"
     Header always set Cross-Origin-Resource-Policy "same-origin"
     # CSP : script-src verrouillé par le hash du <script> inline (pas de 'unsafe-inline' JS)
-    Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; script-src 'self' 'sha256-MElwAQPFOXkhfYKNekzyN/4Wvo5YlDnCSGTnYthKKPc=' 'sha256-R4eRa3/WLHKJOqFKPw80xNKQkRAO79l8teDuT1Zpv2M='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.b-cdn.net; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests"
+    Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; script-src 'self' 'sha256-MElwAQPFOXkhfYKNekzyN/4Wvo5YlDnCSGTnYthKKPc=' 'sha256-R4eRa3/WLHKJOqFKPw80xNKQkRAO79l8teDuT1Zpv2M='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.b-cdn.net; font-src 'self'; connect-src 'self'; form-action 'self'; frame-src https://iframe.mediadelivery.net https://*.mediadelivery.net; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests"
     # Ne pas exposer la techno serveur
     Header always unset X-Powered-By
     Header unset X-Powered-By

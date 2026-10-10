@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/_bootstrap.php';
+require_once dirname(__DIR__) . '/inc/bunny_stream.php';
 admin_require_login();
 
 $base = admin_base();
@@ -16,6 +17,48 @@ const GALLERY_ALLOWED = [
     'image/png'  => 'png',
     'image/webp' => 'webp',
 ];
+
+/* --- Contraintes d'upload vidéo (cohérentes avec admin/.htaccess) --- */
+const GALLERY_VIDEO_MAX_BYTES = 200 * 1024 * 1024; // 200 Mo / vidéo
+const GALLERY_VIDEO_ALLOWED = [
+    'video/mp4'       => 'mp4',
+    'video/webm'      => 'webm',
+    'video/quicktime' => 'mov',
+];
+
+/**
+ * Valide un fichier uploadé comme vidéo réelle (type MIME via finfo, jamais
+ * l'extension du client). Renvoie ['mime'=>..., 'ext'=>...] ou lève MediaException.
+ */
+function admin_validate_video(array $file): array
+{
+    $err = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($err !== UPLOAD_ERR_OK) {
+        // Dépassement des limites PHP = message explicite.
+        if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) {
+            throw new MediaException('Vidéo trop volumineuse (limite serveur dépassée).');
+        }
+        throw new MediaException('Upload vidéo incomplet (code ' . $err . ').');
+    }
+    $tmp = (string) ($file['tmp_name'] ?? '');
+    if ($tmp === '' || !is_uploaded_file($tmp)) {
+        throw new MediaException('Fichier non reçu via un upload HTTP valide.');
+    }
+    $size = (int) ($file['size'] ?? 0);
+    if ($size <= 0) {
+        throw new MediaException('Fichier vidéo vide.');
+    }
+    if ($size > GALLERY_VIDEO_MAX_BYTES) {
+        throw new MediaException('Vidéo trop volumineuse (max 200 Mo).');
+    }
+    // MIME réel via finfo (contenu, pas extension).
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = (string) $finfo->file($tmp);
+    if (!isset(GALLERY_VIDEO_ALLOWED[$mime])) {
+        throw new MediaException('Type non autorisé : ' . ($mime ?: 'inconnu') . ' (MP4, WebM ou MOV uniquement).');
+    }
+    return ['mime' => $mime, 'ext' => GALLERY_VIDEO_ALLOWED[$mime]];
+}
 
 /**
  * Valide un fichier uploadé comme image réelle et renvoie
@@ -149,13 +192,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item['active'] = !empty($_POST['active']);
     $type = in_array(($_POST['type'] ?? ''), CS_GALLERY_TYPES, true) ? (string) $_POST['type'] : ($item['type'] ?? 'carousel');
     $item['type'] = $type;
-    if ($type === 'video') {
-        // Champs posés pour la phase 2 (conservés mais non exploités ici).
-        $item['videoId'] = $item['videoId'] ?? '';
-        $item['poster'] = $item['poster'] ?? '';
-    }
 
     $uploader = cs_make_media_uploader();
+
+    if ($type === 'video') {
+        /* ============================================================
+         *  Branche VIDÉO — upload médié par le serveur vers Bunny Stream.
+         *  Un fichier fourni déclenche : create_video + upload_video, puis
+         *  stockage de videoId (guid) et poster (URL vignette). Remplacement
+         *  d'une vidéo existante : on supprime l'ancienne sur Bunny.
+         * ============================================================ */
+        $item['videoId'] = (string) ($item['videoId'] ?? '');
+        $item['poster']  = (string) ($item['poster'] ?? '');
+        // Un item vidéo n'utilise pas d'images de carrousel.
+        $item['images']  = [];
+
+        $hasUpload = !empty($_FILES['video']['tmp_name'])
+            && (int) ($_FILES['video']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+
+        if ($hasUpload) {
+            try {
+                admin_validate_video($_FILES['video']);
+                $tmp = (string) $_FILES['video']['tmp_name'];
+
+                // Ancienne vidéo à remplacer : suppression best-effort côté Bunny.
+                $oldGuid = (string) ($item['videoId'] ?? '');
+
+                $guid = bunny_stream_create_video((string) ($item['title'] ?? 'Vidéo'));
+                bunny_stream_upload_video($guid, $tmp);
+
+                $item['videoId'] = $guid;
+                $item['poster']  = bunny_stream_thumbnail_url($guid);
+
+                if ($oldGuid !== '' && $oldGuid !== $guid) {
+                    try {
+                        bunny_stream_delete_video($oldGuid);
+                    } catch (\Throwable $e) {
+                        $notices[] = 'Ancienne vidéo non supprimée (' . e($oldGuid) . ') : ' . e($e->getMessage());
+                    }
+                }
+                if (!bunny_stream_enabled()) {
+                    $notices[] = 'Mode local (sans Bunny) : vidéo simulée, videoId factice enregistré.';
+                }
+            } catch (\Throwable $e) {
+                $err = 'Vidéo refusée : ' . $e->getMessage();
+            }
+        }
+        // En mode dégradé sans vignette (pas de BUNNY_STREAM_HOST), on autorise un
+        // poster manuel (URL) pour pouvoir tester le rendu de la façade.
+        if (isset($_POST['poster'])) {
+            $posterIn = trim((string) $_POST['poster']);
+            if ($posterIn === '' || preg_match('#^https?://#i', $posterIn) || str_starts_with($posterIn, '/')) {
+                $item['poster'] = mb_substr($posterIn, 0, 500);
+            }
+        }
+    } else {
 
     // --- Images existantes : mise à jour alt/sort + suppressions ---
     $existing = cs_gallery_item_images($item);
@@ -272,6 +363,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     unset($img);
     $item['images'] = $newImages;
+    } // fin branche carrousel
 
     // --- Persiste ---
     $items = cs_gallery($content);
@@ -284,14 +376,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     unset($it);
     $content['gallery'] = $items;
 
-    try {
-        admin_store()->save($content);
-        if (!$notices) {
-            header('Location: ' . $base . '/gallery_edit.php?id=' . rawurlencode($id) . '&saved=1');
-            exit;
+    // On ne persiste pas si une erreur dure est survenue (ex. vidéo refusée).
+    if ($err === '') {
+        try {
+            admin_store()->save($content);
+            if (!$notices) {
+                header('Location: ' . $base . '/gallery_edit.php?id=' . rawurlencode($id) . '&saved=1');
+                exit;
+            }
+        } catch (\Throwable $e) {
+            $err = 'Échec de l\'enregistrement : ' . $e->getMessage();
         }
-    } catch (\Throwable $e) {
-        $err = 'Échec de l\'enregistrement : ' . $e->getMessage();
     }
 }
 
@@ -332,7 +427,7 @@ echo '<div class="grid2">';
 echo '<div><label for="f_type">Type</label>'
     . '<select id="f_type" name="type" style="width:100%;font-family:var(--fb);font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">'
     . '<option value="carousel"' . ($type === 'carousel' ? ' selected' : '') . '>Carrousel d\'images</option>'
-    . '<option value="video"' . ($type === 'video' ? ' selected' : '') . '>Vidéo (à venir — phase 2)</option>'
+    . '<option value="video"' . ($type === 'video' ? ' selected' : '') . '>Vidéo (Bunny Stream)</option>'
     . '</select></div>';
 echo '<div><label for="f_sort">Ordre (sort)</label>'
     . '<input type="text" id="f_sort" name="sort" value="' . e((string) ((int) ($item['sort'] ?? 0))) . '"></div>';
@@ -341,8 +436,41 @@ echo '<div class="check" style="margin-top:14px"><input type="checkbox" id="f_ac
 echo '</div>'; // card
 
 if ($type === 'video') {
-    echo '<div class="card"><h2 style="margin-top:0">Vidéo — à venir</h2>'
-        . '<p class="muted">La gestion vidéo (Bunny Stream) arrive en phase 2. Cet item s\'affiche pour l\'instant comme un emplacement « Vidéo — bientôt » sur la page publique.</p></div>';
+    $videoId = (string) ($item['videoId'] ?? '');
+    $poster  = (string) ($item['poster'] ?? '');
+    $enabled = bunny_stream_enabled();
+
+    echo '<div class="card"><h2 style="margin-top:0">Vidéo (Bunny Stream)</h2>';
+
+    if ($videoId === '') {
+        echo '<p class="muted">Aucune vidéo pour le moment. Téléversez un fichier ci-dessous : il est envoyé à Bunny Stream, puis lu sans marque sur la page publique.</p>';
+    } else {
+        echo '<p class="muted">Vidéo associée · identifiant <code>' . e($videoId) . '</code>.</p>';
+        echo '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;margin-top:12px">';
+        if ($poster !== '') {
+            echo '<div style="max-width:280px"><img class="thumb" src="' . e($poster) . '" alt="Aperçu de la vidéo" loading="lazy">'
+                . '<p class="muted" style="margin-top:6px">Si la vignette est vide, l\'encodage Bunny est encore en cours — réessayez dans un instant.</p></div>';
+        } else {
+            echo '<p class="muted">Vignette indisponible pour l\'instant';
+            echo $enabled
+                ? ' : l\'encodage Bunny peut prendre un moment, la vignette apparaîtra ensuite.'
+                : ' (mode local sans Bunny). Renseignez un poster de test ci-dessous.';
+            echo '</p>';
+        }
+        echo '</div>';
+    }
+
+    if (!$enabled) {
+        echo '<div class="alert" style="margin-top:14px">Mode local (CONTENT_BACKEND ≠ bunny ou clés absentes) : les vidéos sont simulées (aucun appel réseau). L\'upload réel se fera en production avec les clés Bunny.</div>';
+        echo '<label for="f_poster" style="margin-top:14px">Poster de test (URL d\'image — local/dev uniquement)</label>';
+        echo '<input type="text" id="f_poster" name="poster" value="' . e($poster) . '" placeholder="/img/generique.webp" maxlength="500">';
+    }
+
+    echo '<label for="f_video" style="margin-top:18px">' . ($videoId === '' ? 'Téléverser une vidéo' : 'Remplacer la vidéo') . ' (MP4, WebM ou MOV · max 200 Mo)</label>';
+    echo '<input type="file" id="f_video" name="video" accept="video/mp4,video/webm,video/quicktime" '
+        . 'style="width:100%;font-family:var(--fb);font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">';
+    echo '<p class="muted" style="margin-top:8px">Le fichier transite par le serveur puis Bunny Stream. L\'encodage peut prendre quelques instants après l\'envoi ; la lecture publique reste disponible dès que Bunny a fini.</p>';
+    echo '</div>'; // card
 } else {
     // --- Images existantes ---
     echo '<div class="card"><h2 style="margin-top:0">Images</h2>';

@@ -177,7 +177,7 @@ foreach (ADMIN_TEXT_FIELDS as $key => $meta) {
 
 if (array_key_exists('features', $offer)) {
     echo '<label for="f_features">Caractéristiques (une par ligne)</label>';
-    echo '<textarea id="f_features" name="features" style="min-height:130px">'
+    echo '<textarea id="f_features" class="tall" name="features">'
         . e(implode("\n", array_map('strval', $offer['features'] ?? []))) . '</textarea>';
 }
 
@@ -193,7 +193,7 @@ if (array_key_exists('packs', $offer)) {
 echo '<div class="grid2">';
 echo '<div><label for="f_sort">Ordre (sort)</label>'
     . '<input type="text" id="f_sort" name="sort" value="' . e((string) ((int) ($offer['sort'] ?? 0))) . '"></div>';
-echo '<div style="display:flex;flex-direction:column;justify-content:flex-end;gap:10px">';
+echo '<div class="field--inline">';
 echo '<div class="check"><input type="checkbox" id="f_active" name="active" value="1"' . (!empty($offer['active']) ? ' checked' : '') . '><label for="f_active">Offre active (visible sur le site)</label></div>';
 echo '<div class="check"><input type="checkbox" id="f_unavail" name="unavailable" value="1"' . ((array_key_exists('available', $offer) && empty($offer['available'])) ? ' checked' : '') . '><label for="f_unavail">Indisponible (carte grisée sur le site)</label></div>';
 echo '<div class="check"><input type="checkbox" id="f_feat" name="feat" value="1"' . (!empty($offer['feat']) ? ' checked' : '') . '><label for="f_feat">Mise en avant (bordure accent)</label></div>';
@@ -212,10 +212,10 @@ echo '<div><label for="p_label">Étiquette (ex. -20%)</label>'
 echo '</div>';
 echo '<label for="p_until">Fin de la promo (optionnel, AAAA-MM-JJ)</label>'
     . '<input type="date" id="p_until" name="promo_until" value="' . e((string) ($promo['until'] ?? '')) . '">';
-echo '<p class="muted" style="margin-top:8px">Si une promo est active et non expirée, le site affiche le prix d\'origine barré, le prix promo et l\'étiquette.</p>';
+echo '<p class="hint">Si une promo est active et non expirée, le site affiche le prix d\'origine barré, le prix promo et l\'étiquette.</p>';
 echo '</fieldset>';
 
-echo '<div style="margin-top:22px;display:flex;gap:10px">';
+echo '<div class="formbar">';
 echo '<button class="btn" type="submit">Enregistrer</button>';
 echo '<a class="btn btn--ghost" href="' . e($base) . '/">Annuler</a>';
 echo '</div>';

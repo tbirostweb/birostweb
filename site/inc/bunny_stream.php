@@ -261,3 +261,83 @@ function bunny_stream_delete_video(string $guid): void
     }
     throw new BunnyStreamException('Suppression vidéo échouée : HTTP ' . $res['status'] . '.');
 }
+
+/** Nombre de frames candidates que Bunny génère par vidéo (thumbnail_1.jpg … thumbnail_5.jpg). */
+const BUNNY_STREAM_FRAME_COUNT = 5;
+
+/**
+ * URLs publiques des frames candidates d'une vidéo, indexées de 1 à $count :
+ * [1 => https://{host}/{guid}/thumbnail_1.jpg, …]. Tableau vide si guid/hôte absent
+ * ou guid factice (« local-… »). Aucun appel réseau.
+ *
+ * @return array<int,string>
+ */
+function bunny_stream_frame_urls(string $guid, int $count = BUNNY_STREAM_FRAME_COUNT): array
+{
+    $guid = trim($guid);
+    $host = bunny_stream_host();
+    if ($guid === '' || $host === '' || str_starts_with($guid, 'local-')) {
+        return [];
+    }
+    $out = [];
+    $count = max(1, min(10, $count));
+    for ($i = 1; $i <= $count; $i++) {
+        $out[$i] = 'https://' . $host . '/' . rawurlencode($guid) . '/thumbnail_' . $i . '.jpg';
+    }
+    return $out;
+}
+
+/**
+ * Statut d'encodage Bunny d'une vidéo (0 créée, 1 envoyée, 2 traitement,
+ * 3 transcodage, 4 terminée, 5 erreur, 6 échec d'upload…). null = inconnu
+ * (mode dégradé, guid factice, erreur réseau/API) : l'appelant ne doit jamais planter.
+ */
+function bunny_stream_video_status(string $guid): ?int
+{
+    $guid = trim($guid);
+    if ($guid === '' || str_starts_with($guid, 'local-') || !bunny_stream_enabled()) {
+        return null;
+    }
+    try {
+        $res = bunny_stream_request(
+            'GET',
+            '/library/' . rawurlencode(bunny_stream_library()) . '/videos/' . rawurlencode($guid)
+        );
+    } catch (\Throwable $e) {
+        return null;
+    }
+    if ($res['error'] !== null || $res['status'] !== 200) {
+        return null;
+    }
+    $data = json_decode($res['body'], true);
+    return is_array($data) && isset($data['status']) ? (int) $data['status'] : null;
+}
+
+/**
+ * Synchronise la vignette officielle côté Bunny (« Set Thumbnail ») :
+ * POST /library/{LIB}/videos/{guid}/thumbnail?thumbnailUrl=thumbnail_N.jpg
+ * $thumbName : « thumbnail_3.jpg » (seuls thumbnail_1..10.jpg sont acceptés).
+ * Lève BunnyStreamException en cas d'échec ; no-op en mode dégradé / guid factice.
+ */
+function bunny_stream_set_thumbnail(string $guid, string $thumbName): void
+{
+    $guid = trim($guid);
+    if ($guid === '' || str_starts_with($guid, 'local-') || !bunny_stream_enabled()) {
+        return;
+    }
+    if (!preg_match('/^thumbnail_(?:[1-9]|10)\.jpg$/', $thumbName)) {
+        throw new BunnyStreamException('Nom de vignette invalide.');
+    }
+    $res = bunny_stream_request(
+        'POST',
+        '/library/' . rawurlencode(bunny_stream_library()) . '/videos/' . rawurlencode($guid)
+            . '/thumbnail?thumbnailUrl=' . rawurlencode($thumbName),
+        ''
+    );
+    if ($res['error'] !== null) {
+        throw new BunnyStreamException('Synchronisation de la vignette impossible (réseau) : ' . $res['error']);
+    }
+    if ($res['status'] !== 200 && $res['status'] !== 201 && $res['status'] !== 204) {
+        throw new BunnyStreamException('Synchronisation de la vignette échouée : HTTP ' . $res['status'] . '.');
+    }
+}

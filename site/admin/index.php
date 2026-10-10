@@ -158,8 +158,7 @@ if (!admin_is_authenticated()) {
     echo '<label for="user">Identifiant</label>';
     echo '<input type="text" id="user" name="user" autocomplete="username" autofocus required>';
     echo '<label for="password">Mot de passe</label>';
-    echo '<input type="password" id="password" name="password" autocomplete="current-password" required '
-        . 'style="width:100%;font-family:var(--fb);font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">';
+    echo '<input type="password" id="password" name="password" autocomplete="current-password" required>';
     echo '<div style="margin-top:20px"><button class="btn" type="submit">Se connecter</button></div>';
     echo '</form></div>';
     admin_foot();

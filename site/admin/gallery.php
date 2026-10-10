@@ -218,7 +218,7 @@ echo '<div class="grid2">';
 echo '<div><label for="g_title">Titre</label>'
     . '<input type="text" id="g_title" name="title" maxlength="160" required></div>';
 echo '<div><label for="g_type">Type</label>'
-    . '<select id="g_type" name="type" style="width:100%;font-family:var(--fb);font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">'
+    . '<select id="g_type" name="type">'
     . '<option value="carousel">Carrousel d\'images</option>'
     . '<option value="video">Vidéo (Bunny Stream)</option>'
     . '</select></div>';

@@ -207,6 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Un item vidéo n'utilise pas d'images de carrousel.
         $item['images']  = [];
 
+        $newVideo = false;
         $hasUpload = !empty($_FILES['video']['tmp_name'])
             && (int) ($_FILES['video']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
 
@@ -222,8 +223,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 bunny_stream_upload_video($guid, $tmp);
 
                 $item['videoId'] = $guid;
+                $newVideo = true;
                 if (($item['posterPath'] ?? '') === '') {
-                    $item['poster'] = bunny_stream_thumbnail_url($guid); // pas de couverture perso
+                    // Pas de couverture perso : on repart sur la vignette auto (poster vide ;
+                    // une ancienne frame choisie appartenait à l'ancienne vidéo).
+                    $item['poster'] = '';
                 }
 
                 if ($oldGuid !== '' && $oldGuid !== $guid) {
@@ -240,24 +244,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $err = 'Vidéo refusée : ' . $e->getMessage();
             }
         }
-        /* --- Image de couverture personnalisée (Bunny Storage via MediaUploader) ---
-         * `posterPath` = chemin de stockage (pour suppression), `poster` = URL publique.
-         * Sans couverture perso, la page publique retombe sur la vignette auto Bunny. */
+        /* --- Source de la couverture (cover_source) ---
+         *  auto   : poster + posterPath vides -> la façade publique prend thumbnail.jpg.
+         *  frame  : poster = URL de thumbnail_N.jpg (frame Bunny), posterPath vide ;
+         *           synchro best-effort de la vignette officielle Bunny.
+         *  upload : image perso -> Bunny Storage (poster = URL, posterPath = chemin).
+         * Dans tous les cas, quitter une image perso la supprime du stockage. */
         $item['posterPath'] = (string) ($item['posterPath'] ?? '');
+        $source = (string) ($_POST['cover_source'] ?? '');
+        if (!in_array($source, ['auto', 'frame', 'upload'], true)) {
+            $source = '';
+        }
 
-        if (!empty($_POST['cover_reset'])) {
-            if ($item['posterPath'] !== '') {
+        $dropCustom = function () use (&$item, $uploader, &$notices): void {
+            $old = (string) $item['posterPath'];
+            if ($old !== '') {
                 try {
-                    $uploader->delete($item['posterPath']);
+                    $uploader->delete($old);
                 } catch (\Throwable $e) {
-                    $notices[] = 'Ancienne couverture non supprimée (' . e($item['posterPath']) . ') : ' . e($e->getMessage());
+                    $notices[] = 'Ancienne couverture non supprimée (' . e($old) . ') : ' . e($e->getMessage());
                 }
             }
             $item['posterPath'] = '';
+        };
+
+        if ($source === 'auto' && $err === '') {
+            $dropCustom();
             $item['poster'] = '';
+        } elseif ($source === 'frame' && $err === '' && !$newVideo) {
+            $n = (int) ($_POST['cover_frame'] ?? 0);
+            $frames = bunny_stream_frame_urls((string) $item['videoId']);
+            if ($n >= 1 && isset($frames[$n])) {
+                $dropCustom();
+                $item['poster'] = $frames[$n];
+                try {
+                    bunny_stream_set_thumbnail((string) $item['videoId'], 'thumbnail_' . $n . '.jpg');
+                } catch (\Throwable $e) {
+                    // Non bloquant : la couverture publique utilise déjà `poster`.
+                    $notices[] = 'Image choisie enregistrée, mais la vignette officielle Bunny n\'a pas pu être synchronisée : ' . e($e->getMessage());
+                }
+            }
+        } elseif ($source === 'frame' && $newVideo) {
+            $notices[] = 'Nouvelle vidéo envoyée : choisissez une image de la vidéo une fois l\'encodage terminé.';
         }
 
-        $hasCover = !empty($_FILES['cover']['tmp_name'])
+        $hasCover = $source === 'upload' && !empty($_FILES['cover']['tmp_name'])
             && (int) ($_FILES['cover']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
         if ($hasCover && $err === '') {
             try {
@@ -461,10 +492,10 @@ echo '<div class="card">';
 echo '<label for="f_title">Titre</label>';
 echo '<input type="text" id="f_title" name="title" maxlength="160" value="' . e((string) ($item['title'] ?? '')) . '">';
 echo '<label for="f_desc">Description (affichée sous le carrousel)</label>';
-echo '<textarea id="f_desc" name="description" style="min-height:110px">' . e((string) ($item['description'] ?? '')) . '</textarea>';
+echo '<textarea id="f_desc" class="tall" name="description">' . e((string) ($item['description'] ?? '')) . '</textarea>';
 echo '<div class="grid2">';
 echo '<div><label for="f_type">Type</label>'
-    . '<select id="f_type" name="type" style="width:100%;font-family:var(--fb);font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">'
+    . '<select id="f_type" name="type">'
     . '<option value="carousel"' . ($type === 'carousel' ? ' selected' : '') . '>Carrousel d\'images</option>'
     . '<option value="video"' . ($type === 'video' ? ' selected' : '') . '>Vidéo (Bunny Stream)</option>'
     . '</select></div>';
@@ -481,7 +512,18 @@ if ($type === 'video') {
 
     $posterPath = (string) ($item['posterPath'] ?? '');
     $custom = $posterPath !== '' && $poster !== '';
+    $frames = bunny_stream_frame_urls($videoId);
+    $curFrame = 0;
+    foreach ($frames as $n => $u) {
+        if (!$custom && $poster === $u) {
+            $curFrame = $n;
+        }
+    }
+    $source = $custom ? 'upload' : ($curFrame > 0 ? 'frame' : 'auto');
     $preview = $poster !== '' ? $poster : ($videoId !== '' ? bunny_stream_thumbnail_url($videoId) : '');
+    $vstatus = $videoId !== '' ? bunny_stream_video_status($videoId) : null;
+    // Prête = encodage terminé (4) ; statut inconnu (mode local) => on affiche les frames.
+    $framesReady = $frames && ($vstatus === null || $vstatus === 4);
 
     echo '<div class="card"><h2 style="margin-top:0">Vidéo (Bunny Stream)</h2>';
 
@@ -494,29 +536,63 @@ if ($type === 'video') {
         echo '<div class="alert" style="margin-top:14px">Mode local (CONTENT_BACKEND ≠ bunny ou clés absentes) : les vidéos sont simulées (aucun appel réseau). L\'upload réel se fera en production avec les clés Bunny.</div>';
     }
 
-    echo '<h3 style="margin:22px 0 6px">Image de couverture</h3>';
-    echo '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;margin-top:8px">';
+    echo '<h3 style="margin:26px 0 12px;font-family:var(--fm);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border-top:1px solid var(--line);padding-top:18px">Image de couverture</h3>';
     if ($preview !== '') {
-        echo '<div style="max-width:280px"><img class="thumb" src="' . e($preview) . '" alt="Aperçu de la couverture" loading="lazy">'
-            . '<p class="muted" style="margin-top:6px">' . ($custom
-                ? 'Couverture personnalisée.'
-                : 'Vignette automatique Bunny (image choisie au hasard dans la vidéo ; peut être vide pendant l\'encodage).') . '</p></div>';
+        echo '<div class="cover-preview"><figure><img class="thumb" src="' . e($preview) . '" alt="Aperçu de la couverture" loading="lazy">'
+            . '<figcaption>Couverture actuelle · ' . ($custom ? 'image importée' : ($curFrame > 0 ? 'image de la vidéo n°' . $curFrame : 'vignette automatique')) . '</figcaption></figure></div>';
     } else {
         echo '<p class="muted">Aucune couverture : la page publique affichera un fond neutre avec le bouton lecture.</p>';
     }
-    echo '</div>';
-    echo '<label for="f_cover" style="margin-top:14px">' . ($custom ? 'Remplacer la couverture' : 'Choisir une image de couverture') . ' (JPEG, PNG ou WebP · max 8 Mo)</label>';
-    echo '<input type="file" id="f_cover" name="cover" accept="image/jpeg,image/png,image/webp" '
-        . 'style="width:100%;font-family:var(--fb);font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">';
-    echo '<p class="muted" style="margin-top:8px">Format conseillé 4/3 (ex. 1200×900). L\'image est ré-encodée côté serveur puis stockée sur Bunny Storage.</p>';
-    if ($custom) {
-        echo '<div class="check" style="margin-top:10px"><input type="checkbox" id="f_cover_reset" name="cover_reset" value="1"><label for="f_cover_reset">Utiliser la vignette automatique (supprime la couverture personnalisée)</label></div>';
-    }
 
-    echo '<label for="f_video" style="margin-top:18px">' . ($videoId === '' ? 'Téléverser une vidéo' : 'Remplacer la vidéo') . ' (MP4, WebM ou MOV · max 200 Mo)</label>';
-    echo '<input type="file" id="f_video" name="video" accept="video/mp4,video/webm,video/quicktime" '
-        . 'style="width:100%;font-family:var(--fb);font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">';
-    echo '<p class="muted" style="margin-top:8px">Le fichier transite par le serveur puis Bunny Stream. L\'encodage peut prendre quelques instants après l\'envoi ; la lecture publique reste disponible dès que Bunny a fini.</p>';
+    echo '<div class="cover-src" style="margin-top:18px">';
+    echo '<div class="radio-cards" role="radiogroup" aria-label="Source de la couverture">';
+    $opts = [
+        'auto'   => ['Vignette automatique', 'Bunny choisit une image de la vidéo.'],
+        'frame'  => ['Image de la vidéo', 'Choisir parmi 5 images extraites.'],
+        'upload' => ['Importer une image', 'JPEG, PNG ou WebP, jusqu\'à 8 Mo.'],
+    ];
+    foreach ($opts as $key => [$ttl, $sub]) {
+        echo '<label class="radio-card"><input type="radio" id="src_' . $key . '" name="cover_source" value="' . $key . '"' . ($source === $key ? ' checked' : '') . '>'
+            . '<span class="rc"><b>' . e($ttl) . '</b><small>' . e($sub) . '</small></span></label>';
+    }
+    echo '</div>';
+
+    // -- Panneau 1 : automatique
+    echo '<div class="cover-panel cover-panel--auto"><p class="hint" style="margin:0">La page publique utilise la vignette générée par Bunny'
+        . ($custom ? ' ; l\'image importée actuelle sera supprimée à l\'enregistrement' : '') . '. Elle peut être vide pendant l\'encodage.</p></div>';
+
+    // -- Panneau 2 : frames candidates
+    echo '<div class="cover-panel cover-panel--frame">';
+    if ($videoId === '') {
+        echo '<p class="hint" style="margin:0">Téléversez d\'abord une vidéo : ses images apparaîtront après l\'encodage.</p>';
+    } elseif (!$frames) {
+        echo '<p class="hint" style="margin:0">Les images de la vidéo ne sont pas disponibles en mode local (vidéo simulée ou hôte Bunny non configuré).</p>';
+    } elseif (!$framesReady) {
+        echo '<p class="hint" style="margin:0">Les images de la vidéo apparaîtront après l\'encodage. Revenez dans quelques instants'
+            . ($vstatus !== null ? ' (statut Bunny : ' . $vstatus . ')' : '') . '.</p>';
+    } else {
+        echo '<div class="frames">';
+        foreach ($frames as $n => $u) {
+            echo '<label class="frame"><input type="radio" name="cover_frame" value="' . $n . '"' . ($curFrame === $n ? ' checked' : '') . '>'
+                . '<img class="thumb" src="' . e($u) . '" alt="Image ' . $n . ' de la vidéo" loading="lazy">'
+                . '<span class="n">' . str_pad((string) $n, 2, '0', STR_PAD_LEFT) . '</span></label>';
+        }
+        echo '</div>';
+        echo '<p class="hint">Sélectionnez une image puis enregistrez : elle sert de couverture et la vignette officielle Bunny est synchronisée.</p>';
+    }
+    echo '</div>';
+
+    // -- Panneau 3 : import
+    echo '<div class="cover-panel cover-panel--upload">';
+    echo '<label for="f_cover" style="margin-top:0">' . ($custom ? 'Remplacer l\'image' : 'Image de couverture') . '</label>';
+    echo '<input type="file" id="f_cover" class="filefield" name="cover" accept="image/jpeg,image/png,image/webp">';
+    echo '<p class="hint">Format conseillé 16/9 ou 4/3 (ex. 1200×900) · max 8 Mo. Ré-encodée côté serveur puis stockée sur Bunny Storage.</p>';
+    echo '</div>';
+    echo '</div>'; // cover-src
+
+    echo '<label for="f_video" style="margin-top:26px">' . ($videoId === '' ? 'Téléverser une vidéo' : 'Remplacer la vidéo') . ' (MP4, WebM ou MOV · max 200 Mo)</label>';
+    echo '<input type="file" id="f_video" class="filefield" name="video" accept="video/mp4,video/webm,video/quicktime">';
+    echo '<p class="hint">Le fichier transite par le serveur puis Bunny Stream. L\'encodage peut prendre quelques instants après l\'envoi ; la lecture publique reste disponible dès que Bunny a fini.</p>';
     echo '</div>'; // card
 } else {
     // --- Images existantes ---
@@ -548,13 +624,12 @@ if ($type === 'video') {
 
     // --- Ajout d'images ---
     echo '<label for="f_files" style="margin-top:20px">Ajouter des images (JPEG, PNG, WebP · max 8 Mo/image)</label>';
-    echo '<input type="file" id="f_files" name="images[]" accept="image/jpeg,image/png,image/webp" multiple '
-        . 'style="width:100%;font-family:var(--fb);font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px">';
-    echo '<p class="muted" style="margin-top:8px">Les fichiers sont renommés côté serveur et ré-encodés (métadonnées supprimées, redimensionnés à ' . GALLERY_MAX_DIM . ' px max).</p>';
+    echo '<input type="file" id="f_files" class="filefield" name="images[]" accept="image/jpeg,image/png,image/webp" multiple>';
+    echo '<p class="hint">Les fichiers sont renommés côté serveur et ré-encodés (métadonnées supprimées, redimensionnés à ' . GALLERY_MAX_DIM . ' px max).</p>';
     echo '</div>'; // card
 }
 
-echo '<div style="margin-top:22px;display:flex;gap:10px">';
+echo '<div class="formbar">';
 echo '<button class="btn" type="submit">Enregistrer</button>';
 echo '<a class="btn btn--ghost" href="' . e($base) . '/gallery.php">Retour</a>';
 echo '</div>';

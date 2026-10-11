@@ -257,6 +257,8 @@ function admin_head(string $title): void
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow, noarchive">
+<link rel="icon" type="image/png" sizes="640x640" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>$t · Admin birostweb</title>
 <style>
 :root{

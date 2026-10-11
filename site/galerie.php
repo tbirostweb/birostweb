@@ -251,7 +251,7 @@ a.gal-card__hint:hover{text-decoration:underline;text-underline-offset:3px}
 <?php if ($embed !== ''): ?>
           <a class="gal-video-trigger" href="#lbv-<?= ge($iid) ?>" data-video-open aria-label="Lire la vidéo : <?= ge($title) ?>">
 <?php if ($cover !== ''): ?>
-            <img src="<?= ge($cover) ?>" alt="" loading="lazy" decoding="async">
+            <img src="<?= ge($cover) ?>" referrerpolicy="strict-origin-when-cross-origin" alt="" loading="lazy" decoding="async">
 <?php else: ?>
             <span class="gal-video-bg" aria-hidden="true"></span>
 <?php endif; ?>

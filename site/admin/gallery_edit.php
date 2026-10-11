@@ -538,7 +538,7 @@ if ($type === 'video') {
 
     echo '<h3 style="margin:26px 0 12px;font-family:var(--fm);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border-top:1px solid var(--line);padding-top:18px">Image de couverture</h3>';
     if ($preview !== '') {
-        echo '<div class="cover-preview"><figure><img class="thumb" src="' . e($preview) . '" alt="Aperçu de la couverture" loading="lazy">'
+        echo '<div class="cover-preview"><figure><img class="thumb" referrerpolicy="strict-origin-when-cross-origin" src="' . e($preview) . '" alt="Aperçu de la couverture" loading="lazy">'
             . '<figcaption>Couverture actuelle · ' . ($custom ? 'image importée' : ($curFrame > 0 ? 'image de la vidéo n°' . $curFrame : 'vignette automatique')) . '</figcaption></figure></div>';
     } else {
         echo '<p class="muted">Aucune couverture : la page publique affichera un fond neutre avec le bouton lecture.</p>';
@@ -574,7 +574,7 @@ if ($type === 'video') {
         echo '<div class="frames">';
         foreach ($frames as $n => $u) {
             echo '<label class="frame"><input type="radio" name="cover_frame" value="' . $n . '"' . ($curFrame === $n ? ' checked' : '') . '>'
-                . '<img class="thumb" src="' . e($u) . '" alt="Image ' . $n . ' de la vidéo" loading="lazy">'
+                . '<img class="thumb" referrerpolicy="strict-origin-when-cross-origin" src="' . e($u) . '" alt="Image ' . $n . ' de la vidéo" loading="lazy">'
                 . '<span class="n">' . str_pad((string) $n, 2, '0', STR_PAD_LEFT) . '</span></label>';
         }
         echo '</div>';
@@ -606,7 +606,7 @@ if ($type === 'video') {
             $path = (string) ($img['path'] ?? '');
             $url = (string) ($img['url'] ?? '');
             echo '<div class="imgcard" data-row>';
-            echo '<img class="thumb" src="' . e($url) . '" alt="" loading="lazy">';
+            echo '<img class="thumb" referrerpolicy="strict-origin-when-cross-origin" src="' . e($url) . '" alt="" loading="lazy">';
             echo '<input type="hidden" name="img_path[' . $k . ']" value="' . e($path) . '">';
             echo '<label style="margin-top:10px">Texte alternatif</label>';
             echo '<input type="text" name="img_alt[' . $k . ']" value="' . e((string) ($img['alt'] ?? '')) . '" maxlength="240">';

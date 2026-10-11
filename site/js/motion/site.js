@@ -63,7 +63,8 @@ Motion.run(function (m) {
         { autoAlpha: 1, y: 0, duration: first ? .9 : .55, ease: 'power3.out', stagger: first ? .1 : .06, clearProps: 'transform,opacity,visibility,transition' });
       var badges = panel.querySelectorAll('.offer__badge, .plan__badge');
       if (badges.length) ptl.from(badges, { autoAlpha: 0, y: 6, duration: .5, ease: 'back.out(2)', clearProps: 'transform,opacity,visibility' }, first ? .45 : .25);
-      m.countUp(panel.querySelectorAll('.offer__price .amt'), { trigger: false, duration: first ? 1.1 : .8, delay: first ? .3 : .1 });
+      // Les prix s'affichent directement : pas de compteur animé (il faisait défiler
+      // des valeurs intermédiaires peu lisibles sur les fourchettes et les promos).
     };
 
     // Premier affichage : au scroll.

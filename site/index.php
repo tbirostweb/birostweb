@@ -545,7 +545,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="mini">
         <span class="mini__k">Défi perso · Intégration</span>
         <h3>One Page Challenge</h3>
-        <p>Un défi que je me lance : concevoir et coder une landing page complète en une heure, from scratch. Quatre pages à ce jour — e-commerce, voyage, tech et SaaS.</p>
+        <p>Un défi que je me lance : concevoir et coder une landing page complète en une heure, from scratch. Quatre pages à ce jour : e-commerce, voyage, tech et SaaS.</p>
         <div class="tags"><span class="tag">Vue 3</span><span class="tag">Vite</span><span class="tag">Tailwind</span><span class="tag">HTML</span></div>
         <a class="plink" href="https://onepage.birostweb.fr" target="_blank" rel="noopener">Voir le projet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
       </article>
@@ -661,7 +661,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 <?= offers_render_tab($offersByTab['maint'], 'maint') ?>
 
       </div>
-      <p class="maint__note">Sans engagement — le suivi mensuel s'arrête quand vous voulez, et les heures d'un pack restent valables 24 mois.</p>
+      <p class="maint__note">Sans engagement : le suivi mensuel s'arrête quand vous voulez, et les heures d'un pack restent valables 24 mois.</p>
       </div>
     </div>
   </div>
@@ -746,7 +746,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
           <div class="estimate__row"><span>Hébergement</span><b id="est-heb">—</b></div>
           <div class="estimate__row"><span>Maintenance</span><b id="est-maint">—</b></div>
           <div class="estimate__total"><span id="est-oneoff">—</span> <span id="est-mo"></span></div>
-          <div class="estimate__note">Estimation indicative — le prix exact dépend du périmètre et vous est confirmé dans le devis.</div>
+          <div class="estimate__note">Estimation indicative : le prix exact dépend du périmètre et vous est confirmé dans le devis.</div>
         </div>
         <div class="field"><label for="cn">Nom</label><input id="cn" name="name" type="text" autocomplete="name" required maxlength="100"></div>
         <div class="field"><label for="ce">Email</label><input id="ce" name="email" type="email" autocomplete="email" required maxlength="254"></div>

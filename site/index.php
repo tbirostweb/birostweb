@@ -15,10 +15,11 @@ $contactFormToken = hash_hmac('sha256', (string) $contactFormTs, $contactSecret)
 // souci de stockage, on retombe sur le seed en mémoire (le site ne casse pas).
 require __DIR__ . '/inc/offers_render.php';
 try {
-    $offersByTab = cs_offers_by_tab(cs_make_store()->get());
+    $siteContent = cs_make_store()->get();
 } catch (\Throwable $e) {
-    $offersByTab = cs_offers_by_tab(cs_default_content());
+    $siteContent = cs_default_content();
 }
+$offersByTab = cs_offers_by_tab($siteContent);
 
 // Cache-busting : ajoute ?v=<empreinte du contenu> aux fichiers statiques.
 // Le .htaccess met ces URL versionnées en cache 1 an : dès qu'un fichier
@@ -753,14 +754,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
         <div id="form-details" hidden>
         <div class="field"><label for="coffer">Offre qui vous intéresse</label>
           <select id="coffer" name="offre">
-            <option value="">— Je ne sais pas encore —</option>
-            <option value="Offre 1 — Site vitrine">Offre 1 · Site vitrine</option>
-            <option value="Offre 2 — Boutique en ligne">Offre 2 · Boutique en ligne</option>
-            <option value="Offre 3 — Application web">Offre 3 · Application web</option>
-            <option value="Offre 4 — Refonte de site">Offre 4 · Refonte de site</option>
-            <option value="Offre 5 — Landing page">Offre 5 · Landing page</option>
-            <option value="Devis sur-mesure">Devis sur-mesure</option>
-          </select>
+<?= offers_contact_options_html($siteContent) ?>          </select>
         </div>
         <div class="field"><label for="cmaint">Maintenance</label>
           <select id="cmaint" name="maintenance">

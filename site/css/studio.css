@@ -46,8 +46,7 @@ html{scroll-padding-top:88px}
 #tab-crea:focus-visible~.tabs__nav label[for="tab-crea"],#tab-heb:focus-visible~.tabs__nav label[for="tab-heb"],#tab-maint:focus-visible~.tabs__nav label[for="tab-maint"]{outline:2px solid var(--accent);outline-offset:2px}
 .offer,.plan{padding:30px 26px}
 .offer--feat,.plan--feat{box-shadow:none;border-top:3px solid var(--accent)}
-.offer__price .amt{font-size:42px;letter-spacing:-.045em}
-.offer__price .amt.amt--range{font-size:clamp(25px,2.2vw,31px);letter-spacing:-.035em;line-height:1.15;padding:5px 0}
+.offer__price .amt{font-size:clamp(25px,2.2vw,31px);letter-spacing:-.035em;line-height:1.15;padding:5px 0}
 .offer__price .indic{font-family:var(--fm);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);opacity:.8;margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
 .price-disclaimer{font-family:var(--fm);font-size:12.5px;line-height:1.6;color:var(--gray);max-width:62ch;margin-top:14px;padding-left:12px;border-left:2px solid var(--accent)}
 .offer__badge,.plan__badge{letter-spacing:.04em}

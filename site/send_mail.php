@@ -4,6 +4,7 @@ use PHPMailer\PHPMailer\Exception;
 
 require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/inc/contact_lib.php';
+require __DIR__ . '/inc/offers_render.php';
 
 // En prod (Dokploy) les variables viennent de l'environnement. En local, .env.
 try {
@@ -286,10 +287,17 @@ $email   = filter_var(trim($_POST["email"] ?? ''), FILTER_SANITIZE_EMAIL);
 $message = trim($_POST["message"] ?? '');
 
 // Champs à choix fermé : on n'accepte que des valeurs de la liste blanche.
-$offreAllowed = ['Offre 1 — Site vitrine', 'Offre 2 — Boutique en ligne', 'Offre 3 — Application web', 'Offre 4 — Refonte de site', 'Offre 5 — Landing page', 'Devis sur-mesure'];
 $maintAllowed = ['Suivi mensuel (39 €/mois)', "Pack d'heures", "On verra plus tard / besoin d'infos"];
 $hebergAllowed = ['Sur mon propre serveur / hébergeur', 'Essentiel · VPS-1 (45 €/mois)', 'Pro · VPS-2 (69 €/mois)'];
-$offre       = in_array($_POST["offre"] ?? '', $offreAllowed, true) ? $_POST["offre"] : '';
+// Offre : liste blanche = id des offres réelles actives du ContentStore (ou « sur-mesure »).
+// On envoie par mail le libellé lisible ; un id inconnu est traité comme « non précisé ».
+try {
+    $siteContent = cs_make_store()->get();
+} catch (\Throwable $e) {
+    $siteContent = cs_default_content();
+}
+$offreId = $_POST["offre"] ?? '';
+$offre   = is_string($offreId) ? offers_contact_label($siteContent, $offreId) : '';
 $maintenance = in_array($_POST["maintenance"] ?? '', $maintAllowed, true) ? $_POST["maintenance"] : '';
 $hebergement = in_array($_POST["hebergement"] ?? '', $hebergAllowed, true) ? $_POST["hebergement"] : '';
 

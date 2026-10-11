@@ -17,15 +17,78 @@ function oe(string $s): string
     return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 }
 
-/** Attributs data-* d'un CTA, rendus dans l'ordre stocké. */
+/** Valeur du select de contact pour « Devis sur-mesure » (hors catalogue). */
+const OFFERS_CUSTOM_QUOTE_VALUE = 'sur-mesure';
+const OFFERS_CUSTOM_QUOTE_LABEL = 'Devis sur-mesure';
+
+/** Prix de départ (1er nombre du prix, ex. « 990 € – 1 900 € » => 990), 0 si aucun. */
+function offers_start_price(array $offer): int
+{
+    if (preg_match('/\d[\d \x{00A0}\x{202F}]*/u', (string) ($offer['price'] ?? ''), $m)) {
+        return (int) preg_replace('/\D+/', '', $m[0]);
+    }
+    return 0;
+}
+
+/**
+ * Attributs data-* d'un CTA. Onglet Création : auto-dérivés de l'offre
+ * (data-form = id, valeur du select de contact ; data-oneoff = prix de départ).
+ * Autres onglets : rendus tels que stockés.
+ */
 function offers_cta_attrs(array $offer): string
 {
+    if (($offer['tab'] ?? '') === 'crea') {
+        $stored = is_array($offer['cta_data'] ?? null) ? $offer['cta_data'] : [];
+        $attrs = [
+            'data-step'   => 'offre',
+            'data-label'  => (string) ($offer['title'] ?? ''),
+            'data-oneoff' => (string) offers_start_price($offer),
+            'data-form'   => (string) ($offer['id'] ?? ''),
+            'data-next'   => (string) ($stored['data-next'] ?? 'tab-heb'),
+        ];
+    } else {
+        $attrs = is_array($offer['cta_data'] ?? null) ? $offer['cta_data'] : [];
+    }
     $out = '';
-    foreach (($offer['cta_data'] ?? []) as $k => $v) {
+    foreach ($attrs as $k => $v) {
         // Les clés sont contrôlées côté serveur (data-*) ; on échappe quand même.
         $out .= ' ' . oe((string) $k) . '="' . oe((string) $v) . '"';
     }
     return $out;
+}
+
+/** Offres Création sélectionnables dans le formulaire de contact (actives, triées). */
+function offers_contact_choices(array $content): array
+{
+    return cs_offers_by_tab($content)['crea'];
+}
+
+/** <option> du select « offre » du formulaire de contact. */
+function offers_contact_options_html(array $content, string $indent = '            '): string
+{
+    $h = $indent . '<option value="">— Je ne sais pas encore —</option>' . "\n";
+    foreach (offers_contact_choices($content) as $o) {
+        if (!offers_is_available($o)) {
+            continue;
+        }
+        $h .= $indent . '<option value="' . oe((string) $o['id']) . '">' . oe((string) ($o['title'] ?? $o['id'])) . '</option>' . "\n";
+    }
+    $h .= $indent . '<option value="' . OFFERS_CUSTOM_QUOTE_VALUE . '">' . OFFERS_CUSTOM_QUOTE_LABEL . '</option>' . "\n";
+    return $h;
+}
+
+/** Libellé lisible d'un id d'offre reçu du formulaire, ou '' si inconnu (liste blanche = offres réelles actives). */
+function offers_contact_label(array $content, string $id): string
+{
+    if ($id === OFFERS_CUSTOM_QUOTE_VALUE) {
+        return OFFERS_CUSTOM_QUOTE_LABEL;
+    }
+    foreach (offers_contact_choices($content) as $o) {
+        if (($o['id'] ?? null) === $id) {
+            return (string) ($o['title'] ?? '');
+        }
+    }
+    return '';
 }
 
 /**

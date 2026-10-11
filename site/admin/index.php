@@ -81,6 +81,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($action === 'move') {
                 $dir = ($_POST['dir'] ?? '') === 'up' ? 'up' : 'down';
                 $offers = admin_move_offer($offers, $id, $dir);
+            } elseif ($action === 'create') {
+                $tab   = (string) ($_POST['tab'] ?? '');
+                $title = trim((string) ($_POST['title'] ?? ''));
+                if (!in_array($tab, ['crea', 'heb', 'maint'], true) || $title === '') {
+                    header('Location: ' . admin_base() . '/?err=create');
+                    exit;
+                }
+                $title = mb_substr($title, 0, 160);
+                $newId = admin_offer_slug($tab, $title, array_map(static fn ($o) => (string) ($o['id'] ?? ''), $offers));
+                $offers[] = admin_offer_template($tab, $newId, $title, $offers);
+                $content['offers'] = $offers;
+                admin_store()->save($content);
+                header('Location: ' . admin_base() . '/edit.php?id=' . rawurlencode($newId));
+                exit;
+            } elseif ($action === 'delete') {
+                $offers = array_values(array_filter($offers, static fn ($o) => ($o['id'] ?? '') !== $id));
             }
             $content['offers'] = $offers;
             admin_store()->save($content);
@@ -90,6 +106,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . admin_base() . '/');
         exit;
     }
+}
+
+/** Slug unique « tab-titre » (segments [a-z0-9-]). */
+function admin_offer_slug(string $tab, string $title, array $existingIds): string
+{
+    $t = strtolower(trim((string) iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $title)));
+    $t = trim((string) preg_replace('/[^a-z0-9]+/', '-', $t), '-');
+    $base = substr($tab . '-' . ($t !== '' ? $t : 'offre'), 0, 48);
+    $s = $base;
+    $n = 2;
+    while (in_array($s, $existingIds, true)) {
+        $s = $base . '-' . $n++;
+    }
+    return $s;
+}
+
+/**
+ * Offre par défaut, avec EXACTEMENT les clés du seed de l'onglet.
+ * Créée inactive : elle n'apparaît sur le site qu'une fois complétée et activée.
+ */
+function admin_offer_template(string $tab, string $id, string $title, array $offers): array
+{
+    $maxSort = 0;
+    $count = 0;
+    foreach ($offers as $o) {
+        if (($o['tab'] ?? '') === $tab) {
+            $maxSort = max($maxSort, (int) ($o['sort'] ?? 0));
+            $count++;
+        }
+    }
+    $base = [
+        'id' => $id, 'tab' => $tab, 'sort' => $maxSort + 10,
+        'active' => false, 'available' => true, 'feat' => false, 'badge' => '',
+    ];
+    $promo = ['active' => false, 'price' => '', 'label' => '', 'until' => ''];
+    if ($tab === 'crea') {
+        return $base + [
+            'number' => 'OFFRE ' . str_pad((string) ($count + 1), 2, '0', STR_PAD_LEFT),
+            'tag' => $title,
+            'title' => $title,
+            'description' => 'Description de l\'offre.',
+            'inc' => 'Ce qui est inclus.',
+            'price_label' => 'Fourchette',
+            'price' => '0 €',
+            'price_unit' => '',
+            'price_note' => '',
+            'cta_label' => 'Demander un devis',
+            'cta_data' => [
+                'data-step' => 'offre',
+                'data-label' => $title,
+                'data-oneoff' => '0',
+                'data-form' => 'Devis sur-mesure',
+                'data-next' => 'tab-heb',
+            ],
+            'promo' => $promo,
+        ];
+    }
+    return $base + [
+        'title' => $title,
+        'description' => 'Description de l\'offre',
+        'price' => '0 €',
+        'price_unit' => ' / mois',
+        'features' => ['Caractéristique 1'],
+        'cta_label' => 'Choisir cette option',
+        'cta_data' => $tab === 'heb'
+            ? ['data-step' => 'heb', 'data-label' => $title, 'data-mo' => '0', 'data-form' => $title]
+            : ['data-step' => 'maint', 'data-label' => $title, 'data-mo' => '0', 'data-form' => $title],
+        'promo' => $promo,
+    ];
 }
 
 /**
@@ -184,7 +269,27 @@ if ($flash === '1') {
     echo '<div class="alert alert--ok" style="margin-top:18px">Offre enregistrée.</div>';
 }
 
+if (($_GET['err'] ?? '') === 'create') {
+    echo '<div class="alert" style="margin-top:18px">Choisissez un onglet et donnez un titre à la nouvelle offre.</div>';
+}
+
 $base = e(admin_base());
+$csrf = admin_csrf_field();
+
+echo '<div class="card" style="margin-top:18px">';
+echo '<h2 style="margin-top:0">+ Nouvelle offre</h2>';
+echo '<form method="post" action="' . $base . '/">' . $csrf . '<input type="hidden" name="action" value="create">';
+echo '<div class="grid2">';
+echo '<div><label for="n_title">Titre</label><input type="text" id="n_title" name="title" maxlength="160" required></div>';
+echo '<div><label for="n_tab">Onglet</label><select id="n_tab" name="tab">';
+foreach ($tabNames as $tk => $tl) {
+    echo '<option value="' . e($tk) . '">' . e($tl) . '</option>';
+}
+echo '</select></div></div>';
+echo '<p class="hint">L\'offre est créée inactive : complétez-la puis activez-la pour l\'afficher sur le site.</p>';
+echo '<div style="margin-top:16px"><button class="btn" type="submit">+ Nouvelle offre</button></div>';
+echo '</form></div>';
+
 foreach ($tabNames as $tab => $label) {
     echo '<div class="tabgroup"><div class="lbl">' . e($label) . '</div>';
     $list = $grouped[$tab] ?? [];
@@ -232,9 +337,14 @@ foreach ($tabNames as $tab => $label) {
             . '<button class="btn btn--ghost btn--sm" type="submit">' . (empty($o['active']) ? 'Activer' : 'Désactiver') . '</button></form>';
         // Éditer
         echo '<a class="btn btn--sm" href="' . $base . '/edit.php?id=' . rawurlencode($id) . '">Modifier</a>';
+        // Supprimer (confirmation via admin-gallery.js, CSP-safe)
+        echo '<form class="inline" method="post" action="' . $base . '/" data-confirm="Supprimer cette offre ? Action définitive.">' . admin_csrf_field()
+            . '<input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="' . e($id) . '">'
+            . '<button class="btn btn--ghost btn--sm" type="submit">Supprimer</button></form>';
         echo '</div></div></div>';
     }
     echo '</div>';
 }
 
+echo '<script src="/js/admin-gallery.js" defer></script>';
 admin_foot();

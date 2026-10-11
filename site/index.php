@@ -601,8 +601,8 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
   <div class="wrap">
     <div class="sec-head">
       <span class="eyebrow">Offres &amp; tarifs</span>
-      <h2 class="h2 reveal">Des offres claires, un prix de départ affiché.</h2>
-      <p class="lead reveal">Ce sont des prix de départ, juste pour vous donner un ordre d'idée. Le périmètre, la techno et le contenu se décident ensemble, et vous avez un devis précis avant de vous engager.</p>
+      <h2 class="h2 reveal">Des offres claires, des prix indicatifs.</h2>
+      <p class="lead reveal">Ce sont des fourchettes indicatives, juste pour vous donner un ordre d'idée. Le périmètre, la techno et le contenu se décident ensemble, et vous recevez un devis gratuit et précis avant de vous engager.</p>
     </div>
 
     <div class="tabs">
@@ -757,6 +757,8 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
             <option value="Offre 1 — Site vitrine">Offre 1 · Site vitrine</option>
             <option value="Offre 2 — Boutique en ligne">Offre 2 · Boutique en ligne</option>
             <option value="Offre 3 — Application web">Offre 3 · Application web</option>
+            <option value="Offre 4 — Refonte de site">Offre 4 · Refonte de site</option>
+            <option value="Offre 5 — Landing page">Offre 5 · Landing page</option>
             <option value="Devis sur-mesure">Devis sur-mesure</option>
           </select>
         </div>

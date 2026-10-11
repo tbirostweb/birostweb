@@ -86,8 +86,9 @@ function offers_render_offer(array $o): string
     $h .= '        <p class="offer__promise">' . oe((string) ($o['description'] ?? '')) . '</p>' . "\n";
     $h .= '        <div class="offer__inc"><b>Inclus</b>' . oe((string) ($o['inc'] ?? '')) . '</div>' . "\n";
     $h .= '        <div class="offer__price"><div class="lbl">' . oe((string) ($o['price_label'] ?? ''))
-        . '</div><div class="amt">' . offers_price_html($o, '')
-        . '</div><div class="note">' . oe((string) ($o['price_note'] ?? '')) . '</div></div>' . "\n";
+        . '</div><div class="amt' . (str_contains((string) ($o['price'] ?? ''), '–') ? ' amt--range' : '') . '">' . offers_price_html($o, '')
+        . '</div><div class="note">' . oe((string) ($o['price_note'] ?? '')) . '</div>'
+        . '<div class="indic">prix indicatif · devis gratuit</div></div>' . "\n";
     $h .= offers_cta_html($o, '        ');
     $h .= '      </article>';
     return $h;

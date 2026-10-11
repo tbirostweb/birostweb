@@ -286,7 +286,7 @@ $email   = filter_var(trim($_POST["email"] ?? ''), FILTER_SANITIZE_EMAIL);
 $message = trim($_POST["message"] ?? '');
 
 // Champs à choix fermé : on n'accepte que des valeurs de la liste blanche.
-$offreAllowed = ['Offre 1 — Site vitrine', 'Offre 2 — Boutique en ligne', 'Offre 3 — Application web', 'Devis sur-mesure'];
+$offreAllowed = ['Offre 1 — Site vitrine', 'Offre 2 — Boutique en ligne', 'Offre 3 — Application web', 'Offre 4 — Refonte de site', 'Offre 5 — Landing page', 'Devis sur-mesure'];
 $maintAllowed = ['Suivi mensuel (39 €/mois)', "Pack d'heures", "On verra plus tard / besoin d'infos"];
 $hebergAllowed = ['Sur mon propre serveur / hébergeur', 'Essentiel · VPS-1 (45 €/mois)', 'Pro · VPS-2 (69 €/mois)'];
 $offre       = in_array($_POST["offre"] ?? '', $offreAllowed, true) ? $_POST["offre"] : '';

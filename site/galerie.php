@@ -196,6 +196,7 @@ a.gal-card__hint:hover{text-decoration:underline;text-underline-offset:3px}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.lightbox__track{scroll-behavior:auto}}
 </style>
 <link rel="stylesheet" href="<?= g_asset('/css/studio.css') ?>">
+  <script defer src="https://umami.birostweb.fr/script.js" data-website-id="6e1ecb75-aa0a-4a22-a2d3-ccfc5012ad23"></script>
 </head>
 <body id="top">
 

@@ -205,3 +205,60 @@ function offers_render_tab(array $offers, string $tab): string
     }
     return implode("\n\n", $parts);
 }
+
+/**
+ * JSON-LD : liste d'Offer (schema.org) pour les offres ACTIVES du store.
+ * Prix pris tels quels dans le store (fourchette, "à partir de", mensuel/horaire, gratuit).
+ */
+function offers_jsonld(array $content): array
+{
+    $nums = static function (string $s): array {
+        $s = str_replace(["\xC2\xA0", "\xE2\x80\xAF", ' '], '', $s);
+        preg_match_all('/\d+(?:[.,]\d+)?/', $s, $m);
+        return array_map(static fn($n) => (float) str_replace(',', '.', $n) + 0, $m[0]);
+    };
+    $out = [];
+    foreach (cs_offers($content) as $o) {
+        if (empty($o['active'])) {
+            continue;
+        }
+        $title = trim((string) ($o['title'] ?? ''));
+        if ($title === '') {
+            continue;
+        }
+        $service = ['@type' => 'Service', 'name' => $title];
+        $desc = trim((string) ($o['description'] ?? ''));
+        if ($desc !== '') {
+            $service['description'] = $desc;
+        }
+        $offer = ['@type' => 'Offer', 'itemOffered' => $service, 'priceCurrency' => 'EUR'];
+
+        $price = trim((string) ($o['price'] ?? ''));
+        $unit = strtolower(trim((string) ($o['price_unit'] ?? '')));
+        $n = $nums($price);
+        if ($n) {
+            if ($unit !== '') {
+                $code = strpos($unit, 'mois') !== false ? 'MON' : (strpos($unit, 'heure') !== false ? 'HUR' : '');
+                $spec = ['@type' => 'UnitPriceSpecification', 'price' => $n[0], 'priceCurrency' => 'EUR'];
+                if ($code !== '') {
+                    $spec['unitCode'] = $code;
+                    $spec['unitText'] = $code === 'MON' ? 'mois' : 'heure';
+                }
+                $offer['priceSpecification'] = $spec;
+            } elseif (count($n) >= 2) {
+                $offer['priceSpecification'] = [
+                    '@type' => 'PriceSpecification',
+                    'minPrice' => min($n[0], $n[1]),
+                    'maxPrice' => max($n[0], $n[1]),
+                    'priceCurrency' => 'EUR',
+                ];
+            } else {
+                $offer['priceSpecification'] = ['@type' => 'PriceSpecification', 'minPrice' => $n[0], 'priceCurrency' => 'EUR'];
+            }
+        } elseif (stripos($price, 'gratuit') !== false) {
+            $offer['price'] = 0;
+        }
+        $out[] = $offer;
+    }
+    return $out;
+}

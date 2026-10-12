@@ -52,6 +52,7 @@ $hasCarousel = (bool) cs_gallery_items($content, true, 'carousel');
 <title>Galerie — Réalisations en images · Théo Birost</title>
 <meta name="description" content="Galerie de réalisations en images : carrousels de projets web conçus par Théo Birost, développeur web full-stack.">
 <link rel="canonical" href="https://birostweb.fr/galerie">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://birostweb.fr/"},{"@type":"ListItem","position":2,"name":"Galerie","item":"https://birostweb.fr/galerie"}]}</script>
 <meta name="robots" content="index, follow">
 <meta name="author" content="Théo Birost">
 <meta name="theme-color" content="#231F20">
@@ -218,7 +219,7 @@ a.gal-card__hint:hover{text-decoration:underline;text-underline-offset:3px}
   <div class="wrap">
     <div class="sec-head" id="gal">
       <span class="eyebrow">Galerie</span>
-      <h2 class="h2">Des projets en images.</h2>
+      <h1 class="h2">Des projets en images.</h1>
       <p class="lead">Quelques réalisations en détail&nbsp;: parcourez les carrousels pour voir les écrans clés de chaque projet, et lancez les vidéos pour les voir en mouvement.</p>
     </div>
 

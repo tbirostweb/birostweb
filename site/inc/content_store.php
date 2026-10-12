@@ -836,7 +836,7 @@ function cs_default_content(): array
                 'price' => '990 € – 1 900 €',
                 'price_unit' => '',
                 'price_note' => "Version multilingue ou à gérer soi-même : sur devis",
-                'cta_label' => 'Choisir le site vitrine',
+                'cta_label' => 'Choisir cette offre',
                 'cta_data' => [
                     'data-step' => 'offre',
                     'data-label' => 'Site vitrine',
@@ -863,7 +863,7 @@ function cs_default_content(): array
                 'price' => '2 500 € – 4 500 €',
                 'price_unit' => '',
                 'price_note' => "Version 100 % sur-mesure : sur devis",
-                'cta_label' => 'Choisir la boutique',
+                'cta_label' => 'Choisir cette offre',
                 'cta_data' => [
                     'data-step' => 'offre',
                     'data-label' => 'Boutique en ligne',
@@ -890,7 +890,7 @@ function cs_default_content(): array
                 'price' => '4 000 €',
                 'price_unit' => '',
                 'price_note' => "Chiffré précisément selon le périmètre",
-                'cta_label' => "Choisir l'application",
+                'cta_label' => 'Choisir cette offre',
                 'cta_data' => [
                     'data-step' => 'offre',
                     'data-label' => 'Application web',
@@ -918,7 +918,7 @@ function cs_default_content(): array
                 'price' => '790 € – 1 900 €',
                 'price_unit' => '',
                 'price_note' => "Selon l'ampleur de la refonte",
-                'cta_label' => 'Demander un devis',
+                'cta_label' => 'Choisir cette offre',
                 'cta_data' => [
                     'data-step' => 'offre',
                     'data-label' => 'Refonte de site',
@@ -945,7 +945,7 @@ function cs_default_content(): array
                 'price' => '490 € – 790 €',
                 'price_unit' => '',
                 'price_note' => "Mise en ligne rapide",
-                'cta_label' => 'Demander un devis',
+                'cta_label' => 'Choisir cette offre',
                 'cta_data' => [
                     'data-step' => 'offre',
                     'data-label' => 'Landing page',
@@ -976,7 +976,7 @@ function cs_default_content(): array
                     'Aucun abonnement chez moi',
                     'Maintenance en option (39 €/mois)',
                 ],
-                'cta_label' => 'Choisir cette option',
+                'cta_label' => 'Choisir cette offre',
                 'cta_data' => [
                     'data-step' => 'heb',
                     'data-label' => 'Sur mon propre hébergement',
@@ -1006,7 +1006,7 @@ function cs_default_content(): array
                     'Support par email',
                     "Tout compris — rien d'autre à payer",
                 ],
-                'cta_label' => 'Choisir Essentiel',
+                'cta_label' => 'Choisir cette offre',
                 'cta_data' => [
                     'data-step' => 'heb',
                     'data-label' => 'Essentiel · VPS-1 (tout compris)',
@@ -1034,7 +1034,7 @@ function cs_default_content(): array
                     'Ressources pour un trafic plus élevé',
                     'Support prioritaire',
                 ],
-                'cta_label' => 'Choisir Pro',
+                'cta_label' => 'Choisir cette offre',
                 'cta_data' => [
                     'data-step' => 'heb',
                     'data-label' => 'Pro · VPS-2 (tout compris)',
@@ -1065,7 +1065,7 @@ function cs_default_content(): array
                     'Petites corrections incluses',
                     'Support par email',
                 ],
-                'cta_label' => 'Choisir le suivi mensuel',
+                'cta_label' => 'Choisir cette offre',
                 'cta_data' => [
                     'data-maint' => 'suivi',
                     'data-step' => 'maint',
@@ -1097,7 +1097,7 @@ function cs_default_content(): array
                     ['a' => 'Pack 5 h', 'b_main' => '175 €', 'b_small' => '35 €/h'],
                     ['a' => 'Pack 10 h', 'b_main' => '320 €', 'b_small' => '32 €/h'],
                 ],
-                'cta_label' => "Choisir le pack d'heures",
+                'cta_label' => 'Choisir cette offre',
                 'cta_data' => [
                     'data-maint' => 'heures',
                     'data-step' => 'maint',

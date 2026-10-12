@@ -34,16 +34,16 @@ function asset(string $path): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Théo Birost — Développeur web full-stack · Sites qui convertissent</title>
-<meta name="description" content="Développeur web freelance en France. Je crée des sites et applications sur-mesure, soignés et rapides, pensés pour convertir. Devis gratuit sous 48h.">
+<title>Développeur web freelance à Troyes (Aube) — Théo Birost</title>
+<meta name="description" content="Développeur web freelance à Troyes et dans l'Aube, aussi à distance partout en France. Sites sur-mesure, rapides et soignés. Devis gratuit sous 48h.">
 <link rel="canonical" href="https://birostweb.fr/">
 <meta name="robots" content="index, follow">
 <meta name="author" content="Théo Birost">
 <meta name="theme-color" content="#231F20">
 <meta name="color-scheme" content="light">
 <!-- Open Graph -->
-<meta property="og:title" content="Théo Birost — Développeur web full-stack">
-<meta property="og:description" content="Des sites web sur-mesure pensés pour vous rapporter des clients. Devis gratuit sous 48h.">
+<meta property="og:title" content="Développeur web freelance à Troyes (Aube) — Théo Birost">
+<meta property="og:description" content="Développeur web freelance à Troyes et dans l'Aube, aussi à distance en France. Des sites sur-mesure pensés pour vous rapporter des clients. Devis gratuit sous 48h.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
 <meta property="og:url" content="https://birostweb.fr/">
@@ -54,8 +54,8 @@ function asset(string $path): string {
 <meta property="og:image:alt" content="Théo Birost, développeur web freelance — sites sur-mesure qui convertissent">
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Théo Birost — Développeur web full-stack">
-<meta name="twitter:description" content="Des sites web sur-mesure pensés pour vous rapporter des clients. Devis gratuit sous 48h.">
+<meta name="twitter:title" content="Développeur web freelance à Troyes (Aube) — Théo Birost">
+<meta name="twitter:description" content="Développeur web freelance à Troyes et dans l'Aube, aussi à distance en France. Des sites sur-mesure pensés pour vous rapporter des clients. Devis gratuit sous 48h.">
 <meta name="twitter:image" content="https://birostweb.fr/og-image.png">
 <!-- Favicon Birostweb (logo BW) -->
 <link rel="icon" type="image/png" sizes="640x640" href="<?= asset('/favicon.png') ?>">
@@ -421,7 +421,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
     <div>
       <span class="chip"><b></b>Disponible · Devis sous 48h</span>
       <h1>Un site web qui vous ressemble, et qui <span class="accent">vous ramène des clients</span>.</h1>
-      <p class="hero__sub">Je suis développeur web indépendant, en télétravail partout en France. Je crée des sites sur-mesure, soignés et rapides, et je m'occupe de tout : du premier échange jusqu'à la mise en ligne. Sans jargon inutile, sans mauvaise surprise.</p>
+      <p class="hero__sub">Je suis développeur web indépendant, basé près de Troyes (Aube) et disponible à distance partout en France. Je crée des sites sur-mesure, soignés et rapides, et je m'occupe de tout : du premier échange jusqu'à la mise en ligne. Sans jargon inutile, sans mauvaise surprise.</p>
       <div class="hero__cta">
         <a href="#contact" class="btn btn-accent btn-lg">Demander un devis gratuit
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -736,7 +736,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
           <div class="mrow"><span class="mk">Mail</span><span class="mv"><a href="mailto:contact@theo-birost.fr">contact@theo-birost.fr</a></span></div>
           <div class="mrow"><span class="mk">GitHub</span><span class="mv"><a href="https://github.com/tbirostweb" target="_blank" rel="noopener">github.com/tbirostweb</a></span></div>
           <div class="mrow"><span class="mk">LinkedIn</span><span class="mv"><a href="https://www.linkedin.com/in/th%C3%A9o-birost-09b286429/" target="_blank" rel="noopener">linkedin.com/in/théo-birost</a></span></div>
-          <div class="mrow"><span class="mk">Zone</span><span class="mv">France entière · Full remote</span></div>
+          <div class="mrow"><span class="mk">Zone</span><span class="mv">Troyes &amp; Aube · France entière à distance</span></div>
         </div>
       </div>
       <form class="form" id="cform" method="post" action="send_mail.php">
@@ -816,7 +816,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
         <a href="#realisations">Réalisations</a><a href="/galerie">Galerie</a><a href="#offres">Offres</a><a href="#approche">Approche</a><a href="#faq">FAQ</a><a href="#contact">Contact</a><a href="/mentions-legales.html">Mentions légales</a><a href="/cgv.html">CGV</a><a href="#top">↑ Haut</a>
       </nav>
     </div>
-    <div class="footer__meta"><span>© 2026 Théo Birost · France · Full remote</span><span>Micro-entreprise · Développement web sur-mesure</span></div>
+    <div class="footer__meta"><span>© 2026 Théo Birost · Troyes &amp; Aube · France à distance</span><span>Micro-entreprise · Développement web sur-mesure</span></div>
   </div>
 </footer>
 

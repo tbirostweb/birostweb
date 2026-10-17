@@ -3,8 +3,8 @@
 PID=""
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 T=$(mktemp -d); trap 'kill $PID 2>/dev/null; rm -rf "$T"' EXIT
-[ -d "$ROOT/vendor" ] || (cd "$ROOT" && composer install --no-dev --no-scripts -q)
-cp -R "$ROOT/site" "$T/www"; cp -R "$ROOT/vendor" "$T/www/vendor"
+cp -R "$ROOT/site" "$T/www"
+if [ -d "$ROOT/vendor" ]; then cp -R "$ROOT/vendor" "$T/www/vendor"; else (cp "$ROOT/composer.json" "$ROOT/composer.lock" "$T/www/" && cd "$T/www" && composer install --no-dev --no-scripts -q); fi
 PORT=18099; FAIL=0
 run() { # $1 = env prefix
   kill $PID 2>/dev/null; sleep 0.3

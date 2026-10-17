@@ -1,6 +1,6 @@
 <?php
 // Vérifie que les scripts inline exécutables de index.php sont couverts par la CSP de .htaccess.
-$html = file_get_contents(__DIR__ . '/../site/index.php');
+$html = file_get_contents(__DIR__ . '/../site/index.php') . "\n" . file_get_contents(__DIR__ . '/../site/galerie.php');
 $htaccess = file_get_contents(__DIR__ . '/../site/.htaccess');
 preg_match_all('#<script(?![^>]*\bsrc=)(?![^>]*type="application/ld\+json")[^>]*>(.*?)</script>#s', $html, $m);
 $fail = 0;

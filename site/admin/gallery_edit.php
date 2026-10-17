@@ -11,6 +11,7 @@ $base = admin_base();
 /* --- Contraintes d'upload image --- */
 const GALLERY_MAX_BYTES = 8 * 1024 * 1024;      // 8 Mo / image
 const GALLERY_MAX_DIM   = 2000;                  // px : bord max après ré-encodage GD
+const GALLERY_MAX_PIXELS = 30000000;             // 30 Mpx : borne la mémoire GD (anti « bombe » de décompression)
 const GALLERY_MAX_IMAGES = 40;                   // garde-fou par item
 const GALLERY_ALLOWED = [
     'image/jpeg' => 'jpg',
@@ -91,6 +92,9 @@ function admin_validate_image(array $file): array
     if ($info === false || !isset($info['mime']) || $info['mime'] !== $mime) {
         throw new MediaException('Le fichier n\'est pas une image valide.');
     }
+    if (((int) $info[0]) * ((int) $info[1]) > GALLERY_MAX_PIXELS) {
+        throw new MediaException('Image trop grande (max 30 mégapixels).');
+    }
     return ['mime' => $mime, 'ext' => GALLERY_ALLOWED[$mime]];
 }
 
@@ -110,7 +114,8 @@ function admin_reencode_image(string $srcTmp, string $mime): array
     }
     $img = @imagecreatefromstring($raw);
     if ($img === false) {
-        return [$srcTmp, false];
+        // GD disponible mais image non décodable : on ne stocke jamais l'original brut.
+        throw new MediaException('Image illisible ou corrompue.');
     }
     $w = imagesx($img);
     $h = imagesy($img);
@@ -359,7 +364,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $uploader->delete($p);
             } catch (\Throwable $e) {
-                $notices[] = 'Fichier non supprimé (' . e($p) . ') : ' . $e->getMessage();
+                $notices[] = 'Fichier non supprimé (' . e($p) . ') : ' . e($e->getMessage());
             }
             continue;
         }
@@ -396,10 +401,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $meta = admin_validate_image($one);
             } catch (\Throwable $e) {
-                $notices[] = 'Image refusée : ' . $e->getMessage();
+                $notices[] = 'Image refusée : ' . e($e->getMessage());
                 continue;
             }
-            [$uploadPath, $reencoded] = admin_reencode_image((string) $one['tmp_name'], $meta['mime']);
+            try {
+                [$uploadPath, $reencoded] = admin_reencode_image((string) $one['tmp_name'], $meta['mime']);
+            } catch (\Throwable $e) {
+                $notices[] = 'Image refusée : ' . e($e->getMessage());
+                continue;
+            }
             $name = bin2hex(random_bytes(8)) . '.' . $meta['ext'];
             $destPath = 'gallery/' . $id . '/' . $name;
             try {
@@ -408,7 +418,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($reencoded) {
                     @unlink($uploadPath);
                 }
-                $notices[] = 'Échec de l\'enregistrement d\'une image : ' . $e->getMessage();
+                $notices[] = 'Échec de l\'enregistrement d\'une image : ' . e($e->getMessage());
                 continue;
             }
             if ($reencoded) {

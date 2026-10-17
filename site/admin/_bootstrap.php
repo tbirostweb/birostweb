@@ -64,9 +64,12 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
 /* ---- Timeout d'inactivité (30 min) ---- */
 const ADMIN_IDLE_TIMEOUT = 1800;
+const ADMIN_ABSOLUTE_TIMEOUT = 43200; // 12 h : reconnexion obligatoire même en activité continue
 if (isset($_SESSION['admin_auth']) && $_SESSION['admin_auth'] === true) {
     $last = (int) ($_SESSION['admin_last'] ?? 0);
-    if ($last > 0 && (time() - $last) > ADMIN_IDLE_TIMEOUT) {
+    $started = (int) ($_SESSION['admin_started'] ?? 0);
+    if (($last > 0 && (time() - $last) > ADMIN_IDLE_TIMEOUT)
+        || ($started > 0 && (time() - $started) > ADMIN_ABSOLUTE_TIMEOUT)) {
         admin_destroy_session();
     } else {
         $_SESSION['admin_last'] = time();
@@ -228,6 +231,76 @@ function admin_login_reset(string $ip): void
         return;
     }
     @unlink($file);
+}
+
+/* ---- 2FA TOTP (RFC 6238), activée seulement si ADMIN_TOTP_SECRET est défini ---- */
+/** Secret TOTP en base32 (Dokploy → Environment), ou '' si la 2FA n'est pas activée. */
+function admin_totp_secret(): string
+{
+    return strtoupper(preg_replace('/[\s=-]+/', '', (string) (cs_env('ADMIN_TOTP_SECRET') ?? '')) ?? '');
+}
+
+function admin_base32_decode(string $b32): string
+{
+    $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    $bits = '';
+    foreach (str_split($b32) as $c) {
+        $pos = strpos($alphabet, $c);
+        if ($pos === false) {
+            return '';
+        }
+        $bits .= str_pad(decbin($pos), 5, '0', STR_PAD_LEFT);
+    }
+    $out = '';
+    foreach (str_split($bits, 8) as $byte) {
+        if (strlen($byte) === 8) {
+            $out .= chr(bindec($byte));
+        }
+    }
+    return $out;
+}
+
+function admin_totp_code(string $key, int $step): string
+{
+    $hash = hash_hmac('sha1', pack('J', $step), $key, true);
+    $o = ord($hash[19]) & 0xF;
+    $n = ((ord($hash[$o]) & 0x7F) << 24) | (ord($hash[$o + 1]) << 16) | (ord($hash[$o + 2]) << 8) | ord($hash[$o + 3]);
+    return str_pad((string) ($n % 1000000), 6, '0', STR_PAD_LEFT);
+}
+
+/** Vérifie un code à 6 chiffres (fenêtre ±30 s) ; un code déjà utilisé est refusé (anti-rejeu). */
+function admin_totp_verify(string $code, ?int $now = null): bool
+{
+    $code = preg_replace('/\s+/', '', $code) ?? '';
+    $key = admin_base32_decode(admin_totp_secret());
+    if ($key === '' || !preg_match('/^\d{6}$/', $code)) {
+        return false;
+    }
+    $step = intdiv($now ?? time(), 30);
+    try {
+        $file = contact_state_dir('admin_totp') . '/last.txt';
+    } catch (\Throwable $e) {
+        return false; // fail-closed
+    }
+    $h = @fopen($file, 'c+');
+    if (!$h || !flock($h, LOCK_EX)) {
+        return false;
+    }
+    $last = (int) trim((string) stream_get_contents($h));
+    $ok = false;
+    for ($i = -1; $i <= 1; $i++) {
+        if ($step + $i > $last && hash_equals(admin_totp_code($key, $step + $i), $code)) {
+            ftruncate($h, 0);
+            rewind($h);
+            fwrite($h, (string) ($step + $i));
+            fflush($h);
+            $ok = true;
+            break;
+        }
+    }
+    flock($h, LOCK_UN);
+    fclose($h);
+    return $ok;
 }
 
 /* ---- Helpers vue ---- */

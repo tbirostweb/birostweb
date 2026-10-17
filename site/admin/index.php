@@ -39,17 +39,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $p = (string) ($_POST['password'] ?? '');
             $userOk = hash_equals(admin_user(), $u);
             $passOk = password_verify($p, admin_hash());
-            if ($userOk && $passOk) {
+            // 2FA TOTP : exigée seulement si ADMIN_TOTP_SECRET est défini (sinon comportement inchangé).
+            $totpOk = admin_totp_secret() === '' || ($userOk && $passOk && admin_totp_verify((string) ($_POST['totp'] ?? '')));
+            if ($userOk && $passOk && $totpOk) {
                 admin_login_reset($ip);
                 session_regenerate_id(true);
                 $_SESSION['admin_auth'] = true;
                 $_SESSION['admin_user'] = admin_user();
                 $_SESSION['admin_last'] = time();
+                $_SESSION['admin_started'] = time();
                 $_SESSION['csrf'] = bin2hex(random_bytes(32));
                 header('Location: ' . admin_base() . '/');
                 exit;
             }
             admin_login_record_failure($ip);
+            usleep(300000); // ralentit légèrement le brute-force
             $err = 'Identifiants invalides.';
         }
     } else {
@@ -244,6 +248,10 @@ if (!admin_is_authenticated()) {
     echo '<input type="text" id="user" name="user" autocomplete="username" autofocus required>';
     echo '<label for="password">Mot de passe</label>';
     echo '<input type="password" id="password" name="password" autocomplete="current-password" required>';
+    if (admin_totp_secret() !== '') {
+        echo '<label for="totp">Code de vérification (2FA)</label>';
+        echo '<input type="text" id="totp" name="totp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" required>';
+    }
     echo '<div style="margin-top:20px"><button class="btn" type="submit">Se connecter</button></div>';
     echo '</form></div>';
     admin_foot();
@@ -267,6 +275,12 @@ echo '<p class="muted">Modifiez prix, descriptions, caractéristiques et promos.
 
 if ($flash === '1') {
     echo '<div class="alert alert--ok" style="margin-top:18px">Offre enregistrée.</div>';
+}
+
+// Garde-fou : en production (HTTPS), un stockage local est éphémère -> les modifications seraient perdues au redéploiement.
+if (admin_is_https() && strtolower((string) (cs_env('CONTENT_BACKEND', 'local') ?? 'local')) !== 'bunny') {
+    echo '<div class="alert" style="margin-top:18px"><b>Attention :</b> <code>CONTENT_BACKEND</code> n\'est pas « bunny ». '
+        . 'Les modifications sont enregistrées sur le disque du conteneur et seront perdues au prochain déploiement.</div>';
 }
 
 if (($_GET['err'] ?? '') === 'create') {

@@ -33,6 +33,8 @@ Options -Indexes
     php_value post_max_size 210M
     # Transfert serveur -> Bunny : laisse le temps pour un clip de ~200 Mo.
     php_value max_execution_time 300
+    # Décodage GD des images (jusqu'à 30 Mpx) : marge mémoire pour l'admin uniquement.
+    php_value memory_limit 256M
 </IfModule>
 
 # Corps de requête autorisé relevé (mod_core) : ~220 Mo (couvre post_max_size + overhead).

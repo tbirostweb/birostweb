@@ -150,6 +150,8 @@ final class BunnyStore implements ContentStoreBackend
     private string $object;
     private string $cacheFile;
     private int $cacheTtl;
+    /** True si la dernière lecture a échoué (réseau/401/5xx) : le contenu n'est PAS prouvé absent. */
+    private bool $lastReadFailed = false;
 
     public function __construct()
     {
@@ -279,8 +281,14 @@ final class BunnyStore implements ContentStoreBackend
      *   4) réseau / 401 / 5xx / autre  -> cache périmé si présent, sinon null (seed).
      * Ne lève JAMAIS : le rendu public doit toujours aboutir.
      */
+    public function lastReadFailed(): bool
+    {
+        return $this->lastReadFailed;
+    }
+
     public function read(): ?string
     {
+        $this->lastReadFailed = false;
         if ($this->cacheFresh()) {
             $cached = $this->cacheRead();
             if ($cached !== null) {
@@ -300,7 +308,8 @@ final class BunnyStore implements ContentStoreBackend
             return null;
         }
 
-        // Échec (réseau, 401, 5xx, …) : anti-panne.
+        // Échec (réseau, 401, 5xx, …) : anti-panne. Le contenu existe peut-être : ne jamais le réamorcer.
+        $this->lastReadFailed = true;
         $reason = $res['error'] !== null ? ('réseau: ' . $res['error']) : ('HTTP ' . $status);
         $stale = $this->cacheRead();
         if ($stale !== null) {
@@ -362,24 +371,34 @@ final class ContentStore
             return $this->cache;
         }
         $raw = null;
+        $readFailed = false;
         try {
             $raw = $this->backend->read();
+            $readFailed = method_exists($this->backend, 'lastReadFailed') && $this->backend->lastReadFailed();
         } catch (\Throwable $e) {
             $raw = null;
+            $readFailed = true;
         }
         $data = null;
+        $mayBeCorrupt = false;
         if ($raw !== null && $raw !== '') {
             $decoded = json_decode($raw, true);
             if (is_array($decoded) && isset($decoded['offers']) && is_array($decoded['offers'])) {
                 $data = $decoded;
+            } else {
+                $mayBeCorrupt = true; // contenu présent mais illisible : ne pas l'écraser
             }
         }
         if ($data === null) {
             $data = cs_default_content();
-            try {
-                $this->backend->write($this->encode($data));
-            } catch (\Throwable $e) {
-                // Lecture résiliente : on sert le seed en mémoire même si l'écriture échoue.
+            // Le seed n'est persisté que si le contenu est PROUVÉ absent (404 / fichier inexistant).
+            // Panne de lecture ou JSON illisible : seed en mémoire uniquement, aucune écriture.
+            if (!$readFailed && !$mayBeCorrupt) {
+                try {
+                    $this->backend->write($this->encode($data));
+                } catch (\Throwable $e) {
+                    // Lecture résiliente : on sert le seed en mémoire même si l'écriture échoue.
+                }
             }
         }
         $this->cache = $data;

@@ -24,6 +24,7 @@
   .todo{background:#fff3ef;border:1px solid var(--accent);border-radius:6px;padding:2px 8px;font-size:13px;color:var(--accent);font-weight:600}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-top:12px}
   footer{color:var(--gray);font-size:13px;margin-top:40px;padding-top:18px;border-top:1px solid var(--line)}
+.btn-optout{font:inherit;padding:8px 14px;border:1.5px solid #231F20;background:transparent;color:#231F20;border-radius:3px;cursor:pointer}.btn-optout:hover{background:#231F20;color:#FBFAF6}.btn-optout:focus-visible{outline:3px solid #F0451E;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -70,18 +71,21 @@
     </ul>
 
     <h3>Destinataires</h3>
-    <p>Vos données sont lues par Théo Birost. Après envoi, un accusé de réception automatique est adressé à l'email que vous avez indiqué. Leur acheminement par email transite par le ou les fournisseurs de messagerie SMTP configurés pour le site : OVHcloud (serveur principal pro2.mail.ovh.net, connexion TLS). Le code du site n'utilise plus de serveur de secours ; un ancien secours Google Gmail a pu être configuré avant le 4 octobre 2026, et le retrait de cette configuration en production reste à confirmer. Si ce serveur a été utilisé, Google a pu traiter des données hors Union européenne. Le site est hébergé par OVH SAS (voir ci-dessus). Vos données ne sont ni revendues ni cédées.</p>
+    <p>Vos données sont lues par Théo Birost. Après envoi, un accusé de réception automatique est adressé à l'email que vous avez indiqué. Leur acheminement par email transite par le ou les fournisseurs de messagerie SMTP configurés pour le site : OVHcloud (serveur principal pro2.mail.ovh.net, connexion TLS). Le code du site n'utilise plus de serveur de secours ; un ancien secours Google Gmail a pu être configuré avant le 4 octobre 2026, et le retrait de cette configuration en production reste à confirmer. Si ce serveur a été utilisé, Google a pu traiter des données hors Union européenne. Le site est hébergé par OVH SAS (voir ci-dessus). Les médias de la galerie (images, vidéos) sont diffusés par Bunny.net (prestataire de diffusion et de stockage de contenu). Vos données ne sont ni revendues ni cédées.</p>
 
     <h3>Durée de conservation</h3>
     <p>Journaux techniques : <span class="todo">30 jours maximum (valeur par défaut du site ; À CONFIRMER par l'éditeur)</span>. Compteurs anti-abus : au plus 24 heures. Messages reçus : conservés le temps nécessaire au traitement de votre demande, puis archivés ou supprimés (au plus 12 mois après le dernier échange, sauf relation contractuelle en cours) <span class="todo">À CONFIRMER : procédure de purge effective</span>.</p>
 
     <h3>Cookies &amp; traceurs</h3>
-    <p>Ce site n'utilise <strong>aucun cookie de suivi</strong>, aucun outil de mesure d'audience et aucun traceur publicitaire. Les polices d'écriture sont hébergées sur le site lui-même : aucune requête n'est envoyée à un service tiers (pas de Google Fonts). Le site n'écrit aucun cookie et n'utilise ni localStorage, sessionStorage ni IndexedDB. Les liens vers des sites externes (réservation d'appel, GitHub, LinkedIn, Instagram, projets présentés) ne déclenchent aucune requête tant que vous ne cliquez pas dessus ; leurs politiques propres s'appliquent ensuite.</p>
+    <p>Ce site ne dépose <strong>aucun cookie</strong> et n'utilise aucun traceur publicitaire. Il mesure sa fréquentation avec <strong>Umami</strong>, un outil de mesure d'audience <strong>auto-hébergé</strong> par l'éditeur (umami.birostweb.fr) : aucune donnée n'est transmise à un tiers, aucun cookie n'est utilisé, et les statistiques (pages vues, provenance, type d'appareil) servent uniquement à améliorer le site, sans suivi individuel ni croisement avec d'autres sites. Vous pouvez refuser cette mesure à tout moment :</p>
+    <p><button type="button" id="optout-btn" class="btn-optout" aria-pressed="false">Refuser la mesure d’audience</button> <span id="optout-state" role="status" aria-live="polite"></span></p>
+    <p>Ce bouton enregistre uniquement votre refus dans le stockage local de votre navigateur (clé <code>umami.disabled</code>) ; le script respecte aussi le signal « Do Not Track » de votre navigateur. Les polices d'écriture sont hébergées sur le site lui-même : aucune requête n'est envoyée à Google Fonts. Les images et vidéos de la <a href="/galerie">galerie</a> sont servies par le réseau de diffusion <strong>Bunny.net</strong> (Bunny Storage / Bunny Stream) : votre adresse IP lui est transmise lors du chargement de ces médias ; la lecture d'une vidéo ne démarre (et ne charge le lecteur Bunny) qu'au clic. Les liens vers des sites externes (réservation d'appel, GitHub, LinkedIn, Instagram, projets présentés) ne déclenchent aucune requête tant que vous ne cliquez pas dessus ; leurs politiques propres s'appliquent ensuite.</p>
 
     <h3>Vos droits</h3>
     <p>Vous disposez d'un droit d'accès, de rectification, de suppression, d'opposition, de limitation et, le cas échéant, de portabilité sur vos données. Pour l'exercer, écrivez à <a href="mailto:contact@theo-birost.fr">contact@theo-birost.fr</a>. Vous pouvez aussi introduire une réclamation auprès de la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>).</p>
 
     <footer>© 2026 Théo Birost — Birostweb. Tous droits réservés.</footer>
   </div>
+  <script src="/js/analytics-optout.js" defer></script>
 </body>
 </html>

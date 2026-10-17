@@ -396,7 +396,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 <script defer src="<?= asset('/js/lib/SplitText.min.js') ?>"></script>
 <script defer src="<?= asset('/js/motion/core.js') ?>"></script>
 <script defer src="<?= asset('/js/motion/site.js') ?>"></script>
-  <script defer src="https://umami.birostweb.fr/script.js" data-website-id="0ee73c30-9df2-4d1a-99fc-1ae604e9562c"></script>
+  <script defer src="https://umami.birostweb.fr/script.js" data-do-not-track="true" data-website-id="0ee73c30-9df2-4d1a-99fc-1ae604e9562c"></script>
 </head>
 <body>
 

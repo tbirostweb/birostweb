@@ -8,10 +8,12 @@ formulaire de contact qui envoie par **SMTP** (comme le portfolio).
 
 ```
 birostweb/
-├── Dockerfile            # image de prod (php:8.2-apache, port 8080)
-├── entrypoint.sh         # port dynamique Apache ($PORT, défaut 8080)
+├── Dockerfile            # image de prod (php:8.3-apache, non-root www-data, port 8080)
+├── entrypoint.sh         # port dynamique Apache ($PORT, défaut 8080, via LISTEN_PORT)
 ├── composer.json/.lock   # dépendances PHP (PHPMailer, phpdotenv)
 ├── .env.example          # variables à définir dans Dokploy (NE PAS committer de vraies valeurs)
+├── OPS-CHECKLIST.md      # état d'exploitation, faits vérifiés et points ouverts
+├── tests/                # tests PHP/shell (CSP, formulaire, store, TOTP)
 ├── .dockerignore
 └── site/                 # racine web (DocumentRoot)
     ├── index.php         # page (génère le jeton anti-spam du formulaire)
@@ -45,16 +47,18 @@ birostweb/
 
 ## Variables d'environnement (Dokploy → onglet Environment)
 
-Les **mêmes** que ton portfolio (boîte OVH `contact@theo-birost.fr`). Voir `.env.example` :
+Voir `.env.example` (boîte OVH `contact@theo-birost.fr`) :
 
 | Variable | Exemple |
 |---|---|
-| `SMTP_HOST` | `ssl0.ovh.net` |
+| `SMTP_HOST` | `pro2.mail.ovh.net` |
 | `SMTP_USERNAME` | `contact@theo-birost.fr` |
 | `SMTP_PASSWORD` | *(le mot de passe de la boîte)* |
-| `SMTP_PORT` | `465` |
-| `SMTP_SECURE` | `ssl` |
+| `SMTP_PORT` / `SMTP_SECURE` | `587` / `tls` |
 | `CONTACT_FORM_SECRET` | une longue chaîne aléatoire (`openssl rand -hex 32`) |
+| `CONTENT_BACKEND` | `bunny` en production (stockage persistant) |
+| `ADMIN_USER` / `ADMIN_PASSWORD_HASH` | identifiant et hash `password_hash` du back-office |
+| `ADMIN_TOTP_SECRET` | *(optionnel)* secret base32 : active la 2FA de `/admin` |
 
 Sans ces variables, la page s'affiche mais l'envoi du formulaire échoue.
 

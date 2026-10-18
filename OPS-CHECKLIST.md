@@ -20,7 +20,8 @@
 5. **Umami** : exemption de consentement **non établie** (la page publique ne la revendique pas) ; à confirmer par l'absence de colonne IP en base (`\d session`) et par le contrôle de la purge mensuelle (première exécution). Transferts et sous-traitants (OVH, Bunny.net) à garder à jour dans le registre.
 6. **E-mail** : SPF, DKIM, DMARC du domaine d'envoi à vérifier.
 7. **Sauvegardes** : restauration de la sauvegarde VPS OVH non testée ; copie de `data/content.json` hors Bunny.
-8. **Autres** : limites CPU/RAM Dokploy, notifications/alertes (aucune configurée), CSP `img-src` à resserrer sur l'hôte exact de la Pull Zone, registre des traitements et procédure de violation (CNIL 72 h), audit d'accessibilité.
+8. **Google Analytics 4 (code prêt, non déployé)** : ajouter `GA4_MEASUREMENT_ID` dans Dokploy après déploiement ; régler dans GA4 la conservation à 14 mois (ou 2), désactiver les signaux Google, créer le filtre de trafic interne ; vérifier en production que la CSP (nouvelle version) n'empêche ni le bandeau ni le chargement de gtag après acceptation. Détails : `ANALYTICS.md`.
+9. **Autres** : limites CPU/RAM Dokploy, notifications/alertes (aucune configurée), CSP `img-src` à resserrer sur l'hôte exact de la Pull Zone, registre des traitements et procédure de violation (CNIL 72 h), audit d'accessibilité.
 
 ---
 

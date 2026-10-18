@@ -391,6 +391,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 <!-- Animations : GSAP auto-hébergé (CSP 'self'), voir js/motion/ -->
 <link rel="stylesheet" href="<?= asset('/css/motion.css') ?>">
 <script src="<?= asset('/js/motion/init.js') ?>"></script>
+<script defer src="<?= asset('/js/consent.js') ?>"></script>
 <script defer src="<?= asset('/js/lib/gsap.min.js') ?>"></script>
 <script defer src="<?= asset('/js/lib/ScrollTrigger.min.js') ?>"></script>
 <script defer src="<?= asset('/js/lib/SplitText.min.js') ?>"></script>
@@ -816,7 +817,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
     <div class="footer__in">
       <span class="footer__b">Théo Birost — Développeur web full-stack</span>
       <nav class="footer__l">
-        <a href="#realisations">Réalisations</a><a href="/galerie">Galerie</a><a href="#offres">Offres</a><a href="#approche">Approche</a><a href="#faq">FAQ</a><a href="#contact">Contact</a><a href="/mentions-legales.html">Mentions légales</a><a href="/cgv.html">CGV</a><a href="#top">↑ Haut</a>
+        <a href="#realisations">Réalisations</a><a href="/galerie">Galerie</a><a href="#offres">Offres</a><a href="#approche">Approche</a><a href="#faq">FAQ</a><a href="#contact">Contact</a><a href="/mentions-legales.html">Mentions légales</a><a href="/cgv.html">CGV</a><a href="#" data-consent-open hidden>Cookies</a><a href="#top">↑ Haut</a>
       </nav>
     </div>
     <div class="footer__meta"><span>© 2026 Théo Birost · Troyes &amp; Aube · France à distance</span><span>Micro-entreprise · Développement web sur-mesure</span></div>

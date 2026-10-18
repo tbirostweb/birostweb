@@ -21,6 +21,7 @@ chk "GET send_mail => 403" "$(code $U/send_mail.php)" 403
 chk "corps invalide (token absent) => 400" "$(code -X POST -d 'name=a&email=a@b.fr&message=bonjourbonjour' $U/send_mail.php)" 400
 run "CONTACT_FORM_SECRET= CONTACT_STATE_DIR=$T/st CONTACT_LOG_DIR=$T/lg"
 chk "altcha sans secret => 503" "$(code $U/altcha.php)" 503
+chk "ga-config sans variable => id null" "$(curl -s $U/ga-config.php)" '{"id":null}'
 chk "send_mail sans secret => 503" "$(code -X POST -d 'a=b' $U/send_mail.php)" 503
 run "CONTACT_FORM_SECRET=court CONTACT_STATE_DIR=$T/st CONTACT_LOG_DIR=$T/lg"
 chk "secret < 32 car => 503" "$(code -X POST -d 'a=b' $U/send_mail.php)" 503

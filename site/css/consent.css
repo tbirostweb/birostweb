@@ -1,0 +1,11 @@
+/* Bandeau de consentement (mesure d'audience Google Analytics) */
+.bw-consent{position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483000;max-width:640px;margin:0 auto;background:#231F20;color:#F0EDE4;border:1px solid #4a4540;border-radius:8px;padding:16px 18px;box-shadow:0 10px 40px rgba(0,0,0,.45);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.bw-consent[hidden]{display:none}
+.bw-consent__t{font-weight:600;font-size:15px;margin:0 0 6px}
+.bw-consent__p{margin:0 0 12px;color:#D9D5C9}
+.bw-consent__p a{color:#F0EDE4;text-decoration:underline}
+.bw-consent__b{display:flex;gap:10px;flex-wrap:wrap}
+.bw-consent__btn{flex:1 1 140px;min-height:44px;padding:10px 16px;border-radius:4px;border:1.5px solid #F0EDE4;background:#F0EDE4;color:#231F20;font:inherit;font-weight:600;cursor:pointer}
+.bw-consent__btn:hover{background:#F0451E;border-color:#F0451E;color:#fff}
+.bw-consent__btn:focus-visible{outline:3px solid #F0451E;outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){.bw-consent{animation:bwc-in .25s ease-out}@keyframes bwc-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}

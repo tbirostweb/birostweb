@@ -43,6 +43,42 @@ if ($offer === null) {
 
 $err = '';
 
+const ADMIN_TAB_NAMES = ['crea' => 'Création de site', 'heb' => 'Hébergement', 'seo' => 'SEO (onglet Référencement)', 'maint' => 'Maintenance'];
+
+/** Déplace l'offre vers un autre onglet : adapte la structure (carte « offre » ↔ carte « plan ») sans rien supprimer. */
+function admin_move_to_tab(array $offer, string $newTab, array $allOffers): array
+{
+    $max = 0;
+    foreach ($allOffers as $o) {
+        if (($o['tab'] ?? '') === $newTab && ($o['id'] ?? '') !== ($offer['id'] ?? '')) {
+            $max = max($max, (int) ($o['sort'] ?? 0));
+        }
+    }
+    $title = (string) ($offer['title'] ?? '');
+    $offer['tab'] = $newTab;
+    $offer['sort'] = $max + 10;
+    if ($newTab === 'crea') {
+        $offer += [
+            'number' => 'OFFRE', 'tag' => $title, 'inc' => implode(' ', array_map('strval', $offer['features'] ?? [])),
+            'price_label' => 'Tarif', 'price_note' => '', 'cta_label' => 'Choisir cette offre',
+        ];
+        $offer['price_unit'] = $offer['price_unit'] ?? '';
+        $offer['cta_data'] = ['data-step' => 'offre', 'data-label' => $title, 'data-oneoff' => '0', 'data-form' => (string) $offer['id'], 'data-next' => 'tab-heb'];
+    } else {
+        if (!array_key_exists('features', $offer)) {
+            $inc = trim((string) ($offer['inc'] ?? ''));
+            $offer['features'] = $inc !== '' ? [$inc] : [];
+        }
+        $offer['price_unit'] = $offer['price_unit'] ?? '';
+        $offer['cta_label'] = $offer['cta_label'] ?? 'Choisir cette offre';
+        $step = $newTab === 'heb' ? 'heb' : ($newTab === 'seo' ? 'seo' : 'maint');
+        $offer['cta_data'] = $newTab === 'seo'
+            ? ['data-step' => 'seo', 'data-label' => $title, 'data-oneoff' => '0', 'data-form' => (string) $offer['id']]
+            : ['data-step' => $step, 'data-label' => $title, 'data-mo' => '0', 'data-form' => $title];
+    }
+    return $offer;
+}
+
 /* ---------- Enregistrement ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!admin_csrf_check()) {
@@ -121,8 +157,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'until' => $until,
         ];
 
-        // Réécrit l'offre dans la liste
         $offers = cs_offers($content);
+        $newTab = (string) ($_POST['tab'] ?? ($offer['tab'] ?? ''));
+        if (isset(ADMIN_TAB_NAMES[$newTab]) && $newTab !== ($offer['tab'] ?? '')) {
+            $offer = admin_move_to_tab($offer, $newTab, $offers);
+        }
+        // Réécrit l'offre dans la liste
         foreach ($offers as &$o) {
             if (($o['id'] ?? '') === $id) {
                 $o = $offer;
@@ -148,7 +188,7 @@ $promo = $offer['promo'] ?? ['active' => false, 'price' => '', 'label' => '', 'u
 admin_head('Modifier · ' . (string) ($offer['title'] ?? ''));
 echo '<div class="topbar"><span class="brand"><b>BW</b> Admin</span>'
     . '<a class="muted" href="' . e($base) . '/">← Toutes les offres</a></div>';
-echo '<span class="eyebrow">Onglet ' . e((string) ($offer['tab'] ?? '')) . '</span>';
+echo '<span class="eyebrow">Onglet ' . e(ADMIN_TAB_NAMES[$offer['tab'] ?? ''] ?? (string) ($offer['tab'] ?? '')) . '</span>';
 echo '<h1>' . e((string) ($offer['title'] ?? 'Offre')) . '</h1>';
 echo '<p class="muted">Identifiant : <code>' . e($id) . '</code></p>';
 
@@ -190,6 +230,11 @@ if (array_key_exists('packs', $offer)) {
     echo '<textarea id="f_packs" name="packs">' . e(implode("\n", $packLines)) . '</textarea>';
 }
 
+echo '<label for="f_tab">Onglet du site</label><select id="f_tab" name="tab">';
+foreach (ADMIN_TAB_NAMES as $tk => $tl) {
+    echo '<option value="' . e($tk) . '"' . (($offer['tab'] ?? '') === $tk ? ' selected' : '') . '>' . e($tl) . '</option>';
+}
+echo '</select><p class="hint">Changer d\'onglet déplace l\'offre à la fin du nouvel onglet. Enregistrez, puis rouvrez l\'offre pour compléter les champs propres au nouvel onglet (caractéristiques, étiquette…). Pour un prix de départ, le prix doit commencer par un nombre.</p>';
 echo '<div class="grid2">';
 echo '<div><label for="f_sort">Ordre (sort)</label>'
     . '<input type="text" id="f_sort" name="sort" value="' . e((string) ((int) ($offer['sort'] ?? 0))) . '"></div>';

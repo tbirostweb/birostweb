@@ -153,12 +153,18 @@ function offers_soldout_badge(): string
     return '<span class="stock-badge">Indisponible</span>';
 }
 
+/** Bouton « Voir le détail » (mobile uniquement, actif seulement avec JS : voir js/offers-fold.js). */
+function offers_fold_toggle(string $indent): string
+{
+    return $indent . '<button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>' . "\n";
+}
+
 function offers_cta_html(array $o, string $indent): string
 {
     if (!offers_is_available($o)) {
-        return $indent . '<span class="btn btn-ghost is-disabled" aria-disabled="true" role="link">Indisponible</span>' . "\n";
+        return $indent . '<span class="btn btn-ghost fold is-disabled" aria-disabled="true" role="link">Indisponible</span>' . "\n";
     }
-    return $indent . '<a href="#contact" class="btn btn-ghost"' . offers_cta_attrs($o) . '>'
+    return $indent . '<a href="#contact" class="btn btn-ghost fold"' . offers_cta_attrs($o) . '>'
         . oe((string) ($o['cta_label'] ?? '')) . '</a>' . "\n";
 }
 
@@ -176,12 +182,13 @@ function offers_render_offer(array $o): string
     $h .= '        <div class="offer__top"><span class="offer__n">' . oe((string) ($o['number'] ?? ''))
         . '</span><span class="tag">' . oe((string) ($o['tag'] ?? '')) . '</span></div>' . "\n";
     $h .= '        <h3>' . oe((string) ($o['title'] ?? '')) . '</h3>' . "\n";
-    $h .= '        <p class="offer__promise">' . oe((string) ($o['description'] ?? '')) . '</p>' . "\n";
-    $h .= '        <div class="offer__inc"><b>Inclus</b>' . oe((string) ($o['inc'] ?? '')) . '</div>' . "\n";
+    $h .= '        <p class="offer__promise fold">' . oe((string) ($o['description'] ?? '')) . '</p>' . "\n";
+    $h .= '        <div class="offer__inc fold"><b>Inclus</b>' . oe((string) ($o['inc'] ?? '')) . '</div>' . "\n";
     $h .= '        <div class="offer__price"><div class="lbl">' . oe((string) ($o['price_label'] ?? ''))
         . '</div><div class="amt' . (str_contains((string) ($o['price'] ?? ''), '–') ? ' amt--range' : '') . '">' . offers_price_html($o, '')
         . '</div><div class="note">' . oe((string) ($o['price_note'] ?? '')) . '</div>'
         . '<div class="indic">prix indicatif · devis gratuit</div></div>' . "\n";
+    $h .= offers_fold_toggle('        ');
     $h .= offers_cta_html($o, '        ');
     $h .= '      </article>';
     return $h;
@@ -205,14 +212,15 @@ function offers_render_plan(array $o): string
     }
     $h .= '          <div class="plan__name">' . oe((string) ($o['title'] ?? '')) . '</div>' . "\n";
     $h .= '          <div class="plan__price">' . offers_price_html($o, $unit) . '</div>' . "\n";
-    $h .= '          <div class="plan__for">' . oe((string) ($o['description'] ?? '')) . '</div>' . "\n";
-    $h .= '          <ul class="plan__list">';
+    $h .= offers_fold_toggle('          ');
+    $h .= '          <div class="plan__for fold">' . oe((string) ($o['description'] ?? '')) . '</div>' . "\n";
+    $h .= '          <ul class="plan__list fold">';
     foreach (($o['features'] ?? []) as $f) {
         $h .= '<li>' . oe((string) $f) . '</li>';
     }
     $h .= '</ul>' . "\n";
     if (!empty($o['packs']) && is_array($o['packs'])) {
-        $h .= '          <div class="plan__packs">' . "\n";
+        $h .= '          <div class="plan__packs fold">' . "\n";
         $h .= '            <span class="pk-lbl">Packs dégressifs</span>' . "\n";
         foreach ($o['packs'] as $p) {
             $h .= '            <div class="plan__pack"><span class="a">' . oe((string) ($p['a'] ?? ''))

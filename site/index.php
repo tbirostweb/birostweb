@@ -379,6 +379,19 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 #tab-crea:checked~#panel-crea,#tab-heb:checked~#panel-heb,#tab-seo:checked~#panel-seo,#tab-maint:checked~#panel-maint{display:block}
 .tabs__panel .reveal{opacity:1;transform:none}
 
+/* Offres repliables sur mobile (voir js/offers-fold.js) */
+.fold-toggle{display:none}
+@media (max-width:640px){
+  .js-fold .fold-toggle{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;margin-top:14px;padding:6px 0;background:none;border:0;border-bottom:1px solid var(--accent);font-family:var(--fm);font-size:13px;letter-spacing:.02em;color:var(--accent);cursor:pointer}
+  .js-fold .fold-toggle::after{content:"";width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+  .js-fold .is-open .fold-toggle::after{transform:rotate(-135deg) translateY(-2px)}
+  .js-fold .offer:not(.is-open) .fold,.js-fold .plan:not(.is-open) .fold,
+  .js-fold .offer:not(.is-open) .offer__price .note,.js-fold .offer:not(.is-open) .offer__price .indic{display:none}
+  .js-fold .offer,.js-fold .plan{padding:22px 22px 20px}
+  .js-fold .offer__price{padding-top:12px}
+  .js-fold .offer:not(.is-open) .offer__top{margin-bottom:8px}
+}
+
 /* ===== Estimation (configurateur d'offre) ===== */
 .estimate{background:rgba(240,69,30,.10);border:1px solid var(--accent);border-radius:10px;padding:16px 18px;margin-bottom:4px}
 .estimate__t{font-family:var(--fm);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
@@ -391,6 +404,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 <!-- Animations : GSAP auto-hébergé (CSP 'self'), voir js/motion/ -->
 <link rel="stylesheet" href="<?= asset('/css/motion.css') ?>">
 <script src="<?= asset('/js/motion/init.js') ?>"></script>
+<script src="<?= asset('/js/offers-fold.js') ?>"></script>
 <script defer src="<?= asset('/js/consent.js') ?>"></script>
 <script defer src="<?= asset('/js/lib/gsap.min.js') ?>"></script>
 <script defer src="<?= asset('/js/lib/ScrollTrigger.min.js') ?>"></script>

@@ -379,6 +379,29 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 #tab-crea:checked~#panel-crea,#tab-heb:checked~#panel-heb,#tab-seo:checked~#panel-seo,#tab-maint:checked~#panel-maint{display:block}
 .tabs__panel .reveal{opacity:1;transform:none}
 
+/* Mobile : contenu secondaire replié / compacté (voir js/offers-fold.js) */
+@media (max-width:640px){
+  .section{padding:38px 0}
+  .sec-head{margin-bottom:22px}
+  .sec-head .lead{font-size:15.5px}
+  .hero{padding:28px 0 36px}
+  .hero__card{max-width:210px}
+  .hero__note{display:none}
+  .bcell{padding:16px 14px}
+  .bcell .t{font-size:14px}
+  .js-fold .project .shot__img{aspect-ratio:16/8}
+  .js-fold .project:not(.is-open) .fold,.js-fold .mini:not(.is-open) .fold{display:none}
+  .js-fold .project .fold-toggle,.js-fold .mini .fold-toggle{display:flex;width:fit-content;margin-top:10px;margin-bottom:10px}
+  .js-fold .project{gap:16px}
+  .js-fold .project.is-open .project__links{margin-top:4px}
+  .js-fold .mini{padding:18px 20px}
+  .js-fold .mini:not(.is-open) h3{margin-bottom:0}
+  .steps{gap:18px}
+  .step{padding-top:14px}
+  .step p{font-size:14.5px}
+  .manifest .mrow:nth-child(2),.manifest .mrow:nth-child(3){display:none}
+}
+
 /* Offres repliables sur mobile (voir js/offers-fold.js) */
 .fold-toggle{display:none}
 @media (max-width:640px){
@@ -489,9 +512,10 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
           <span class="project__k">Projet client · Stage</span>
           <h3>Maison du Bonheur</h3>
           <span class="project__ctx">Site de réservation · Deux logements touristiques</span>
-          <p>Le site vitrine de deux appartements meublés à Troyes et Sainte-Savine. J'ai mis en avant les logements, les avis des voyageurs et l'accueil de l'hôtesse, avec un parcours clair qui mène jusqu'à la réservation. Un site rapide et soigné, pensé pour donner envie de poser ses valises.</p>
-          <p class="project__role"><b>Mon rôle</b>Seul développeur, de la conception à la mise en ligne, pendant mon stage à la SCI Birost.</p>
-          <div class="tags"><span class="tag">Vue 3</span><span class="tag">Vite</span><span class="tag">JavaScript</span><span class="tag">SEO</span></div>
+          <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
+          <p class="fold">Le site vitrine de deux appartements meublés à Troyes et Sainte-Savine. J'ai mis en avant les logements, les avis des voyageurs et l'accueil de l'hôtesse, avec un parcours clair qui mène jusqu'à la réservation. Un site rapide et soigné, pensé pour donner envie de poser ses valises.</p>
+          <p class="project__role fold"><b>Mon rôle</b>Seul développeur, de la conception à la mise en ligne, pendant mon stage à la SCI Birost.</p>
+          <div class="tags fold"><span class="tag">Vue 3</span><span class="tag">Vite</span><span class="tag">JavaScript</span><span class="tag">SEO</span></div>
           <div class="project__links">
             <a class="plink" href="https://maisondubonheurstesavine.fr/" target="_blank" rel="noopener">Voir le site
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
@@ -508,9 +532,10 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
           <span class="project__k">Projet client · Stage</span>
           <h3>Forum Hydrogen Business for Climate</h3>
           <span class="project__ctx">Réalisé pour AER BFC · Événement B2B international</span>
-          <p>Refonte intégrale du site d'un forum international de la filière hydrogène : bascule bilingue FR/EN, blocs sur-mesure (intervenants, exposants, presse) et pages optimisées pour charger vite malgré un contenu dense.</p>
-          <p class="project__role"><b>Mon rôle</b>Seul développeur sur le projet, de l'intégration au déploiement, pendant mon stage chez AER BFC.</p>
-          <div class="tags"><span class="tag">WordPress</span><span class="tag">ACF</span><span class="tag">CPT UI</span><span class="tag">TranslatePress</span><span class="tag">PHP</span><span class="tag">SEO</span></div>
+          <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
+          <p class="fold">Refonte intégrale du site d'un forum international de la filière hydrogène : bascule bilingue FR/EN, blocs sur-mesure (intervenants, exposants, presse) et pages optimisées pour charger vite malgré un contenu dense.</p>
+          <p class="project__role fold"><b>Mon rôle</b>Seul développeur sur le projet, de l'intégration au déploiement, pendant mon stage chez AER BFC.</p>
+          <div class="tags fold"><span class="tag">WordPress</span><span class="tag">ACF</span><span class="tag">CPT UI</span><span class="tag">TranslatePress</span><span class="tag">PHP</span><span class="tag">SEO</span></div>
           <div class="project__links">
             <a class="plink" href="https://www.hydrogenbusinessforclimate.com" target="_blank" rel="noopener">Voir le site en ligne
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
@@ -527,9 +552,10 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
           <span class="project__k">Application web · Full-stack</span>
           <h3>Générique</h3>
           <span class="project__ctx">Index de cinéma · Recherche &amp; fiches détaillées</span>
-          <p>Une application pour explorer un index de films, d'interprètes et de réalisateurs : recherche instantanée, fiches détaillées et données à jour. Une base full-stack complète, du front jusqu'à la logique serveur.</p>
-          <p class="project__role"><b>Mon rôle</b>Conception et développement complet, du front à l'API.</p>
-          <div class="tags"><span class="tag">Vue 3</span><span class="tag">Vite</span><span class="tag">JavaScript</span><span class="tag">API</span></div>
+          <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
+          <p class="fold">Une application pour explorer un index de films, d'interprètes et de réalisateurs : recherche instantanée, fiches détaillées et données à jour. Une base full-stack complète, du front jusqu'à la logique serveur.</p>
+          <p class="project__role fold"><b>Mon rôle</b>Conception et développement complet, du front à l'API.</p>
+          <div class="tags fold"><span class="tag">Vue 3</span><span class="tag">Vite</span><span class="tag">JavaScript</span><span class="tag">API</span></div>
           <div class="project__links">
             <a class="plink" href="https://generique.theo-birost.fr" target="_blank" rel="noopener">Voir le projet
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
@@ -546,9 +572,10 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
           <span class="project__k">Projet perso · Solo</span>
           <h3>Jeu du clicker</h3>
           <span class="project__ctx">Jeu de clic old-school · Système de progression</span>
-          <p>Un petit jeu de clic old-school : on accumule des points, on débloque des améliorations et on grimpe au classement. Front, back et déploiement Docker faits maison.</p>
-          <p class="project__role"><b>Mon rôle</b>Conception et développement complet, du front au back.</p>
-          <div class="tags"><span class="tag">HTML</span><span class="tag">Tailwind</span><span class="tag">PHP</span><span class="tag">Docker</span></div>
+          <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
+          <p class="fold">Un petit jeu de clic old-school : on accumule des points, on débloque des améliorations et on grimpe au classement. Front, back et déploiement Docker faits maison.</p>
+          <p class="project__role fold"><b>Mon rôle</b>Conception et développement complet, du front au back.</p>
+          <div class="tags fold"><span class="tag">HTML</span><span class="tag">Tailwind</span><span class="tag">PHP</span><span class="tag">Docker</span></div>
           <div class="project__links">
             <a class="plink" href="https://portfolio.theo-birost.fr/clicker/" target="_blank" rel="noopener">Voir le projet
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
@@ -563,29 +590,33 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="mini">
         <span class="mini__k">Défi perso · Intégration</span>
         <h3>One Page Challenge</h3>
-        <p>Un défi que je me lance : concevoir et coder une landing page complète en une heure, from scratch. Quatre pages à ce jour : e-commerce, voyage, tech et SaaS.</p>
-        <div class="tags"><span class="tag">Vue 3</span><span class="tag">Vite</span><span class="tag">Tailwind</span><span class="tag">HTML</span></div>
+        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
+        <p class="fold">Un défi que je me lance : concevoir et coder une landing page complète en une heure, from scratch. Quatre pages à ce jour : e-commerce, voyage, tech et SaaS.</p>
+        <div class="tags fold"><span class="tag">Vue 3</span><span class="tag">Vite</span><span class="tag">Tailwind</span><span class="tag">HTML</span></div>
         <a class="plink" href="https://onepage.birostweb.fr" target="_blank" rel="noopener">Voir le projet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
       </article>
       <article class="mini">
         <span class="mini__k">Jeu web · Solo</span>
         <h3>Empire Culturel</h3>
-        <p>Jeu incrémental de collection de monuments : farm, boosters, arbre technologique et classement. Parties sauvegardées en local.</p>
-        <div class="tags"><span class="tag">Vue 3</span><span class="tag">Tailwind</span><span class="tag">JavaScript</span></div>
+        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
+        <p class="fold">Jeu incrémental de collection de monuments : farm, boosters, arbre technologique et classement. Parties sauvegardées en local.</p>
+        <div class="tags fold"><span class="tag">Vue 3</span><span class="tag">Tailwind</span><span class="tag">JavaScript</span></div>
         <a class="plink" href="https://carte.theo-birost.fr" target="_blank" rel="noopener">Voir le projet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
       </article>
       <article class="mini">
         <span class="mini__k">Projet perso · Solo</span>
         <h3>Sidequest</h3>
-        <p>Une collection de mini-jeux à découvrir dans le navigateur : dactylographie, lancer de dés, morpion et Snake.</p>
-        <div class="tags"><span class="tag">Mini-jeux</span><span class="tag">Jeu web</span></div>
+        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
+        <p class="fold">Une collection de mini-jeux à découvrir dans le navigateur : dactylographie, lancer de dés, morpion et Snake.</p>
+        <div class="tags fold"><span class="tag">Mini-jeux</span><span class="tag">Jeu web</span></div>
         <a class="plink" href="https://jeu.birostweb.fr/" target="_blank" rel="noopener">Voir le projet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
       </article>
       <article class="mini">
         <span class="mini__k">Projet perso · Solo</span>
         <h3>Portfolio template</h3>
-        <p>Un template de portfolio en Tailwind et PHP, multilingue FR/EN, pensé pour être facile à reprendre et à adapter.</p>
-        <div class="tags"><span class="tag">Tailwind</span><span class="tag">PHP</span><span class="tag">JavaScript</span></div>
+        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
+        <p class="fold">Un template de portfolio en Tailwind et PHP, multilingue FR/EN, pensé pour être facile à reprendre et à adapter.</p>
+        <div class="tags fold"><span class="tag">Tailwind</span><span class="tag">PHP</span><span class="tag">JavaScript</span></div>
         <a class="plink" href="https://portfolio.theo-birost.fr" target="_blank" rel="noopener">Voir le projet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
       </article>
     </div>
@@ -604,12 +635,14 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="mini">
         <span class="mini__k">22 juin – 15 août 2026 · 8 semaines</span>
         <h3>SCI BIROST</h3>
-        <p>Stage en développement web et communication digitale. Mission : création d'un site de réservation pour deux logements touristiques, gestion de leur communication digitale et participation à leur promotion publicitaire.</p>
+        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
+        <p class="fold">Stage en développement web et communication digitale. Mission : création d'un site de réservation pour deux logements touristiques, gestion de leur communication digitale et participation à leur promotion publicitaire.</p>
       </article>
       <article class="mini">
         <span class="mini__k">20 avril – 19 juin 2026 · 9 semaines</span>
         <h3>AER BFC</h3>
-        <p>Stage à l'Agence économique régionale de Bourgogne-Franche-Comté, à Dijon. Mission : contribuer à la refonte d'un site internet, avec un travail sur le Forum Hydrogen Business for Climate présenté dans mes réalisations.</p>
+        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
+        <p class="fold">Stage à l'Agence économique régionale de Bourgogne-Franche-Comté, à Dijon. Mission : contribuer à la refonte d'un site internet, avec un travail sur le Forum Hydrogen Business for Climate présenté dans mes réalisations.</p>
       </article>
     </div>
   </div>

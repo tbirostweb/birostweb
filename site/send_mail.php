@@ -288,7 +288,7 @@ $message = trim($_POST["message"] ?? '');
 
 // Champs à choix fermé : on n'accepte que des valeurs de la liste blanche.
 $maintAllowed = ['Suivi mensuel (39 €/mois)', "Pack d'heures", "On verra plus tard / besoin d'infos"];
-$hebergAllowed = ['Sur mon propre serveur / hébergeur', 'Essentiel · VPS-1 (45 €/mois)', 'Pro · VPS-2 (69 €/mois)'];
+$hebergAllowed = ['Sur mon propre serveur / hébergeur', 'Essentiel · VPS-1 (45 €/mois)'];
 // Offre : liste blanche = id des offres réelles actives du ContentStore (ou « sur-mesure »).
 // On envoie par mail le libellé lisible ; un id inconnu est traité comme « non précisé ».
 try {

@@ -785,7 +785,6 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
             <option value="">— À définir —</option>
             <option value="Sur mon propre serveur / hébergeur">Sur mon propre serveur / hébergeur</option>
             <option value="Essentiel · VPS-1 (45 €/mois)">Essentiel · VPS-1 — 45 €/mois (tout compris)</option>
-            <option value="Pro · VPS-2 (69 €/mois)">Pro · VPS-2 — 69 €/mois (tout compris)</option>
           </select>
         </div>
         </div><!-- /form-details -->

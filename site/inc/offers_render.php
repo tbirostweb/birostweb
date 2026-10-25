@@ -84,6 +84,38 @@ function offers_contact_options_html(array $content, string $indent = '         
     return $h;
 }
 
+/** Valeur « plus tard » du select Maintenance du formulaire de contact. */
+const OFFERS_MAINT_LATER_VALUE = "On verra plus tard / besoin d'infos";
+
+/** Valeurs de formulaire (data-form) des offres actives et disponibles d'un onglet Hébergement / Maintenance. */
+function offers_plan_choices(array $content, string $tab): array
+{
+    $vals = [];
+    foreach (cs_offers_by_tab($content)[$tab] ?? [] as $o) {
+        if (!offers_is_available($o)) {
+            continue;
+        }
+        $v = trim((string) (($o['cta_data']['data-form'] ?? '') ?: ($o['title'] ?? '')));
+        if ($v !== '') {
+            $vals[] = $v;
+        }
+    }
+    return array_values(array_unique($vals));
+}
+
+/** <option> d'un select Hébergement / Maintenance du formulaire de contact (offres actives de l'onglet). */
+function offers_plan_options_html(array $content, string $tab, bool $withLater = false, string $indent = '            '): string
+{
+    $h = $indent . '<option value="">— À définir —</option>' . "\n";
+    foreach (offers_plan_choices($content, $tab) as $v) {
+        $h .= $indent . '<option value="' . oe($v) . '">' . oe($v) . '</option>' . "\n";
+    }
+    if ($withLater) {
+        $h .= $indent . '<option value="' . oe(OFFERS_MAINT_LATER_VALUE) . '">' . oe(OFFERS_MAINT_LATER_VALUE) . '</option>' . "\n";
+    }
+    return $h;
+}
+
 /** <option> du select « référencement » du formulaire de contact (offres de l'onglet Référencement actives). */
 function offers_seo_options_html(array $content, string $indent = '            '): string
 {

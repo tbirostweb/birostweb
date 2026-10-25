@@ -287,8 +287,6 @@ $email   = filter_var(trim($_POST["email"] ?? ''), FILTER_SANITIZE_EMAIL);
 $message = trim($_POST["message"] ?? '');
 
 // Champs à choix fermé : on n'accepte que des valeurs de la liste blanche.
-$maintAllowed = ['Suivi mensuel (39 €/mois)', "Pack d'heures", "On verra plus tard / besoin d'infos"];
-$hebergAllowed = ['Sur mon propre serveur / hébergeur', 'Essentiel · VPS-1 (45 €/mois)'];
 // Offre : liste blanche = id des offres réelles actives du ContentStore (ou « sur-mesure »).
 // On envoie par mail le libellé lisible ; un id inconnu est traité comme « non précisé ».
 try {
@@ -296,6 +294,9 @@ try {
 } catch (\Throwable $e) {
     $siteContent = cs_default_content();
 }
+// Maintenance / hébergement : liste blanche dérivée des offres actives du ContentStore (valeur = data-form de l'offre).
+$maintAllowed = array_merge(offers_plan_choices($siteContent, 'maint'), [OFFERS_MAINT_LATER_VALUE]);
+$hebergAllowed = offers_plan_choices($siteContent, 'heb');
 $offreId = $_POST["offre"] ?? '';
 $offre   = is_string($offreId) ? offers_contact_label($siteContent, $offreId) : '';
 $seoId = $_POST["referencement"] ?? '';
@@ -449,16 +450,21 @@ if (!$sent) {
 }
 
 // --- Accusé de réception automatique au visiteur (best-effort : n'échoue pas la demande) ---
-try {
+// Pas d'accusé pour un message marqué spam (évite de servir de relais à des adresses arbitraires),
+// et le nom saisi n'est repris que s'il ne ressemble ni à une URL ni à une adresse.
+if (!$spam['flag']) try {
     $ack = new PHPMailer(true);
     $ack->CharSet = 'UTF-8';
     contact_apply_smtp($ack, $usedProfile);
     $ack->setFrom($usedProfile['user'], 'Théo Birost — Birostweb');
-    $ack->addAddress($email, $name);
+    $ack->addAddress($email, preg_match('~https?:|www\.|@|\.[a-z]{2,}(/|$)~i', $name) ? '' : $name);
     $ack->addReplyTo($recipient, 'Théo Birost');
     $ack->isHTML(true);
     $ack->Subject = 'Bien reçu — je reviens vers vous sous 48h';
-    $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+    $nameOk = !preg_match('~https?:|www\.|@|\.[a-z]{2,}(/|$)~i', $name);
+    $ackName = $nameOk ? $name : '';
+    $safeName = htmlspecialchars($ackName, ENT_QUOTES, 'UTF-8');
+    $greet = $ackName !== '' ? ' ' . $safeName : '';
     $ack->Body = <<<HTML
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
 <body style="margin:0;background-color:#E5E2D6;font-family:'Helvetica Neue',Arial,sans-serif;padding:32px 16px;">
@@ -470,7 +476,7 @@ try {
 <div style="color:#F0EDE4;font-size:20px;font-weight:700;margin-top:12px;">Bien reçu, merci !</div>
 </td></tr>
 <tr><td style="padding:26px 30px;color:#231F20;font-size:15px;line-height:1.6;">
-Bonjour {$safeName},<br><br>
+Bonjour{$greet},<br><br>
 Merci pour votre message, je l'ai bien reçu. Je reviens vers vous <b>sous 48h</b> (jours ouvrés) avec une première réponse ou un devis.<br><br>
 Si vous avez un document ou une précision à ajouter, répondez simplement à cet email.<br><br>
 À très vite,<br><b>Théo Birost</b><br>
@@ -478,7 +484,7 @@ Si vous avez un document ou une précision à ajouter, répondez simplement à c
 </td></tr></table></td></tr></table>
 </body></html>
 HTML;
-    $ack->AltBody = "Bonjour $name,\n\nMerci pour votre message, je l'ai bien reçu. Je reviens vers vous sous 48h (jours ouvrés).\n\nÀ très vite,\nThéo Birost — birostweb.fr";
+    $ack->AltBody = "Bonjour" . ($ackName !== '' ? " $ackName" : '') . ",\n\nMerci pour votre message, je l'ai bien reçu. Je reviens vers vous sous 48h (jours ouvrés).\n\nÀ très vite,\nThéo Birost — birostweb.fr";
     $ack->send();
 } catch (Exception $e) {
     // Ignoré : la notification principale, elle, est bien partie.

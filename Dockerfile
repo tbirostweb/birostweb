@@ -21,7 +21,7 @@ RUN a2enmod rewrite headers expires
 
 # Config PHP de production (display_errors off, expose_php off, etc.)
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
-    && echo "variables_order = EGPCS" > "$PHP_INI_DIR/conf.d/zz-app.ini"
+    && printf 'variables_order = EGPCS\nsession.use_strict_mode = 1\n' > "$PHP_INI_DIR/conf.d/zz-app.ini"
 
 # GD : ré-encodage des images uploadées en admin (métadonnées supprimées, redimensionnement)
 RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
@@ -32,7 +32,8 @@ RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
 
 # Apache non-root : port via variable d'environnement (aucune modification de config au démarrage),
 # journaux vers stdout/stderr, dossiers d'exécution accessibles à www-data.
-RUN echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf \
+RUN sed -i 's/^ServerTokens .*/ServerTokens Prod/; s/^ServerSignature .*/ServerSignature Off/' /etc/apache2/conf-available/security.conf \
+    && echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf \
     && a2enconf servername \
     && sed -i 's/Listen 80/Listen ${LISTEN_PORT}/' /etc/apache2/ports.conf \
     && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:${LISTEN_PORT}>/' /etc/apache2/sites-available/*.conf \

@@ -49,13 +49,20 @@ function admin_is_https(): bool
     return is_string($xf) && strtolower($xf) === 'https';
 }
 
+/** Cookie de session Secure partout sauf en développement local (ne dépend pas de X-Forwarded-Proto, falsifiable). */
+function admin_cookie_secure(): bool
+{
+    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    return !preg_match('/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/', $host);
+}
+
 /* ---- Session durcie ---- */
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/admin',
         'httponly' => true,
-        'secure' => admin_is_https(),
+        'secure' => admin_cookie_secure(),
         'samesite' => 'Strict',
     ]);
     session_name('bwadmin');
@@ -110,7 +117,7 @@ function admin_destroy_session(): void
             'expires' => time() - 42000,
             'path' => $p['path'] ?: '/admin',
             'httponly' => true,
-            'secure' => admin_is_https(),
+            'secure' => admin_cookie_secure(),
             'samesite' => 'Strict',
         ]);
     }
@@ -154,6 +161,7 @@ function admin_csrf_check(): bool
 
 /* ---- Anti-force-brute (par IP, fenêtre glissante) ---- */
 const ADMIN_LOGIN_MAX = 5;
+const ADMIN_LOGIN_GLOBAL_MAX = 60; // toutes IP confondues, même fenêtre
 const ADMIN_LOGIN_WINDOW = 900; // 15 min
 
 /** Fichier d'état des tentatives pour une IP. */
@@ -164,48 +172,26 @@ function admin_login_rl_file(string $ip): string
     return $dir . '/' . hash_hmac('sha256', $ip, $secret) . '.json';
 }
 
-/** True si l'IP a dépassé le quota de tentatives. Fail-closed (storage KO => true). */
-function admin_login_limited(string $ip): bool
+/**
+ * Contrôle ET enregistre une tentative de connexion, de façon atomique (un seul verrou exclusif),
+ * pour que des requêtes parallèles ne dépassent pas le quota. True = bloqué. Fail-closed (stockage KO => true).
+ * Quota par IP (ADMIN_LOGIN_MAX) et plafond global (ADMIN_LOGIN_GLOBAL_MAX) sur la même fenêtre.
+ * Une connexion réussie remet à zéro le compteur de l'IP (admin_login_reset) ; le plafond global n'est pas remis à zéro.
+ */
+function admin_login_hit(string $key, int $max): bool
 {
     try {
-        $file = admin_login_rl_file($ip);
+        $file = admin_login_rl_file($key);
     } catch (\Throwable $e) {
         return true;
     }
     $h = @fopen($file, 'c+');
     if (!$h) {
         return true;
-    }
-    if (!flock($h, LOCK_SH)) {
-        fclose($h);
-        return true;
-    }
-    $times = json_decode(stream_get_contents($h) ?: '[]', true);
-    flock($h, LOCK_UN);
-    fclose($h);
-    if (!is_array($times)) {
-        $times = [];
-    }
-    $now = time();
-    $times = array_filter($times, static fn ($t) => is_int($t) && $t > $now - ADMIN_LOGIN_WINDOW);
-    return count($times) >= ADMIN_LOGIN_MAX;
-}
-
-/** Enregistre une tentative échouée. */
-function admin_login_record_failure(string $ip): void
-{
-    try {
-        $file = admin_login_rl_file($ip);
-    } catch (\Throwable $e) {
-        return;
-    }
-    $h = @fopen($file, 'c+');
-    if (!$h) {
-        return;
     }
     if (!flock($h, LOCK_EX)) {
         fclose($h);
-        return;
+        return true;
     }
     $times = json_decode(stream_get_contents($h) ?: '[]', true);
     if (!is_array($times)) {
@@ -213,13 +199,28 @@ function admin_login_record_failure(string $ip): void
     }
     $now = time();
     $times = array_values(array_filter($times, static fn ($t) => is_int($t) && $t > $now - ADMIN_LOGIN_WINDOW));
-    $times[] = $now;
-    ftruncate($h, 0);
-    rewind($h);
-    fwrite($h, json_encode($times));
-    fflush($h);
+    $limited = count($times) >= $max;
+    if (!$limited) {
+        $times[] = $now;
+        ftruncate($h, 0);
+        rewind($h);
+        fwrite($h, json_encode($times));
+        fflush($h);
+    }
     flock($h, LOCK_UN);
     fclose($h);
+    return $limited;
+}
+
+/** True si la tentative est refusée (quota IP ou plafond global atteint) ; sinon l'enregistre. */
+function admin_login_limited(string $ip): bool
+{
+    return admin_login_hit($ip, ADMIN_LOGIN_MAX) || admin_login_hit('*global*', ADMIN_LOGIN_GLOBAL_MAX);
+}
+
+/** Conservé pour compatibilité : l'échec est déjà compté par admin_login_limited(). */
+function admin_login_record_failure(string $ip): void
+{
 }
 
 /** Réinitialise le compteur (connexion réussie). */

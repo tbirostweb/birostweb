@@ -822,11 +822,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
         </div>
         <div class="field"><label for="cmaint">Maintenance</label>
           <select id="cmaint" name="maintenance">
-            <option value="">— À définir —</option>
-            <option value="Suivi mensuel (39 €/mois)">Suivi mensuel · 39 €/mois</option>
-            <option value="Pack d'heures">Pack d'heures</option>
-            <option value="On verra plus tard / besoin d'infos">On verra plus tard / besoin d'infos</option>
-          </select>
+<?= offers_plan_options_html($siteContent, 'maint', true) ?>          </select>
         </div>
         <div class="field" id="pack-detail" style="display:none">
           <label for="cpack">Nombre d'heures</label>
@@ -842,10 +838,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
         </div>
         <div class="field"><label for="cheb">Hébergement</label>
           <select id="cheb" name="hebergement">
-            <option value="">— À définir —</option>
-            <option value="Sur mon propre serveur / hébergeur">Sur mon propre serveur / hébergeur</option>
-            <option value="Essentiel · VPS-1 (45 €/mois)">Essentiel · VPS-1 — 45 €/mois (tout compris)</option>
-          </select>
+<?= offers_plan_options_html($siteContent, 'heb') ?>          </select>
         </div>
         </div><!-- /form-details -->
         <div class="field"><label for="cm">Votre projet</label><textarea id="cm" name="message" required minlength="10" maxlength="5000"></textarea></div>
@@ -927,7 +920,7 @@ document.querySelectorAll('.faq__q').forEach(function(q){
  document.querySelectorAll('[data-maint]').forEach(function(btn){
   btn.addEventListener('click',function(){
    var isHeures=btn.getAttribute('data-maint')==='heures';
-   maint.value=isHeures?"Pack d'heures":"Suivi mensuel (39 €/mois)";
+   maint.value=btn.getAttribute('data-form')||'';
    syncDetail();
    if(isHeures){setTimeout(function(){pack.focus();},450);}
   });

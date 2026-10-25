@@ -41,9 +41,9 @@ html{scroll-padding-top:88px}
 .mini:hover{background:var(--surface)}
 .mini h3{font-size:26px;letter-spacing:-.025em}
 .tabs__nav{gap:4px;padding:5px;background:var(--surface);border:1px solid var(--line);width:fit-content;max-width:100%;border-radius:var(--r)}
-.tabs__nav label{font-family:var(--fb);font-size:14px;font-weight:500;border:1px solid transparent;border-radius:2px;padding:12px 20px;white-space:normal}
-#tab-crea:checked~.tabs__nav label[for="tab-crea"],#tab-heb:checked~.tabs__nav label[for="tab-heb"],#tab-maint:checked~.tabs__nav label[for="tab-maint"]{background:var(--ink);border-color:var(--ink)}
-#tab-crea:focus-visible~.tabs__nav label[for="tab-crea"],#tab-heb:focus-visible~.tabs__nav label[for="tab-heb"],#tab-maint:focus-visible~.tabs__nav label[for="tab-maint"]{outline:2px solid var(--accent);outline-offset:2px}
+.tabs__nav label{font-family:var(--fb);font-size:14px;font-weight:500;border:1px solid transparent;border-radius:2px;padding:12px 20px;white-space:nowrap}
+#tab-crea:checked~.tabs__nav label[for="tab-crea"],#tab-heb:checked~.tabs__nav label[for="tab-heb"],#tab-seo:checked~.tabs__nav label[for="tab-seo"],#tab-maint:checked~.tabs__nav label[for="tab-maint"]{background:var(--ink);border-color:var(--ink)}
+#tab-crea:focus-visible~.tabs__nav label[for="tab-crea"],#tab-heb:focus-visible~.tabs__nav label[for="tab-heb"],#tab-seo:focus-visible~.tabs__nav label[for="tab-seo"],#tab-maint:focus-visible~.tabs__nav label[for="tab-maint"]{outline:2px solid var(--accent);outline-offset:2px}
 .offer,.plan{padding:30px 26px}
 .offer--feat,.plan--feat{box-shadow:none;border-top:3px solid var(--accent)}
 .offer__price .amt{font-size:clamp(25px,2.2vw,31px);letter-spacing:-.035em;line-height:1.15;padding:5px 0}
@@ -78,8 +78,8 @@ altcha-widget{--altcha-border-radius:3px;--altcha-color-base:var(--surface);--al
  .hero h1{font-size:clamp(38px,10vw,56px)}
  .hero__cta .btn{width:100%;justify-content:center}
  .project{padding:18px}
- .tabs__nav{width:100%;flex-wrap:nowrap;gap:2px}
- .tabs__nav label{flex:1;min-width:0;text-align:center;padding:12px 6px;font-size:12px}
+ .tabs__nav{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:4px}
+ .tabs__nav label{min-width:0;text-align:center;padding:12px 8px;font-size:13px}
  .offer,.plan{padding:28px 22px}
  .sticky-cta{background:rgba(251,250,246,.97)}
 }

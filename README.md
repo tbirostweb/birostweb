@@ -19,7 +19,7 @@ birostweb/
     ├── index.php         # page (génère le jeton anti-spam du formulaire)
     ├── send_mail.php     # endpoint du formulaire (validation + SMTP)
     ├── .htaccess         # en-têtes de sécurité + CSP + blocage fichiers sensibles
-    ├── favicon.svg       # logo BW
+    ├── favicon.png       # icône BW
     ├── og-image.png      # image de partage réseaux sociaux (1200×630)
     ├── robots.txt / sitemap.xml
     ├── img/              # captures des projets (hydrogen, clicker)
@@ -47,7 +47,7 @@ birostweb/
 
 ## Variables d'environnement (Dokploy → onglet Environment)
 
-Voir `.env.example` (boîte OVH `contact@theo-birost.fr`) :
+Voir `.env.example` (SMTP primaire Gmail, boîte OVH `contact@theo-birost.fr` en secours ; exemple OVH ci-dessous) :
 
 | Variable | Exemple |
 |---|---|

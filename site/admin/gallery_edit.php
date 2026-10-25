@@ -199,6 +199,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item['type'] = $type;
 
     $uploader = cs_make_media_uploader();
+    // Images de carrousel abandonnées (passage carrousel -> vidéo) : supprimées du stockage seulement
+    // une fois l'enregistrement réussi, pour ne pas laisser de fichiers orphelins.
+    $droppedImages = [];
 
     if ($type === 'video') {
         /* ============================================================
@@ -210,6 +213,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $item['videoId'] = (string) ($item['videoId'] ?? '');
         $item['poster']  = (string) ($item['poster'] ?? '');
         // Un item vidéo n'utilise pas d'images de carrousel.
+        foreach (cs_gallery_item_images($item) as $img) {
+            if (($img['path'] ?? '') !== '') {
+                $droppedImages[] = (string) $img['path'];
+            }
+        }
         $item['images']  = [];
 
         $newVideo = false;
@@ -225,7 +233,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $oldGuid = (string) ($item['videoId'] ?? '');
 
                 $guid = bunny_stream_create_video((string) ($item['title'] ?? 'Vidéo'));
-                bunny_stream_upload_video($guid, $tmp);
+                try {
+                    bunny_stream_upload_video($guid, $tmp);
+                } catch (\Throwable $e) {
+                    // L'envoi a échoué : on retire la vidéo vide créée côté Bunny (best-effort).
+                    try {
+                        bunny_stream_delete_video($guid);
+                    } catch (\Throwable $e2) {
+                    }
+                    throw $e;
+                }
 
                 $item['videoId'] = $guid;
                 $newVideo = true;
@@ -460,6 +477,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($err === '') {
         try {
             admin_store()->save($content);
+            foreach ($droppedImages as $dp) {
+                try {
+                    $uploader->delete($dp);
+                } catch (\Throwable $e) {
+                    $notices[] = 'Fichier non supprimé (' . e($dp) . ') : ' . e($e->getMessage());
+                }
+            }
             if (!$notices) {
                 header('Location: ' . $base . '/gallery_edit.php?id=' . rawurlencode($id) . '&saved=1');
                 exit;

@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($action === 'create') {
                 $tab   = (string) ($_POST['tab'] ?? '');
                 $title = trim((string) ($_POST['title'] ?? ''));
-                if (!in_array($tab, ['crea', 'heb', 'maint'], true) || $title === '') {
+                if (!in_array($tab, ['crea', 'heb', 'seo', 'maint'], true) || $title === '') {
                     header('Location: ' . admin_base() . '/?err=create');
                     exit;
                 }
@@ -176,7 +176,9 @@ function admin_offer_template(string $tab, string $id, string $title, array $off
         'cta_label' => 'Choisir cette option',
         'cta_data' => $tab === 'heb'
             ? ['data-step' => 'heb', 'data-label' => $title, 'data-mo' => '0', 'data-form' => $title]
-            : ['data-step' => 'maint', 'data-label' => $title, 'data-mo' => '0', 'data-form' => $title],
+            : ($tab === 'seo'
+                ? ['data-step' => 'seo', 'data-label' => $title, 'data-oneoff' => '0', 'data-form' => $id]
+                : ['data-step' => 'maint', 'data-label' => $title, 'data-mo' => '0', 'data-form' => $title]),
         'promo' => $promo,
     ];
 }
@@ -265,7 +267,7 @@ $content = admin_store()->get();
 $grouped = cs_offers_by_tab($content, false); // inclut les inactives
 $flash   = (string) ($_GET['saved'] ?? '');
 
-$tabNames = ['crea' => 'Création de site', 'heb' => 'Hébergement', 'maint' => 'Maintenance'];
+$tabNames = ['crea' => 'Création de site', 'heb' => 'Hébergement', 'seo' => 'Référencement', 'maint' => 'Maintenance'];
 
 admin_head('Offres');
 admin_topbar('offers');

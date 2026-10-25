@@ -298,6 +298,11 @@ try {
 }
 $offreId = $_POST["offre"] ?? '';
 $offre   = is_string($offreId) ? offers_contact_label($siteContent, $offreId) : '';
+$seoId = $_POST["referencement"] ?? '';
+$seo = is_string($seoId) ? offers_seo_label($siteContent, $seoId) : '';
+if ($seo !== '') {
+    $offre = ($offre !== '' ? $offre . ' + ' : '') . $seo;
+}
 $maintenance = in_array($_POST["maintenance"] ?? '', $maintAllowed, true) ? $_POST["maintenance"] : '';
 $hebergement = in_array($_POST["hebergement"] ?? '', $hebergAllowed, true) ? $_POST["hebergement"] : '';
 

@@ -375,8 +375,8 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 .tabs__nav label{font-family:var(--fm);font-size:13.5px;letter-spacing:.02em;padding:12px 20px;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;color:var(--gray);background:var(--surface);transition:.15s;white-space:nowrap}
 .tabs__nav label:hover{color:var(--ink);border-color:var(--ink)}
 .tabs__panel{display:none}
-#tab-crea:checked~.tabs__nav label[for="tab-crea"],#tab-heb:checked~.tabs__nav label[for="tab-heb"],#tab-maint:checked~.tabs__nav label[for="tab-maint"]{background:var(--accent);border-color:var(--accent);color:#fff}
-#tab-crea:checked~#panel-crea,#tab-heb:checked~#panel-heb,#tab-maint:checked~#panel-maint{display:block}
+#tab-crea:checked~.tabs__nav label[for="tab-crea"],#tab-heb:checked~.tabs__nav label[for="tab-heb"],#tab-seo:checked~.tabs__nav label[for="tab-seo"],#tab-maint:checked~.tabs__nav label[for="tab-maint"]{background:var(--accent);border-color:var(--accent);color:#fff}
+#tab-crea:checked~#panel-crea,#tab-heb:checked~#panel-heb,#tab-seo:checked~#panel-seo,#tab-maint:checked~#panel-maint{display:block}
 .tabs__panel .reveal{opacity:1;transform:none}
 
 /* ===== Estimation (configurateur d'offre) ===== */
@@ -613,10 +613,12 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
     <div class="tabs">
       <input type="radio" name="offtab" id="tab-crea" aria-label="Création de site" checked>
       <input type="radio" name="offtab" id="tab-heb" aria-label="Hébergement">
+      <input type="radio" name="offtab" id="tab-seo" aria-label="Référencement">
       <input type="radio" name="offtab" id="tab-maint" aria-label="Maintenance">
       <div class="tabs__nav">
         <label for="tab-crea">Création de site</label>
         <label for="tab-heb">Hébergement</label>
+        <label for="tab-seo">Référencement</label>
         <label for="tab-maint">Maintenance</label>
       </div>
 
@@ -651,8 +653,22 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 <?= offers_render_tab($offersByTab['heb'], 'heb') ?>
 
       </div>
-      <p class="maint__note"><span>Les offres <b>Essentiel</b> et <b>Pro</b> sont <b>tout compris</b> : hébergement, mises à jour, sécurité, sauvegardes et support, sans surcoût. Si vous préférez héberger vous-même, la maintenance reste en option (onglet Maintenance).</span></p>
+      <p class="maint__note"><span>L'offre <b>Essentiel</b> est <b>tout comprise</b> : hébergement, mises à jour, sécurité, sauvegardes et support, sans surcoût. Si vous préférez héberger vous-même, la maintenance reste en option (onglet Maintenance).</span></p>
     </div>
+
+      <!-- Onglet Référencement -->
+      <div class="tabs__panel" id="panel-seo">
+      <div class="maint__head">
+        <h3>Soyez trouvé sur Google.</h3>
+        <p>Des forfaits uniques pour poser les bases du référencement local, sans abonnement. Vous pouvez les ajouter à n'importe quel projet, ou à un site existant.</p>
+      </div>
+      <div class="plans">
+
+<?= offers_render_tab($offersByTab['seo'], 'seo') ?>
+
+      </div>
+      <p class="maint__note">Prestations ponctuelles : pas d'abonnement, pas d'engagement. Le référencement demande du temps : les premiers effets se voient en quelques semaines à quelques mois.</p>
+      </div>
 
       <!-- Onglet Maintenance -->
       <div class="tabs__panel" id="panel-maint">
@@ -748,6 +764,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
           <div class="estimate__t">Votre sélection</div>
           <div class="estimate__row"><span>Projet</span><b id="est-offre">—</b></div>
           <div class="estimate__row"><span>Hébergement</span><b id="est-heb">—</b></div>
+          <div class="estimate__row"><span>Référencement</span><b id="est-seo">—</b></div>
           <div class="estimate__row"><span>Maintenance</span><b id="est-maint">—</b></div>
           <div class="estimate__total"><span id="est-oneoff">—</span> <span id="est-mo"></span></div>
           <div class="estimate__note">Estimation indicative : le prix exact dépend du périmètre et vous est confirmé dans le devis.</div>
@@ -759,6 +776,10 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
         <div class="field"><label for="coffer">Offre qui vous intéresse</label>
           <select id="coffer" name="offre">
 <?= offers_contact_options_html($siteContent) ?>          </select>
+        </div>
+        <div class="field"><label for="cseo">Référencement</label>
+          <select id="cseo" name="referencement">
+<?= offers_seo_options_html($siteContent) ?>          </select>
         </div>
         <div class="field"><label for="cmaint">Maintenance</label>
           <select id="cmaint" name="maintenance">
@@ -876,15 +897,16 @@ document.querySelectorAll('.faq__q').forEach(function(q){
 // Configurateur d'offre : parcours guidé (onglet -> onglet) + estimation + pré-remplissage du formulaire
 (function(){
  var box=document.getElementById('estimate'); if(!box) return;
- var el={offre:document.getElementById('est-offre'),heb:document.getElementById('est-heb'),maint:document.getElementById('est-maint'),oneoff:document.getElementById('est-oneoff'),mo:document.getElementById('est-mo')};
+ var el={offre:document.getElementById('est-offre'),heb:document.getElementById('est-heb'),seo:document.getElementById('est-seo'),maint:document.getElementById('est-maint'),oneoff:document.getElementById('est-oneoff'),mo:document.getElementById('est-mo')};
  var state={};
  function setSelect(id,val){var s=document.getElementById(id); if(!s||val==null) return; var ok=false; for(var i=0;i<s.options.length;i++){if(s.options[i].value===val){ok=true;break;}} if(!ok){s.add(new Option(val,val));} s.value=val;}
  function refresh(){
   box.hidden=false;
   el.offre.textContent=state.offre?state.offre.label:'—';
   el.heb.textContent=state.heb?state.heb.label:'—';
+  el.seo.textContent=state.seo?state.seo.label:'—';
   el.maint.textContent=state.maint?state.maint.label:'—';
-  var oneoff=state.offre?state.offre.oneoff:0;
+  var oneoff=(state.offre?state.offre.oneoff:0)+(state.seo?state.seo.oneoff:0);
   el.oneoff.textContent=(oneoff>0)?('À partir de '+oneoff.toLocaleString('fr-FR')+' €'):'Projet sur devis';
   var mo=(state.heb?state.heb.mo:0)+(state.maint?state.maint.mo:0);
   el.mo.textContent=(mo>0)?('+ '+mo+' €/mois'):'';
@@ -897,6 +919,7 @@ document.querySelectorAll('.faq__q').forEach(function(q){
    if(d.step==='offre'){state.offre={label:d.label,oneoff:parseInt(d.oneoff||'0',10)};setSelect('coffer',d.form);}
    else if(d.step==='heb'){state.heb={label:d.label,mo:parseInt(d.mo||'0',10)};setSelect('cheb',d.form);
     if(d.included){state.maint={label:"Incluse dans l'offre",mo:0};setSelect('cmaint','');}}
+   else if(d.step==='seo'){state.seo={label:d.label,oneoff:parseInt(d.oneoff||'0',10)};setSelect('cseo',d.form);}
    else if(d.step==='maint'){state.maint={label:d.label,mo:parseInt(d.mo||'0',10)};setSelect('cmaint',d.form);}
    refresh();
    if(d.next){toTab(d.next);} else {var c=document.getElementById('contact'); if(c)c.scrollIntoView({behavior:'smooth'});}

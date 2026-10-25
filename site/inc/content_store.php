@@ -726,11 +726,11 @@ function cs_find_offer(array $content, string $id): ?array
 
 /**
  * Offres actives groupées par onglet et triées par `sort` croissant.
- * Renvoie ['crea' => [...], 'heb' => [...], 'maint' => [...]].
+ * Renvoie ['crea' => [...], 'heb' => [...], 'seo' => [...], 'maint' => [...]].
  */
 function cs_offers_by_tab(array $content, bool $activeOnly = true): array
 {
-    $tabs = ['crea' => [], 'heb' => [], 'maint' => []];
+    $tabs = ['crea' => [], 'heb' => [], 'seo' => [], 'maint' => []];
     foreach (cs_offers($content) as $o) {
         $tab = $o['tab'] ?? '';
         if (!isset($tabs[$tab])) {
@@ -974,62 +974,6 @@ function cs_default_content(): array
                 ],
                 'promo' => ['active' => false, 'price' => '', 'label' => '', 'until' => ''],
             ],
-            [
-                'id' => 'crea-seo',
-                'tab' => 'crea',
-                'sort' => 60,
-                'active' => true,
-                'available' => true,
-                'feat' => false,
-                'badge' => '',
-                'number' => 'OFFRE 06',
-                'tag' => 'Visibilité',
-                'title' => 'Référencement local (SEO)',
-                'description' => "Rendez votre site lisible par Google, avec les bases en place pour être trouvé et pour mesurer vos visites.",
-                'inc' => "Titres et descriptions, données structurées, plan du site, mise en place de Google Search Console et de Google Analytics. Une mise en place unique, sans abonnement.",
-                'price_label' => 'À partir de',
-                'price' => '399 €',
-                'price_unit' => '',
-                'price_note' => "Prix forfaitaire, sans abonnement",
-                'cta_label' => 'Choisir cette offre',
-                'cta_data' => [
-                    'data-step' => 'offre',
-                    'data-label' => 'Référencement local (SEO)',
-                    'data-oneoff' => '399',
-                    'data-form' => 'crea-seo',
-                    'data-next' => 'tab-heb',
-                ],
-                'promo' => ['active' => false, 'price' => '', 'label' => '', 'until' => ''],
-            ],
-            [
-                'id' => 'crea-gbp',
-                'tab' => 'crea',
-                'sort' => 70,
-                'active' => true,
-                'available' => true,
-                'feat' => false,
-                'badge' => '',
-                'number' => 'OPTION',
-                'tag' => 'Option',
-                'title' => 'Fiche Google Business',
-                'description' => "Une fiche Google complète et à jour, pour être trouvé sur Google Maps et dans les recherches locales.",
-                'inc' => "Création ou mise à jour de la fiche : catégories, horaires, photos, lien vers votre site.",
-                'price_label' => 'Forfait',
-                'price' => '149 €',
-                'price_unit' => '',
-                'price_note' => "Option, avec ou sans création de site",
-                'cta_label' => 'Choisir cette offre',
-                'cta_data' => [
-                    'data-step' => 'offre',
-                    'data-label' => 'Fiche Google Business',
-                    'data-oneoff' => '149',
-                    'data-form' => 'crea-gbp',
-                    'data-next' => 'tab-heb',
-                ],
-                'promo' => ['active' => false, 'price' => '', 'label' => '', 'until' => ''],
-            ],
-
-
             /* ---------- Onglet Hébergement ---------- */
             [
                 'id' => 'heb-self',
@@ -1087,6 +1031,65 @@ function cs_default_content(): array
                     'data-mo' => '45',
                     'data-form' => 'Essentiel · VPS-1 (45 €/mois)',
                     'data-included' => '1',
+                ],
+                'promo' => ['active' => false, 'price' => '', 'label' => '', 'until' => ''],
+            ],
+
+            /* ---------- Onglet Référencement ---------- */
+            [
+                'id' => 'seo-local',
+                'tab' => 'seo',
+                'sort' => 10,
+                'active' => true,
+                'available' => true,
+                'feat' => true,
+                'badge' => 'Le plus demandé',
+                'title' => 'Référencement local (SEO)',
+                'description' => "Rendre votre site lisible par Google, une fois pour toutes",
+                'price' => '399 €',
+                'price_unit' => '',
+                'features' => [
+                    "Titres et descriptions optimisés",
+                    "Données structurées (schema.org)",
+                    "Plan du site (sitemap) et robots.txt",
+                    "Mise en place de Google Search Console",
+                    "Mise en place de Google Analytics",
+                    "Mise en place unique, sans abonnement",
+                ],
+                'cta_label' => 'Choisir cette offre',
+                'cta_data' => [
+                    'data-step' => 'seo',
+                    'data-label' => 'Référencement local (SEO)',
+                    'data-oneoff' => '399',
+                    'data-form' => 'seo-local',
+                ],
+                'promo' => ['active' => false, 'price' => '', 'label' => '', 'until' => ''],
+            ],
+            [
+                'id' => 'seo-gbp',
+                'tab' => 'seo',
+                'sort' => 20,
+                'active' => true,
+                'available' => true,
+                'feat' => false,
+                'badge' => 'Option',
+                'title' => 'Fiche Google Business',
+                'description' => "Être trouvé sur Google Maps et en recherche locale",
+                'price' => '149 €',
+                'price_unit' => '',
+                'features' => [
+                    "Création ou mise à jour de la fiche",
+                    "Catégories et horaires",
+                    "Photos de votre activité",
+                    "Lien vers votre site",
+                    "Forfait unique, sans abonnement",
+                ],
+                'cta_label' => 'Choisir cette offre',
+                'cta_data' => [
+                    'data-step' => 'seo',
+                    'data-label' => 'Fiche Google Business',
+                    'data-oneoff' => '149',
+                    'data-form' => 'seo-gbp',
                 ],
                 'promo' => ['active' => false, 'price' => '', 'label' => '', 'until' => ''],
             ],

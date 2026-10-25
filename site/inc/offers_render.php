@@ -37,7 +37,14 @@ function offers_start_price(array $offer): int
  */
 function offers_cta_attrs(array $offer): string
 {
-    if (($offer['tab'] ?? '') === 'crea') {
+    if (($offer['tab'] ?? '') === 'seo') {
+        $attrs = [
+            'data-step'   => 'seo',
+            'data-label'  => (string) ($offer['title'] ?? ''),
+            'data-oneoff' => (string) offers_start_price($offer),
+            'data-form'   => (string) ($offer['id'] ?? ''),
+        ];
+    } elseif (($offer['tab'] ?? '') === 'crea') {
         $stored = is_array($offer['cta_data'] ?? null) ? $offer['cta_data'] : [];
         $attrs = [
             'data-step'   => 'offre',
@@ -75,6 +82,29 @@ function offers_contact_options_html(array $content, string $indent = '         
     }
     $h .= $indent . '<option value="' . OFFERS_CUSTOM_QUOTE_VALUE . '">' . OFFERS_CUSTOM_QUOTE_LABEL . '</option>' . "\n";
     return $h;
+}
+
+/** <option> du select « référencement » du formulaire de contact (offres de l'onglet Référencement actives). */
+function offers_seo_options_html(array $content, string $indent = '            '): string
+{
+    $h = $indent . '<option value="">— Aucun —</option>' . "\n";
+    foreach (cs_offers_by_tab($content)['seo'] as $o) {
+        if (offers_is_available($o)) {
+            $h .= $indent . '<option value="' . oe((string) $o['id']) . '">' . oe((string) ($o['title'] ?? $o['id'])) . '</option>' . "\n";
+        }
+    }
+    return $h;
+}
+
+/** Libellé d'un id d'offre Référencement reçu du formulaire, ou '' si inconnu. */
+function offers_seo_label(array $content, string $id): string
+{
+    foreach (cs_offers_by_tab($content)['seo'] as $o) {
+        if (($o['id'] ?? null) === $id && offers_is_available($o)) {
+            return (string) ($o['title'] ?? '');
+        }
+    }
+    return '';
 }
 
 /** Libellé lisible d'un id d'offre reçu du formulaire, ou '' si inconnu (liste blanche = offres réelles actives). */

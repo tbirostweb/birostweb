@@ -99,6 +99,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 admin_store()->save($content);
                 header('Location: ' . admin_base() . '/edit.php?id=' . rawurlencode($newId));
                 exit;
+            } elseif ($action === 'seed_seo') {
+                // Ajoute les offres SEO par défaut du code absentes du contenu enregistré (ne touche à rien d'autre).
+                $have = array_map(static fn ($o) => (string) ($o['id'] ?? ''), $offers);
+                foreach (cs_offers(cs_default_content()) as $d) {
+                    if (($d['tab'] ?? '') === 'seo' && !in_array((string) ($d['id'] ?? ''), $have, true)) {
+                        $offers[] = $d;
+                    }
+                }
             } elseif ($action === 'delete') {
                 $offers = array_values(array_filter($offers, static fn ($o) => ($o['id'] ?? '') !== $id));
             }
@@ -267,7 +275,7 @@ $content = admin_store()->get();
 $grouped = cs_offers_by_tab($content, false); // inclut les inactives
 $flash   = (string) ($_GET['saved'] ?? '');
 
-$tabNames = ['crea' => 'Création de site', 'heb' => 'Hébergement', 'seo' => 'Référencement', 'maint' => 'Maintenance'];
+$tabNames = ['crea' => 'Création de site', 'heb' => 'Hébergement', 'seo' => 'SEO (onglet Référencement)', 'maint' => 'Maintenance'];
 
 admin_head('Offres');
 admin_topbar('offers');
@@ -305,6 +313,19 @@ echo '</select></div></div>';
 echo '<p class="hint">L\'offre est créée inactive : complétez-la puis activez-la pour l\'afficher sur le site.</p>';
 echo '<div style="margin-top:16px"><button class="btn" type="submit">+ Nouvelle offre</button></div>';
 echo '</form></div>';
+
+$missingSeo = false;
+$haveIds = array_map(static fn ($o) => (string) ($o['id'] ?? ''), cs_offers($content));
+foreach (cs_offers(cs_default_content()) as $d) {
+    if (($d['tab'] ?? '') === 'seo' && !in_array((string) ($d['id'] ?? ''), $haveIds, true)) {
+        $missingSeo = true;
+    }
+}
+if ($missingSeo) {
+    echo '<div class="card" style="margin-top:18px"><b>Section SEO :</b> les offres SEO par défaut (Référencement local 399 €, Fiche Google Business 149 €) ne sont pas encore dans votre contenu enregistré. '
+        . '<form method="post" action="' . $base . '/" style="margin-top:12px">' . $csrf . '<input type="hidden" name="action" value="seed_seo">'
+        . '<button class="btn" type="submit">Ajouter les offres SEO par défaut</button></form></div>';
+}
 
 foreach ($tabNames as $tab => $label) {
     echo '<div class="tabgroup"><div class="lbl">' . e($label) . '</div>';

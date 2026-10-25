@@ -390,12 +390,10 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
   .bcell{padding:16px 14px}
   .bcell .t{font-size:14px}
   .js-fold .project .shot__img{aspect-ratio:16/8}
-  .js-fold .project:not(.is-open) .fold,.js-fold .mini:not(.is-open) .fold{display:none}
-  .js-fold .project .fold-toggle,.js-fold .mini .fold-toggle{display:flex;width:fit-content;margin-top:10px;margin-bottom:10px}
+  .js-fold .project:not(.is-open) .fold{display:none}
+  .js-fold .project .fold-toggle{display:flex;width:fit-content;margin-top:10px;margin-bottom:10px}
   .js-fold .project{gap:16px}
   .js-fold .project.is-open .project__links{margin-top:4px}
-  .js-fold .mini{padding:18px 20px}
-  .js-fold .mini:not(.is-open) h3{margin-bottom:0}
   .steps{gap:18px}
   .step{padding-top:14px}
   .step p{font-size:14.5px}
@@ -590,33 +588,29 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="mini">
         <span class="mini__k">Défi perso · Intégration</span>
         <h3>One Page Challenge</h3>
-        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
-        <p class="fold">Un défi que je me lance : concevoir et coder une landing page complète en une heure, from scratch. Quatre pages à ce jour : e-commerce, voyage, tech et SaaS.</p>
-        <div class="tags fold"><span class="tag">Vue 3</span><span class="tag">Vite</span><span class="tag">Tailwind</span><span class="tag">HTML</span></div>
+        <p>Un défi que je me lance : concevoir et coder une landing page complète en une heure, from scratch. Quatre pages à ce jour : e-commerce, voyage, tech et SaaS.</p>
+        <div class="tags"><span class="tag">Vue 3</span><span class="tag">Vite</span><span class="tag">Tailwind</span><span class="tag">HTML</span></div>
         <a class="plink" href="https://onepage.birostweb.fr" target="_blank" rel="noopener">Voir le projet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
       </article>
       <article class="mini">
         <span class="mini__k">Jeu web · Solo</span>
         <h3>Empire Culturel</h3>
-        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
-        <p class="fold">Jeu incrémental de collection de monuments : farm, boosters, arbre technologique et classement. Parties sauvegardées en local.</p>
-        <div class="tags fold"><span class="tag">Vue 3</span><span class="tag">Tailwind</span><span class="tag">JavaScript</span></div>
+        <p>Jeu incrémental de collection de monuments : farm, boosters, arbre technologique et classement. Parties sauvegardées en local.</p>
+        <div class="tags"><span class="tag">Vue 3</span><span class="tag">Tailwind</span><span class="tag">JavaScript</span></div>
         <a class="plink" href="https://carte.theo-birost.fr" target="_blank" rel="noopener">Voir le projet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
       </article>
       <article class="mini">
         <span class="mini__k">Projet perso · Solo</span>
         <h3>Sidequest</h3>
-        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
-        <p class="fold">Une collection de mini-jeux à découvrir dans le navigateur : dactylographie, lancer de dés, morpion et Snake.</p>
-        <div class="tags fold"><span class="tag">Mini-jeux</span><span class="tag">Jeu web</span></div>
+        <p>Une collection de mini-jeux à découvrir dans le navigateur : dactylographie, lancer de dés, morpion et Snake.</p>
+        <div class="tags"><span class="tag">Mini-jeux</span><span class="tag">Jeu web</span></div>
         <a class="plink" href="https://jeu.birostweb.fr/" target="_blank" rel="noopener">Voir le projet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
       </article>
       <article class="mini">
         <span class="mini__k">Projet perso · Solo</span>
         <h3>Portfolio template</h3>
-        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
-        <p class="fold">Un template de portfolio en Tailwind et PHP, multilingue FR/EN, pensé pour être facile à reprendre et à adapter.</p>
-        <div class="tags fold"><span class="tag">Tailwind</span><span class="tag">PHP</span><span class="tag">JavaScript</span></div>
+        <p>Un template de portfolio en Tailwind et PHP, multilingue FR/EN, pensé pour être facile à reprendre et à adapter.</p>
+        <div class="tags"><span class="tag">Tailwind</span><span class="tag">PHP</span><span class="tag">JavaScript</span></div>
         <a class="plink" href="https://portfolio.theo-birost.fr" target="_blank" rel="noopener">Voir le projet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
       </article>
     </div>
@@ -635,14 +629,12 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <article class="mini">
         <span class="mini__k">22 juin – 15 août 2026 · 8 semaines</span>
         <h3>SCI BIROST</h3>
-        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
-        <p class="fold">Stage en développement web et communication digitale. Mission : création d'un site de réservation pour deux logements touristiques, gestion de leur communication digitale et participation à leur promotion publicitaire.</p>
+        <p>Stage en développement web et communication digitale. Mission : création d'un site de réservation pour deux logements touristiques, gestion de leur communication digitale et participation à leur promotion publicitaire.</p>
       </article>
       <article class="mini">
         <span class="mini__k">20 avril – 19 juin 2026 · 9 semaines</span>
         <h3>AER BFC</h3>
-        <button type="button" class="fold-toggle" aria-expanded="false"><span>Voir le détail</span></button>
-        <p class="fold">Stage à l'Agence économique régionale de Bourgogne-Franche-Comté, à Dijon. Mission : contribuer à la refonte d'un site internet, avec un travail sur le Forum Hydrogen Business for Climate présenté dans mes réalisations.</p>
+        <p>Stage à l'Agence économique régionale de Bourgogne-Franche-Comté, à Dijon. Mission : contribuer à la refonte d'un site internet, avec un travail sur le Forum Hydrogen Business for Climate présenté dans mes réalisations.</p>
       </article>
     </div>
   </div>

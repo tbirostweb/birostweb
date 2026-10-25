@@ -182,7 +182,7 @@ function offers_render_offer(array $o): string
     $h .= '        <div class="offer__top"><span class="offer__n">' . oe((string) ($o['number'] ?? ''))
         . '</span><span class="tag">' . oe((string) ($o['tag'] ?? '')) . '</span></div>' . "\n";
     $h .= '        <h3>' . oe((string) ($o['title'] ?? '')) . '</h3>' . "\n";
-    $h .= '        <p class="offer__promise fold">' . oe((string) ($o['description'] ?? '')) . '</p>' . "\n";
+    $h .= '        <p class="offer__promise">' . oe((string) ($o['description'] ?? '')) . '</p>' . "\n";
     $h .= '        <div class="offer__inc fold"><b>Inclus</b>' . oe((string) ($o['inc'] ?? '')) . '</div>' . "\n";
     $h .= '        <div class="offer__price"><div class="lbl">' . oe((string) ($o['price_label'] ?? ''))
         . '</div><div class="amt' . (str_contains((string) ($o['price'] ?? ''), '–') ? ' amt--range' : '') . '">' . offers_price_html($o, '')
@@ -212,8 +212,8 @@ function offers_render_plan(array $o): string
     }
     $h .= '          <div class="plan__name">' . oe((string) ($o['title'] ?? '')) . '</div>' . "\n";
     $h .= '          <div class="plan__price">' . offers_price_html($o, $unit) . '</div>' . "\n";
+    $h .= '          <div class="plan__for">' . oe((string) ($o['description'] ?? '')) . '</div>' . "\n";
     $h .= offers_fold_toggle('          ');
-    $h .= '          <div class="plan__for fold">' . oe((string) ($o['description'] ?? '')) . '</div>' . "\n";
     $h .= '          <ul class="plan__list fold">';
     foreach (($o['features'] ?? []) as $f) {
         $h .= '<li>' . oe((string) $f) . '</li>';

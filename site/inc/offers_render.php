@@ -21,7 +21,7 @@ function oe(string $s): string
 const OFFERS_CUSTOM_QUOTE_VALUE = 'sur-mesure';
 const OFFERS_CUSTOM_QUOTE_LABEL = 'Devis sur-mesure';
 
-/** Prix de départ (1er nombre du prix, ex. « 990 € – 1 900 € » => 990), 0 si aucun. */
+/** Prix de départ (1er nombre du prix, ex. « 999 € – 1 899 € » => 999), 0 si aucun. */
 function offers_start_price(array $offer): int
 {
     if (preg_match('/\d[\d \x{00A0}\x{202F}]*/u', (string) ($offer['price'] ?? ''), $m)) {

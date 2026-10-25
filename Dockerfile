@@ -9,7 +9,8 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
 
-FROM php:8.3-apache
+# PHP >= 8.3.36 : correctif php2shell (CVE-2026-109618 / CVE-2026-109619)
+FROM php:8.3.36-apache
 
 LABEL org.opencontainers.image.title="birostweb" \
       org.opencontainers.image.description="Site vitrine Birostweb - Theo Birost, developpeur web full-stack" \

@@ -143,6 +143,8 @@ img{max-width:100%;display:block}
 .hero__cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:32px}
 .hero__note{font-family:var(--fm);font-size:12.5px;color:var(--gray);margin-top:18px;display:flex;align-items:center;gap:8px}
 .hero__note svg{width:15px;height:15px;color:var(--accent)}
+/* portrait : le texte décoratif de studio.css (illisible sur la photo) est masqué */
+.hero .portrait::before{display:none}
 /* portrait */
 .portrait{position:relative;aspect-ratio:4/5;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden}
 .portrait img{width:100%;height:100%;object-fit:cover}
@@ -385,7 +387,10 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
   .sec-head{margin-bottom:22px}
   .sec-head .lead{font-size:15.5px}
   .hero{padding:28px 0 36px}
-  .hero__card{max-width:210px}
+  .hero__card{max-width:none;width:100%}
+  .portrait{aspect-ratio:1/1}
+  .portrait img{object-position:center 20%}
+  .portrait__badge{left:10px;right:10px;bottom:10px;padding:8px 12px;font-size:12px;gap:2px 12px;flex-wrap:wrap}
   .hero__note{display:none}
   .bcell{padding:16px 14px}
   .bcell .t{font-size:14px}

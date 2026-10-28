@@ -28,6 +28,10 @@ Options -Indexes
     # Ne pas exposer la techno serveur
     Header always unset X-Powered-By
     Header unset X-Powered-By
+    # Images affichables ailleurs : le logo de la signature des e-mails est chargé par les webmails (autre origine)
+    <FilesMatch "\.(png|jpe?g|gif)$">
+        Header always set Cross-Origin-Resource-Policy "cross-origin"
+    </FilesMatch>
 </IfModule>
 
 # ---------------- Cache ----------------

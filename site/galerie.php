@@ -197,6 +197,7 @@ a.gal-card__hint:hover{text-decoration:underline;text-underline-offset:3px}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.lightbox__track{scroll-behavior:auto}}
 </style>
 <link rel="stylesheet" href="<?= g_asset('/css/studio.css') ?>">
+  <script src="<?= g_asset('/js/no-track.js') ?>"></script>
   <script defer src="https://umami.birostweb.fr/script.js" data-do-not-track="true" data-website-id="0ee73c30-9df2-4d1a-99fc-1ae604e9562c"></script>
 </head>
 <body id="top">

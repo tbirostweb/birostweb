@@ -429,6 +429,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 <link rel="stylesheet" href="<?= asset('/css/studio.css') ?>">
 <!-- Animations : GSAP auto-hébergé (CSP 'self'), voir js/motion/ -->
 <link rel="stylesheet" href="<?= asset('/css/motion.css') ?>">
+<script src="<?= asset('/js/no-track.js') ?>"></script>
 <script src="<?= asset('/js/motion/init.js') ?>"></script>
 <script src="<?= asset('/js/offers-fold.js') ?>"></script>
 <script defer src="<?= asset('/js/consent.js') ?>"></script>

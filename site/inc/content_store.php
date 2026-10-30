@@ -984,8 +984,8 @@ function cs_default_content(): array
                 'feat' => false,
                 'badge' => '',
                 'title' => 'Votre hébergement',
-                'description' => 'Vous gardez la main',
-                'price' => 'Gratuit',
+                'description' => 'Vous payez directement votre hébergeur',
+                'price' => 'Sans abonnement',
                 'price_unit' => '',
                 'features' => [
                     'Déployé sur votre VPS ou votre hébergeur',

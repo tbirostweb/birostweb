@@ -491,9 +491,9 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 <div class="bene">
   <div class="wrap bene__grid">
     <div class="bcell"><span class="n">01</span><div class="t">Un seul interlocuteur, du début à la fin</div></div>
-    <div class="bcell"><span class="n">02</span><div class="t">Livré en 2 à 4 semaines</div></div>
-    <div class="bcell"><span class="n">03</span><div class="t">Rapide, sur mobile comme sur Google</div></div>
-    <div class="bcell"><span class="n">04</span><div class="t">Un prix clair, annoncé dès le départ</div></div>
+    <div class="bcell"><span class="n">02</span><div class="t">Site vitrine : 2 à 4 semaines</div></div>
+    <div class="bcell"><span class="n">03</span><div class="t">Un site adapté à tous les écrans</div></div>
+    <div class="bcell"><span class="n">04</span><div class="t">Un devis clair avant de vous engager</div></div>
   </div>
 </div>
 
@@ -792,7 +792,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <div>
         <span class="eyebrow" style="margin-bottom:16px">Contact</span>
         <h2 class="h2">Parlons de votre projet.</h2>
-        <p class="lead">Un site à créer ou à refondre, une appli à construire, ou juste une question ? Écrivez-moi, même si votre idée est encore floue. Je réponds vite : sous 48h, sans engagement.</p>
+        <p class="lead">Présentez votre activité et ce que vous attendez de votre site. Si vous avez déjà un site ou une date en tête, indiquez-les aussi. Je vous réponds sous 48h pour préciser le projet, sans engagement.</p>
         <a href="https://cal.com/birostweb" target="_blank" rel="noopener" class="btn btn-ghost" style="margin:4px 0 4px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v3M16 2v3M3.5 9h17M5 5h14a1.5 1.5 0 011.5 1.5v13A1.5 1.5 0 0119 21H5a1.5 1.5 0 01-1.5-1.5v-13A1.5 1.5 0 015 5z"/></svg>
           Ou réservez un appel de 15 min
@@ -847,7 +847,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 <?= offers_plan_options_html($siteContent, 'heb') ?>          </select>
         </div>
         </div><!-- /form-details -->
-        <div class="field"><label for="cm">Votre projet</label><textarea id="cm" name="message" required minlength="10" maxlength="5000"></textarea></div>
+        <div class="field"><label for="cm">Votre projet</label><textarea id="cm" name="message" required minlength="10" maxlength="5000" placeholder="Votre activité, le site souhaité, votre site actuel si vous en avez un, et votre délai idéal…"></textarea></div>
         <input type="hidden" name="ts" value="<?= htmlspecialchars((string) $contactFormTs, ENT_QUOTES) ?>">
         <input type="hidden" name="token" value="<?= htmlspecialchars($contactFormToken, ENT_QUOTES) ?>">
         <div style="position:absolute;left:-9999px;top:-9999px" aria-hidden="true">

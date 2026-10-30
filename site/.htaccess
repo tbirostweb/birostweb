@@ -88,8 +88,16 @@ RewriteRule ^vendor/ - [F,L]
 # Autoriser explicitement /.well-known/
 RewriteRule ^\.well-known/ - [L]
 
-# Route propre pour la galerie : /galerie (slash final optionnel) -> galerie.php
-RewriteRule ^galerie/?$ galerie.php [L]
+# Canonicaliser uniquement les URL demandées par le client, jamais les réécritures
+# internes ou DirectoryIndex. HTTPS est terminé par Traefik en amont.
+RewriteCond %{THE_REQUEST} "\s/+index\.php[?\s]"
+RewriteRule ^index\.php$ https://birostweb.fr/ [R=301,L]
+
+RewriteCond %{THE_REQUEST} "\s/+galerie(?:\.php|/)[?\s]"
+RewriteRule ^galerie(?:\.php|/)$ https://birostweb.fr/galerie [R=301,L]
+
+# Route propre pour la galerie : pas de redirection lors du passage interne en PHP.
+RewriteRule ^galerie$ galerie.php [L]
 
 # ---------------- Compression ----------------
 # Brotli si le module est présent (meilleure compression que gzip sur le texte).

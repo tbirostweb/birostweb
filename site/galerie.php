@@ -49,16 +49,17 @@ $hasCarousel = (bool) cs_gallery_items($content, true, 'carousel');
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Galerie — Réalisations en images · Théo Birost</title>
-<meta name="description" content="Galerie de réalisations en images : carrousels de projets web conçus par Théo Birost, développeur web full-stack.">
+<title>Galerie de projets web — Troyes (Aube) | Théo Birost</title>
+<meta name="description" content="Découvrez en images, vidéos et carrousels les projets web de Théo Birost, développeur web freelance à Troyes et dans l’Aube.">
 <link rel="canonical" href="https://birostweb.fr/galerie">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://birostweb.fr/"},{"@type":"ListItem","position":2,"name":"Galerie","item":"https://birostweb.fr/galerie"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","@id":"https://birostweb.fr/galerie#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://birostweb.fr/"},{"@type":"ListItem","position":2,"name":"Galerie","item":"https://birostweb.fr/galerie"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","@id":"https://birostweb.fr/galerie#webpage","url":"https://birostweb.fr/galerie","name":"Galerie de projets web — Troyes (Aube) | Théo Birost","inLanguage":"fr-FR","isPartOf":{"@id":"https://birostweb.fr/#website"},"publisher":{"@id":"https://birostweb.fr/#business"},"breadcrumb":{"@id":"https://birostweb.fr/galerie#breadcrumb"}}</script>
 <meta name="robots" content="index, follow">
 <meta name="author" content="Théo Birost">
 <meta name="theme-color" content="#231F20">
 <meta name="color-scheme" content="light">
-<meta property="og:title" content="Galerie — Réalisations en images · Théo Birost">
-<meta property="og:description" content="Carrousels de projets web conçus par Théo Birost, développeur web full-stack.">
+<meta property="og:title" content="Galerie de projets web — Troyes (Aube) | Théo Birost">
+<meta property="og:description" content="Découvrez en images, vidéos et carrousels les projets web de Théo Birost, développeur web freelance à Troyes et dans l’Aube.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
 <meta property="og:url" content="https://birostweb.fr/galerie">

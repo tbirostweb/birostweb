@@ -34,16 +34,16 @@ function asset(string $path): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Développeur web freelance à Troyes (Aube) — Théo Birost</title>
-<meta name="description" content="Développeur web freelance à Troyes et dans l'Aube, aussi à distance partout en France. Sites sur-mesure, rapides et soignés. Devis gratuit sous 48h.">
+<title>Développeur web freelance | Sites sur mesure — Birostweb</title>
+<meta name="description" content="Création et refonte de sites web pour indépendants et petites entreprises, partout en France. Développeur freelance, devis gratuit sous 48h.">
 <link rel="canonical" href="https://birostweb.fr/">
 <meta name="robots" content="index, follow">
 <meta name="author" content="Théo Birost">
 <meta name="theme-color" content="#231F20">
 <meta name="color-scheme" content="light">
 <!-- Open Graph -->
-<meta property="og:title" content="Développeur web freelance à Troyes (Aube) — Théo Birost">
-<meta property="og:description" content="Développeur web freelance à Troyes et dans l'Aube, aussi à distance en France. Des sites sur-mesure pensés pour vous rapporter des clients. Devis gratuit sous 48h.">
+<meta property="og:title" content="Développeur web freelance | Sites sur mesure — Birostweb">
+<meta property="og:description" content="Création et refonte de sites web pour indépendants et petites entreprises, partout en France. Développeur freelance, devis gratuit sous 48h.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
 <meta property="og:url" content="https://birostweb.fr/">
@@ -54,8 +54,8 @@ function asset(string $path): string {
 <meta property="og:image:alt" content="Théo Birost, développeur web freelance — sites sur-mesure qui convertissent">
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Développeur web freelance à Troyes (Aube) — Théo Birost">
-<meta name="twitter:description" content="Développeur web freelance à Troyes et dans l'Aube, aussi à distance en France. Des sites sur-mesure pensés pour vous rapporter des clients. Devis gratuit sous 48h.">
+<meta name="twitter:title" content="Développeur web freelance | Sites sur mesure — Birostweb">
+<meta name="twitter:description" content="Création et refonte de sites web pour indépendants et petites entreprises, partout en France. Développeur freelance, devis gratuit sous 48h.">
 <meta name="twitter:image" content="https://birostweb.fr/og-image.png">
 <!-- Favicon Birostweb (logo BW) -->
 <link rel="icon" type="image/png" sizes="640x640" href="<?= asset('/favicon.png') ?>">
@@ -69,7 +69,7 @@ function asset(string $path): string {
 {"@context":"https://schema.org","@type":"ProfessionalService","@id":"https://birostweb.fr/#business","name":"Birostweb — Théo Birost","description":"Développeur web full-stack indépendant : sites vitrines, boutiques et applications sur-mesure, du design au déploiement.","url":"https://birostweb.fr/","email":"contact@theo-birost.fr","telephone":"+33659753908","address":{"@type":"PostalAddress","addressLocality":"Bréviandes","postalCode":"10450","addressRegion":"Grand Est","addressCountry":"FR"},"areaServed":["France","Troyes","Aube"],"logo":"https://birostweb.fr/favicon.png","image":"https://birostweb.fr/og-image.png","founder":{"@type":"Person","name":"Théo Birost"},"sameAs":["https://www.instagram.com/birost.web/","https://github.com/tbirostweb","https://www.linkedin.com/in/th%C3%A9o-birost-09b286429/"],"priceRange":"€€"}
 LDJSON
 , true), ($ldOffers = offers_jsonld($siteContent)) ? ['makesOffer' => $ldOffers] : []), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://birostweb.fr/#website","url":"https://birostweb.fr/","name":"Birostweb — Théo Birost","inLanguage":"fr-FR","publisher":{"@id":"https://birostweb.fr/#business"}},{"@type":"WebPage","@id":"https://birostweb.fr/#webpage","url":"https://birostweb.fr/","name":"Développeur web freelance à Troyes (Aube) — Théo Birost","inLanguage":"fr-FR","isPartOf":{"@id":"https://birostweb.fr/#website"},"about":{"@id":"https://birostweb.fr/#business"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://birostweb.fr/#website","url":"https://birostweb.fr/","name":"Birostweb — Théo Birost","inLanguage":"fr-FR","publisher":{"@id":"https://birostweb.fr/#business"}},{"@type":"WebPage","@id":"https://birostweb.fr/#webpage","url":"https://birostweb.fr/","name":"Développeur web freelance | Sites sur mesure — Birostweb","inLanguage":"fr-FR","isPartOf":{"@id":"https://birostweb.fr/#website"},"about":{"@id":"https://birostweb.fr/#business"}}]}</script>
 <style>
 /* ================= TOKENS ================= */
 :root{
@@ -464,8 +464,8 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
   <div class="wrap hero__grid">
     <div>
       <span class="chip"><b></b>Disponible · Devis sous 48h</span>
-      <h1>Un site web qui vous ressemble, et qui <span class="accent">vous ramène des clients</span>.</h1>
-      <p class="hero__sub">Je suis développeur web indépendant, basé près de Troyes (Aube) et disponible à distance partout en France. Je crée des sites sur-mesure, soignés et rapides, et je m'occupe de tout : du premier échange jusqu'à la mise en ligne. Sans jargon inutile, sans mauvaise surprise.</p>
+      <h1>Création de sites web sur mesure, <span class="accent">partout en France</span>.</h1>
+      <p class="hero__sub">Je suis Théo Birost, développeur web freelance basé près de Troyes. J’accompagne les indépendants et les petites entreprises partout en France, à distance. Création, refonte ou boutique en ligne : vous échangez directement avec moi, du premier appel à la mise en ligne.</p>
       <div class="hero__cta">
         <a href="#contact" class="btn btn-accent btn-lg">Demander un devis gratuit
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -651,7 +651,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
     <div class="sec-head">
       <span class="eyebrow">Offres &amp; tarifs</span>
       <h2 class="h2 reveal">Des offres claires, des prix indicatifs.</h2>
-      <p class="lead reveal">Ce sont des fourchettes indicatives, juste pour vous donner un ordre d'idée. Le périmètre, la techno et le contenu se décident ensemble, et vous recevez un devis gratuit et précis avant de vous engager.</p>
+      <p class="lead reveal">Ces tarifs vous donnent un premier repère. Avant de vous engager, vous recevez un devis gratuit qui précise les pages, les fonctionnalités, le prix et le délai.</p>
     </div>
 
     <div class="tabs">
@@ -704,14 +704,14 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <div class="tabs__panel" id="panel-seo">
       <div class="maint__head">
         <h3>Soyez trouvé sur Google.</h3>
-        <p>Des forfaits uniques pour poser les bases du référencement local, sans abonnement. Vous pouvez les ajouter à n'importe quel projet, ou à un site existant.</p>
+        <p>Je pose les bases du référencement de votre site et je vous accompagne sur votre fiche Google Business, à distance partout en France. Deux prestations ponctuelles, sans abonnement.</p>
       </div>
       <div class="plans">
 
 <?= offers_render_tab($offersByTab['seo'], 'seo') ?>
 
       </div>
-      <p class="maint__note">Prestations ponctuelles : pas d'abonnement, pas d'engagement. Le référencement demande du temps : les premiers effets se voient en quelques semaines à quelques mois.</p>
+      <p class="maint__note">Une mise en place ponctuelle, sans abonnement ni suivi mensuel inclus. Les résultats et les délais varient selon votre site et la concurrence.</p>
       </div>
 
       <!-- Onglet Maintenance -->
@@ -776,8 +776,8 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
     </div>
     <div class="faq reveal">
       <div class="faq__item"><button class="faq__q">Combien de temps pour créer mon site ?<span class="ic"></span></button><div class="faq__a"><p>Comptez 2 à 4 semaines pour un site vitrine, selon le nombre de pages et le contenu. Pour une application ou une boutique, le délai est cadré précisément dans le devis.</p></div></div>
-      <div class="faq__item"><button class="faq__q">Je pars de zéro, vous m'accompagnez ?<span class="ic"></span></button><div class="faq__a"><p>Oui, complètement. Je vous guide sur la structure du site, le contenu et le design. Pas besoin de vous y connaître : vous décidez, je m'occupe de la technique.</p></div></div>
-      <div class="faq__item"><button class="faq__q">Le devis est-il vraiment gratuit ?<span class="ic"></span></button><div class="faq__a"><p>Totalement, et sans engagement. On échange sur votre projet, et vous recevez une proposition claire avec périmètre, prix et délai sous 48h.</p></div></div>
+      <div class="faq__item"><button class="faq__q">Comment se déroule un projet à distance ?<span class="ic"></span></button><div class="faq__a"><p>Nous échangeons par visioconférence, téléphone et e-mail. Nous définissons votre besoin, puis vous validez les étapes du projet avant la mise en ligne. Que vous soyez près de Troyes ou ailleurs en France, vous gardez un seul interlocuteur.</p></div></div>
+      <div class="faq__item"><button class="faq__q">Que comprend le prix de mon site ?<span class="ic"></span></button><div class="faq__a"><p>Le devis précise les pages, les fonctionnalités, les contenus à intégrer et la mise en ligne. Le nom de domaine, l’hébergement et la maintenance y sont indiqués comme inclus ou chiffrés séparément, selon l’offre choisie. Vous connaissez le périmètre avant de vous engager.</p></div></div>
       <div class="faq__item"><button class="faq__q">À qui appartient le site une fois livré ?<span class="ic"></span></button><div class="faq__a"><p>Après paiement, vous pouvez exploiter, faire évoluer et faire maintenir par le prestataire de votre choix le code original livré (licence d'utilisation non exclusive, détaillée dans les <a href="/cgv.html">CGV</a>). Vos contenus restent les vôtres, et le nom de domaine comme l'hébergement peuvent être ouverts à votre nom lorsque le devis le prévoit. Vous n'êtes jamais coincé chez un prestataire.</p></div></div>
       <div class="faq__item"><button class="faq__q">Et après la mise en ligne ?<span class="ic"></span></button><div class="faq__a"><p>Vous pouvez gérer le site vous-même, ou souscrire à la maintenance (dès 39 €/mois) : mises à jour, sécurité, sauvegardes et évolutions. Je reste joignable dans tous les cas.</p></div></div>
     </div>

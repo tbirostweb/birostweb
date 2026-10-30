@@ -1043,9 +1043,9 @@ function cs_default_content(): array
                 'active' => true,
                 'available' => true,
                 'feat' => true,
-                'badge' => 'Le plus demandé',
+                'badge' => 'Mise en place',
                 'title' => 'Référencement local (SEO)',
-                'description' => "Rendre votre site lisible par Google, une fois pour toutes",
+                'description' => 'Aider Google à comprendre votre activité et vos services',
                 'price' => '399 €',
                 'price_unit' => '',
                 'features' => [

@@ -30,6 +30,52 @@ function offers_start_price(array $offer): int
     return 0;
 }
 
+/** Nombre de mois payés pour une année d'abonnement (2 mois offerts). */
+const OFFERS_ANNUAL_MONTHS_PAID = 10;
+
+/**
+ * Formule annuelle d'une offre mensuelle (onglets Hébergement et Maintenance), dérivée du prix mensuel
+ * (data-mo) : null si l'offre n'est pas un abonnement mensuel ou si une promo est en cours.
+ */
+function offers_annual_info(array $o): ?array
+{
+    $tab = (string) ($o['tab'] ?? '');
+    if (($tab !== 'heb' && $tab !== 'maint') || cs_promo_active($o)) {
+        return null;
+    }
+    $mo = (int) ($o['cta_data']['data-mo'] ?? 0);
+    if ($mo <= 0 || stripos((string) ($o['price_unit'] ?? ''), 'mois') === false) {
+        return null;
+    }
+    $nb   = "\u{00A0}";
+    $fmt  = static fn(float $n): string => str_replace(',00', '', number_format($n, 2, ',', $nb));
+    $year = $mo * OFFERS_ANNUAL_MONTHS_PAID;
+    $title = trim((string) ($o['title'] ?? ''));
+    return [
+        'mo'    => $mo,
+        'year'  => $year,
+        'full'  => $fmt($mo * 12) . $nb . '€',
+        'price' => $fmt($year) . $nb . '€',
+        'permo' => $fmt($year / 12) . $nb . '€',
+        'saved' => $fmt($mo * (12 - OFFERS_ANNUAL_MONTHS_PAID)) . $nb . '€',
+        'label' => $title . ' (annuel)',
+        'form'  => $title . ' · formule annuelle (' . $year . ' €/an)',
+    ];
+}
+
+/** Sélecteur Mensuel / Annuel affiché en tête des onglets qui ont au moins une formule annuelle. */
+function offers_billing_toggle_html(array $offers, string $indent = '      '): string
+{
+    foreach ($offers as $o) {
+        if (offers_annual_info($o) !== null) {
+            return $indent . '<div class="bill-toggle" role="group" aria-label="Rythme de facturation">'
+                . '<label for="bill-m">Mensuel</label>'
+                . '<label for="bill-y">Annuel <small>2 mois offerts</small></label></div>' . "\n";
+        }
+    }
+    return '';
+}
+
 /**
  * Attributs data-* d'un CTA. Onglet Création : auto-dérivés de l'offre
  * (data-form = id, valeur du select de contact ; data-oneoff = prix de départ).
@@ -55,6 +101,11 @@ function offers_cta_attrs(array $offer): string
         ];
     } else {
         $attrs = is_array($offer['cta_data'] ?? null) ? $offer['cta_data'] : [];
+        if (($yr = offers_annual_info($offer)) !== null) {
+            $attrs['data-yr']       = (string) $yr['year'];
+            $attrs['data-label-yr'] = $yr['label'];
+            $attrs['data-form-yr']  = $yr['form'];
+        }
     }
     $out = '';
     foreach ($attrs as $k => $v) {
@@ -98,6 +149,9 @@ function offers_plan_choices(array $content, string $tab): array
         $v = trim((string) (($o['cta_data']['data-form'] ?? '') ?: ($o['title'] ?? '')));
         if ($v !== '') {
             $vals[] = $v;
+        }
+        if (($yr = offers_annual_info($o)) !== null) {
+            $vals[] = $yr['form'];
         }
     }
     return array_values(array_unique($vals));
@@ -243,7 +297,15 @@ function offers_render_plan(array $o): string
         $h .= '          <span class="plan__badge">' . oe((string) $o['badge']) . '</span>' . "\n";
     }
     $h .= '          <div class="plan__name">' . oe((string) ($o['title'] ?? '')) . '</div>' . "\n";
-    $h .= '          <div class="plan__price">' . offers_price_html($o, $unit) . '</div>' . "\n";
+    $yr = offers_annual_info($o);
+    if ($yr !== null) {
+        $h .= '          <div class="plan__price"><i class="bill bill--m">' . offers_price_html($o, $unit) . '</i>'
+            . '<i class="bill bill--y"><s class="price-was">' . oe($yr['full']) . '</s> ' . oe($yr['price']) . '<span> / an</span></i></div>' . "\n";
+        $h .= '          <div class="plan__annual"><i class="bill bill--m">Ou ' . oe($yr['price']) . ' / an : 2 mois offerts</i>'
+            . '<i class="bill bill--y">Soit ' . oe($yr['permo']) . ' / mois, vous économisez ' . oe($yr['saved']) . '</i></div>' . "\n";
+    } else {
+        $h .= '          <div class="plan__price">' . offers_price_html($o, $unit) . '</div>' . "\n";
+    }
     $h .= '          <div class="plan__for">' . oe((string) ($o['description'] ?? '')) . '</div>' . "\n";
     $h .= offers_fold_toggle('          ');
     $h .= '          <ul class="plan__list fold">';

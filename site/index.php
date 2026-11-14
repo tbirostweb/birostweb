@@ -380,6 +380,17 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 #tab-crea:checked~.tabs__nav label[for="tab-crea"],#tab-heb:checked~.tabs__nav label[for="tab-heb"],#tab-seo:checked~.tabs__nav label[for="tab-seo"],#tab-maint:checked~.tabs__nav label[for="tab-maint"]{background:var(--accent);border-color:var(--accent);color:#fff}
 #tab-crea:checked~#panel-crea,#tab-heb:checked~#panel-heb,#tab-seo:checked~#panel-seo,#tab-maint:checked~#panel-maint{display:block}
 .tabs__panel .reveal{opacity:1;transform:none}
+/* Facturation mensuelle / annuelle (CSS pur, radios #bill-m / #bill-y) */
+.bill-toggle{display:inline-flex;gap:4px;padding:4px;margin-bottom:clamp(20px,3vw,28px);border:1.5px solid var(--line);border-radius:10px;background:var(--surface)}
+.bill-toggle label{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:7px;font-family:var(--fm);font-size:13.5px;letter-spacing:.02em;color:var(--gray);cursor:pointer;transition:.15s;white-space:nowrap}
+.bill-toggle label small{font-size:11px;padding:3px 7px;border-radius:99px;background:var(--accent);color:#fff;letter-spacing:0}
+#bill-m:checked~.tabs__panel label[for="bill-m"],#bill-y:checked~.tabs__panel label[for="bill-y"]{background:var(--ink);color:#fff}
+#bill-m:focus-visible~.tabs__panel label[for="bill-m"],#bill-y:focus-visible~.tabs__panel label[for="bill-y"]{outline:2px solid var(--accent);outline-offset:2px}
+.bill{font-style:normal}
+#bill-m:checked~.tabs__panel .bill--y,#bill-y:checked~.tabs__panel .bill--m{display:none}
+.plan__annual{margin:0 0 6px;font-size:13.5px;color:var(--gray)}
+#bill-y:checked~.tabs__panel .plan__annual{color:var(--accent)}
+@media (max-width:640px){.bill-toggle{display:flex}.bill-toggle label{flex:1;justify-content:center;padding:9px 8px}}
 
 /* Mobile : contenu secondaire replié / compacté (voir js/offers-fold.js) */
 @media (max-width:640px){
@@ -660,6 +671,8 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <input type="radio" name="offtab" id="tab-heb" aria-label="Hébergement">
       <input type="radio" name="offtab" id="tab-seo" aria-label="Référencement">
       <input type="radio" name="offtab" id="tab-maint" aria-label="Maintenance">
+      <input type="radio" name="billing" id="bill-m" aria-label="Facturation mensuelle" checked>
+      <input type="radio" name="billing" id="bill-y" aria-label="Facturation annuelle">
       <div class="tabs__nav">
         <label for="tab-crea">Création de site</label>
         <label for="tab-heb">Hébergement</label>
@@ -693,6 +706,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
         <h3>Où vit votre site&nbsp;?</h3>
         <p>Deux possibilités : vous gardez la main sur votre hébergement, ou je m'occupe de tout, serveur compris.</p>
       </div>
+<?= offers_billing_toggle_html($offersByTab['heb']) ?>
       <div class="hosting">
 
 <?= offers_render_tab($offersByTab['heb'], 'heb') ?>
@@ -721,6 +735,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
         <h3>Maintenance mensuelle, sans y penser.</h3>
         <p>Un site vit : il faut le garder à jour, sauvegardé et sécurisé. Prenez le niveau de suivi qui vous va, et changez ou arrêtez quand vous voulez.</p>
       </div>
+<?= offers_billing_toggle_html($offersByTab['maint']) ?>
       <div class="plans">
 
 <?= offers_render_tab($offersByTab['maint'], 'maint') ?>
@@ -938,6 +953,7 @@ document.querySelectorAll('.faq__q').forEach(function(q){
  var el={offre:document.getElementById('est-offre'),heb:document.getElementById('est-heb'),seo:document.getElementById('est-seo'),maint:document.getElementById('est-maint'),oneoff:document.getElementById('est-oneoff'),mo:document.getElementById('est-mo')};
  var state={};
  function setSelect(id,val){var s=document.getElementById(id); if(!s||val==null) return; var ok=false; for(var i=0;i<s.options.length;i++){if(s.options[i].value===val){ok=true;break;}} if(!ok){s.add(new Option(val,val));} s.value=val;}
+ function pick(d){var y=document.getElementById('bill-y');if(y&&y.checked&&d.yr){return {label:d.labelYr,mo:0,yr:parseInt(d.yr,10),form:d.formYr};}return {label:d.label,mo:parseInt(d.mo||'0',10),yr:0,form:d.form};}
  function refresh(){
   box.hidden=false;
   el.offre.textContent=state.offre?state.offre.label:'—';
@@ -947,7 +963,9 @@ document.querySelectorAll('.faq__q').forEach(function(q){
   var oneoff=(state.offre?state.offre.oneoff:0)+(state.seo?state.seo.oneoff:0);
   el.oneoff.textContent=(oneoff>0)?('À partir de '+oneoff.toLocaleString('fr-FR')+' €'):'Projet sur devis';
   var mo=(state.heb?state.heb.mo:0)+(state.maint?state.maint.mo:0);
-  el.mo.textContent=(mo>0)?('+ '+mo+' €/mois'):'';
+  var yr=(state.heb?state.heb.yr||0:0)+(state.maint?state.maint.yr||0:0),t=[];
+  if(mo>0)t.push(mo+' €/mois'); if(yr>0)t.push(yr+' €/an');
+  el.mo.textContent=t.length?('+ '+t.join(' + ')):'';
  }
  function toTab(id){var r=document.getElementById(id); if(r){r.checked=true; var n=document.querySelector('.tabs__nav'); if(n)n.scrollIntoView({behavior:'smooth',block:'start'});}}
  document.querySelectorAll('[data-step]').forEach(function(btn){
@@ -955,10 +973,10 @@ document.querySelectorAll('.faq__q').forEach(function(q){
    e.preventDefault();
    var d=btn.dataset;
    if(d.step==='offre'){state.offre={label:d.label,oneoff:parseInt(d.oneoff||'0',10)};setSelect('coffer',d.form);}
-   else if(d.step==='heb'){state.heb={label:d.label,mo:parseInt(d.mo||'0',10)};setSelect('cheb',d.form);
+   else if(d.step==='heb'){state.heb=pick(d);setSelect('cheb',state.heb.form);
     if(d.included){state.maint={label:"Incluse dans l'offre",mo:0};setSelect('cmaint','');}}
    else if(d.step==='seo'){state.seo={label:d.label,oneoff:parseInt(d.oneoff||'0',10)};setSelect('cseo',d.form);}
-   else if(d.step==='maint'){state.maint={label:d.label,mo:parseInt(d.mo||'0',10)};setSelect('cmaint',d.form);}
+   else if(d.step==='maint'){state.maint=pick(d);setSelect('cmaint',state.maint.form);}
    refresh();
    if(d.next){toTab(d.next);} else {var c=document.getElementById('contact'); if(c)c.scrollIntoView({behavior:'smooth'});}
   });

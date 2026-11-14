@@ -380,21 +380,17 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 #tab-crea:checked~.tabs__nav label[for="tab-crea"],#tab-heb:checked~.tabs__nav label[for="tab-heb"],#tab-seo:checked~.tabs__nav label[for="tab-seo"],#tab-maint:checked~.tabs__nav label[for="tab-maint"]{background:var(--accent);border-color:var(--accent);color:#fff}
 #tab-crea:checked~#panel-crea,#tab-heb:checked~#panel-heb,#tab-seo:checked~#panel-seo,#tab-maint:checked~#panel-maint{display:block}
 .tabs__panel .reveal{opacity:1;transform:none}
-/* Facturation mensuelle / annuelle (CSS pur, case #bill-y) : interrupteur */
-#bill-y{position:fixed;top:0;left:0}
-.bill-toggle{display:inline-flex;align-items:center;gap:12px;margin-bottom:clamp(20px,3vw,28px);font-family:var(--fm);font-size:14px;letter-spacing:.02em;color:var(--gray);cursor:pointer;user-select:none}
-.bill-toggle .bt-m,.bill-toggle .bt-y{transition:color .15s}
-.bill-toggle .bt-track{position:relative;width:46px;height:26px;border-radius:99px;background:var(--line);transition:background .2s;flex:none}
-.bill-toggle .bt-track::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
-.bill-toggle small{margin-left:8px;font-size:11px;padding:3px 8px;border-radius:99px;background:var(--accent);color:#fff;letter-spacing:0}
-#bill-y:not(:checked)~.tabs__panel .bt-m,#bill-y:checked~.tabs__panel .bt-y{color:var(--ink);font-weight:600}
-#bill-y:checked~.tabs__panel .bt-track{background:var(--accent)}
-#bill-y:checked~.tabs__panel .bt-track::after{transform:translateX(20px)}
-#bill-y:focus-visible~.tabs__panel .bt-track{outline:2px solid var(--accent);outline-offset:3px}
+/* Facturation mensuelle / annuelle (CSS pur, radios #bill-m / #bill-y ; position:fixed pour ne pas faire sauter la page au clic) */
+#bill-m,#bill-y{position:fixed;top:0;left:0}
+.bill-toggle{display:inline-flex;gap:4px;padding:4px;margin-bottom:clamp(20px,3vw,28px);border:1.5px solid var(--line);border-radius:10px;background:var(--surface)}
+.bill-toggle label{display:inline-flex;align-items:center;padding:9px 18px;border-radius:7px;font-family:var(--fm);font-size:13.5px;letter-spacing:.02em;color:var(--gray);cursor:pointer;transition:.15s;white-space:nowrap}
+#bill-m:checked~.tabs__panel label[for="bill-m"],#bill-y:checked~.tabs__panel label[for="bill-y"]{background:var(--ink);color:#fff}
+#bill-m:focus-visible~.tabs__panel label[for="bill-m"],#bill-y:focus-visible~.tabs__panel label[for="bill-y"]{outline:2px solid var(--accent);outline-offset:2px}
 .bill{font-style:normal}
-#bill-y:not(:checked)~.tabs__panel .bill--y,#bill-y:checked~.tabs__panel .bill--m{display:none}
+#bill-m:checked~.tabs__panel .bill--y,#bill-y:checked~.tabs__panel .bill--m{display:none}
 .plan__annual{margin:0 0 6px;font-size:13.5px;color:var(--gray)}
 #bill-y:checked~.tabs__panel .plan__annual{color:var(--accent)}
+@media (max-width:640px){.bill-toggle{display:flex}.bill-toggle label{flex:1;justify-content:center;padding:9px 8px}}
 
 /* Mobile : contenu secondaire replié / compacté (voir js/offers-fold.js) */
 @media (max-width:640px){
@@ -675,7 +671,8 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
       <input type="radio" name="offtab" id="tab-heb" aria-label="Hébergement">
       <input type="radio" name="offtab" id="tab-seo" aria-label="Référencement">
       <input type="radio" name="offtab" id="tab-maint" aria-label="Maintenance">
-      <input type="checkbox" role="switch" id="bill-y" aria-label="Facturation annuelle (2 mois offerts)">
+      <input type="radio" name="billing" id="bill-m" aria-label="Facturation mensuelle" checked>
+      <input type="radio" name="billing" id="bill-y" aria-label="Facturation annuelle">
       <div class="tabs__nav">
         <label for="tab-crea">Création de site</label>
         <label for="tab-heb">Hébergement</label>

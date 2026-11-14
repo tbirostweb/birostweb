@@ -68,8 +68,8 @@ function offers_billing_toggle_html(array $offers, string $indent = '      '): s
 {
     foreach ($offers as $o) {
         if (offers_annual_info($o) !== null) {
-            return $indent . '<label class="bill-toggle" for="bill-y"><span class="bt-m">Mensuel</span><span class="bt-track" aria-hidden="true"></span>'
-                . '<span class="bt-y">Annuel<small>2 mois offerts</small></span></label>' . "\n";
+            return $indent . '<div class="bill-toggle" role="group" aria-label="Rythme de facturation">'
+                . '<label for="bill-m">Mensuel</label><label for="bill-y">Annuel</label></div>' . "\n";
         }
     }
     return '';

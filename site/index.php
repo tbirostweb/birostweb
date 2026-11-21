@@ -989,7 +989,7 @@ document.querySelectorAll('.faq__q').forEach(function(q){
  }
  var skip=document.getElementById('seo-skip');
  if(skip)skip.addEventListener('click',function(e){e.preventDefault();state.seo=null;setSelect('cseo','');refresh();var c=document.getElementById('contact');if(c)c.scrollIntoView({behavior:'smooth'});});
- function toTab(id){var r=document.getElementById(id); if(r){r.checked=true; var n=document.querySelector('.tabs__nav'); if(n)n.scrollIntoView({behavior:'smooth',block:'start'});}}
+ function toTab(id){var r=document.getElementById(id); if(r){r.checked=true; var n=document.querySelector('.tabs__nav'),h=document.querySelector('.nav'); if(n)window.scrollTo({top:n.getBoundingClientRect().top+window.pageYOffset-((h?h.getBoundingClientRect().height:80)+24),behavior:'instant'});}}
  document.querySelectorAll('[data-step]').forEach(function(btn){
   btn.addEventListener('click',function(e){
    e.preventDefault();

@@ -119,3 +119,9 @@ altcha-widget{--altcha-border-radius:3px;--altcha-color-base:var(--surface);--al
   .plan__price{font-size:clamp(25px,2.3vw,30px);margin:8px 0 2px}
   .plan__list li{font-size:14px}
 }
+
+/* Onglets Hébergement / Référencement / Maintenance : l'intro n'est plus affichée (les cartes montent dans l'écran
+   après « Choisir cette offre ») mais reste lue par les lecteurs d'écran et les moteurs de recherche. */
+.tabs__panel>.maint__head{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+.tabs__nav{margin-bottom:clamp(14px,2vw,20px)}
+.bill-toggle{margin-bottom:14px}

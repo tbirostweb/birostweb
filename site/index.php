@@ -393,7 +393,6 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 .plan--later[hidden]{display:none}
 .plan--later .plan__name{font-size:20px}
 .plan--later .plan__for{margin-top:10px;font-size:15px}
-.skip-link{display:inline-block;margin-top:6px;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .plan__annual{margin:0 0 6px;font-size:13.5px;color:var(--gray)}
 #bill-y:checked~.tabs__panel .plan__annual{color:var(--accent)}
 .plan__steps{display:flex;flex-direction:column;gap:4px;color:var(--gray);font-size:14px}
@@ -745,7 +744,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
         </article>
 
       </div>
-      <p class="maint__note">Une mise en place ponctuelle, sans abonnement ni suivi mensuel inclus. Les résultats et les délais varient selon votre site et la concurrence. <label for="tab-maint" class="skip-link">Pas besoin de référencement ? Passer à la suite →</label></p>
+      <p class="maint__note">Une mise en place ponctuelle, sans abonnement ni suivi mensuel inclus. Les résultats et les délais varient selon votre site et la concurrence.</p>
       </div>
 
       <!-- Onglet Maintenance -->

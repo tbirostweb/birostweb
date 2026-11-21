@@ -388,6 +388,11 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 #bill-m:focus-visible~.tabs__panel label[for="bill-m"],#bill-y:focus-visible~.tabs__panel label[for="bill-y"]{outline:2px solid var(--accent);outline-offset:2px}
 .bill{font-style:normal}
 #bill-m:checked~.tabs__panel .bill--y,#bill-y:checked~.tabs__panel .bill--m{display:none}
+@media (min-width:921px){#panel-seo .plans{grid-template-columns:repeat(3,1fr);max-width:1100px}}
+.plan--later{border-style:dashed;background:transparent;justify-content:flex-start}
+.plan--later[hidden]{display:none}
+.plan--later .plan__name{font-size:20px}
+.plan--later .plan__for{margin-top:10px;font-size:15px}
 .skip-link{display:inline-block;margin-top:6px;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .plan__annual{margin:0 0 6px;font-size:13.5px;color:var(--gray)}
 #bill-y:checked~.tabs__panel .plan__annual{color:var(--accent)}
@@ -726,6 +731,12 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 
 <?= offers_render_tab($offersByTab['seo'], 'seo') ?>
 
+        <article class="plan plan--later" id="seo-later" hidden>
+          <div class="plan__name">Pas décidé pour le moment</div>
+          <div class="plan__for">Pas de souci, on verra plus tard. Le référencement pourra toujours s'ajouter après la mise en ligne.</div>
+          <a href="#contact" class="btn btn-ghost" id="seo-skip">Voir le résumé et me contacter</a>
+        </article>
+
       </div>
       <p class="maint__note">Une mise en place ponctuelle, sans abonnement ni suivi mensuel inclus. Les résultats et les délais varient selon votre site et la concurrence. <label for="tab-maint" class="skip-link">Pas besoin de référencement ? Passer à la suite →</label></p>
       </div>
@@ -954,9 +965,11 @@ document.querySelectorAll('.faq__q').forEach(function(q){
  var el={offre:document.getElementById('est-offre'),heb:document.getElementById('est-heb'),seo:document.getElementById('est-seo'),maint:document.getElementById('est-maint'),oneoff:document.getElementById('est-oneoff'),mo:document.getElementById('est-mo')};
  var state={};
  function setSelect(id,val){var s=document.getElementById(id); if(!s||val==null) return; var ok=false; for(var i=0;i<s.options.length;i++){if(s.options[i].value===val){ok=true;break;}} if(!ok){s.add(new Option(val,val));} s.value=val;}
+ var later=document.getElementById('seo-later');
  function pick(d){var y=document.getElementById('bill-y');if(y&&y.checked&&d.yr){return {label:d.labelYr,mo:0,yr:parseInt(d.yr,10),form:d.formYr};}return {label:d.label,mo:parseInt(d.mo||'0',10),yr:0,form:d.form};}
  function refresh(){
   box.hidden=false;
+  if(later)later.hidden=!(state.offre||state.heb);
   el.offre.textContent=state.offre?state.offre.label:'—';
   el.heb.textContent=state.heb?state.heb.label:'—';
   el.seo.textContent=state.seo?state.seo.label:'—';
@@ -968,6 +981,8 @@ document.querySelectorAll('.faq__q').forEach(function(q){
   if(mo>0)t.push(mo+' €/mois'); if(yr>0)t.push(yr+' €/an');
   el.mo.textContent=t.length?('+ '+t.join(' + ')):'';
  }
+ var skip=document.getElementById('seo-skip');
+ if(skip)skip.addEventListener('click',function(e){e.preventDefault();state.seo=null;setSelect('cseo','');refresh();var c=document.getElementById('contact');if(c)c.scrollIntoView({behavior:'smooth'});});
  function toTab(id){var r=document.getElementById(id); if(r){r.checked=true; var n=document.querySelector('.tabs__nav'); if(n)n.scrollIntoView({behavior:'smooth',block:'start'});}}
  document.querySelectorAll('[data-step]').forEach(function(btn){
   btn.addEventListener('click',function(e){

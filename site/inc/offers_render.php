@@ -78,6 +78,8 @@ function offers_annual_info(array $o): ?array
         'was'   => $promo ? $fmt($regular * OFFERS_ANNUAL_MONTHS_PAID) . $nb . '€' : '',
         'price' => $fmt($year) . $nb . '€',
         'permo' => $fmt($year / 12) . $nb . '€',
+        'monthly' => $fmt($regular) . $nb . '€',
+        'extra' => ($promo && $regular * OFFERS_ANNUAL_MONTHS_PAID > $year) ? $fmt($regular * OFFERS_ANNUAL_MONTHS_PAID - $year) . $nb . '€' : '',
         'saved' => $fmt($regular * (12 - OFFERS_ANNUAL_MONTHS_PAID)) . $nb . '€',
         'label' => $title . ' (annuel)',
         'form'  => $title . ' · formule annuelle (' . $year . ' €/an)',
@@ -328,12 +330,24 @@ function offers_render_plan(array $o): string
     $yr = offers_annual_info($o);
     if ($yr !== null) {
         $h .= '          <div class="plan__price"><i class="bill bill--m">' . offers_price_html($o, $unit) . '</i>'
-            . '<i class="bill bill--y"><s class="price-was">' . oe($yr['full']) . '</s> '
-            . ($yr['was'] !== '' ? '<s class="price-was">' . oe($yr['was']) . '</s> ' : '') . oe($yr['price']) . '<span> / an</span>'
+            . '<i class="bill bill--y">' . ($yr['was'] === ''
+                ? '<s class="price-was">' . oe($yr['full']) . '</s> ' . oe($yr['price'])
+                : '<span class="price-now">' . oe($yr['price']) . '</span>')
+            . '<span> / an</span>'
             . ($yr['tag'] !== '' ? ' <span class="promo-tag">' . oe($yr['tag']) . '</span>' : '')
             . '</i></div>' . "\n";
-        $h .= '          <div class="plan__annual"><i class="bill bill--m">Ou ' . oe($yr['price']) . ' / an : 2 mois offerts</i>'
-            . '<i class="bill bill--y">Soit ' . oe($yr['permo']) . ' / mois, vous économisez ' . oe($yr['saved']) . '</i></div>' . "\n";
+        $h .= '          <div class="plan__annual"><i class="bill bill--m">Ou ' . oe($yr['price']) . ' / an : 2 mois offerts</i>';
+        if ($yr['was'] === '') {
+            $h .= '<i class="bill bill--y">Soit ' . oe($yr['permo']) . ' / mois, vous économisez ' . oe($yr['saved']) . '</i></div>' . "\n";
+        } else {
+            // Promo en cours : les trois prix sont expliqués ligne par ligne.
+            $h .= '<div class="bill bill--y plan__steps">'
+                . '<span><s>' . oe($yr['full']) . '</s> En payant au mois (12 × ' . oe($yr['monthly']) . ')</span>'
+                . '<span><s>' . oe($yr['was']) . '</s> En annuel : 2 mois offerts (−' . oe($yr['saved']) . ')</span>'
+                . '<span class="bf"><b>' . oe($yr['price']) . '</b> Black Friday'
+                . ($yr['extra'] !== '' ? ' : −' . oe($yr['extra']) . ' de plus' : '') . '</span>'
+                . '<span class="pm">Soit ' . oe($yr['permo']) . ' / mois</span></div></div>' . "\n";
+        }
     } else {
         $h .= '          <div class="plan__price">' . offers_price_html($o, $unit) . '</div>' . "\n";
     }

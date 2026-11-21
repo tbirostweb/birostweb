@@ -396,6 +396,11 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 .skip-link{display:inline-block;margin-top:6px;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .plan__annual{margin:0 0 6px;font-size:13.5px;color:var(--gray)}
 #bill-y:checked~.tabs__panel .plan__annual{color:var(--accent)}
+.plan__steps{display:flex;flex-direction:column;gap:4px;color:var(--gray);font-size:14px}
+.plan__steps s{margin-right:6px;font-family:var(--fd);font-weight:700;text-decoration-thickness:1px}
+.plan__steps .bf{color:var(--accent);font-weight:600}
+.plan__steps .bf b{margin-right:6px;font-family:var(--fd);font-size:1.15em}
+.plan__steps .pm{margin-top:2px;color:var(--ink)}
 @media (max-width:640px){.bill-toggle{display:flex}.bill-toggle label{flex:1;justify-content:center;padding:9px 8px}}
 
 /* Mobile : contenu secondaire replié / compacté (voir js/offers-fold.js) */

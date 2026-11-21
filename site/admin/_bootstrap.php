@@ -82,6 +82,7 @@ if (isset($_SESSION['admin_auth']) && $_SESSION['admin_auth'] === true) {
         $_SESSION['admin_last'] = time();
     }
 }
+// (le jeton de reconnexion est traité plus bas, après la définition de l'authentification)
 
 /* ---- Config auth ---- */
 function admin_user(): string
@@ -121,7 +122,89 @@ function admin_destroy_session(): void
             'samesite' => 'Strict',
         ]);
     }
+    admin_remember_clear();
     session_destroy();
+}
+
+/* ---- Reconnexion après un redéploiement ----
+ * Les sessions PHP vivent dans le conteneur : un redéploiement les efface. Un jeton signé (HMAC) dans un cookie
+ * HttpOnly/Secure/SameSite=Strict permet de restaurer la session tant que l'inactivité reste < 30 min et la
+ * session < 12 h. La clé dérive de ADMIN_PASSWORD_HASH (ou ADMIN_SESSION_SECRET) : changer le mot de passe
+ * invalide tous les jetons. */
+const ADMIN_REMEMBER_COOKIE = 'bwadmin_auth';
+
+function admin_remember_key(): string
+{
+    $secret = (string) (cs_env('ADMIN_SESSION_SECRET') ?? admin_hash());
+    return $secret === '' ? '' : hash('sha256', 'bw-admin-remember|' . $secret . '|' . admin_user());
+}
+
+function admin_remember_issue(int $started): void
+{
+    $key = admin_remember_key();
+    if ($key === '' || headers_sent()) {
+        return;
+    }
+    $payload = rtrim(strtr(base64_encode(json_encode(['s' => $started, 'l' => time()])), '+/', '-_'), '=');
+    setcookie(ADMIN_REMEMBER_COOKIE, $payload . '.' . hash_hmac('sha256', $payload, $key), [
+        'expires' => 0,
+        'path' => '/admin',
+        'httponly' => true,
+        'secure' => admin_cookie_secure(),
+        'samesite' => 'Strict',
+    ]);
+}
+
+function admin_remember_clear(): void
+{
+    if (isset($_COOKIE[ADMIN_REMEMBER_COOKIE]) && !headers_sent()) {
+        setcookie(ADMIN_REMEMBER_COOKIE, '', [
+            'expires' => time() - 42000,
+            'path' => '/admin',
+            'httponly' => true,
+            'secure' => admin_cookie_secure(),
+            'samesite' => 'Strict',
+        ]);
+    }
+}
+
+/** Début de session (timestamp) si le jeton est valide et non expiré, sinon null. */
+function admin_remember_read(?int $now = null): ?int
+{
+    $raw = $_COOKIE[ADMIN_REMEMBER_COOKIE] ?? '';
+    $key = admin_remember_key();
+    if (!is_string($raw) || $key === '' || substr_count($raw, '.') !== 1) {
+        return null;
+    }
+    [$payload, $sig] = explode('.', $raw);
+    if (!hash_equals(hash_hmac('sha256', $payload, $key), $sig)) {
+        return null;
+    }
+    $d = json_decode((string) base64_decode(strtr($payload, '-_', '+/')), true);
+    $now = $now ?? time();
+    if (!is_array($d) || !isset($d['s'], $d['l']) || !is_int($d['s']) || !is_int($d['l'])
+        || $now - $d['l'] > ADMIN_IDLE_TIMEOUT || $now - $d['s'] > ADMIN_ABSOLUTE_TIMEOUT || $d['l'] > $now + 60) {
+        return null;
+    }
+    return $d['s'];
+}
+
+if (admin_configured()) {
+    if (!admin_is_authenticated()) {
+        $startedAt = admin_remember_read();
+        if ($startedAt !== null) {
+            session_regenerate_id(true);
+            $_SESSION['admin_auth'] = true;
+            $_SESSION['admin_user'] = admin_user();
+            $_SESSION['admin_last'] = time();
+            $_SESSION['admin_started'] = $startedAt;
+        } else {
+            admin_remember_clear();
+        }
+    }
+    if (admin_is_authenticated()) {
+        admin_remember_issue((int) ($_SESSION['admin_started'] ?? time()));
+    }
 }
 
 /** Redirige vers la connexion si non authentifié. */

@@ -49,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['admin_last'] = time();
                 $_SESSION['admin_started'] = time();
                 $_SESSION['csrf'] = bin2hex(random_bytes(32));
+                admin_remember_issue(time());
                 header('Location: ' . admin_base() . '/');
                 exit;
             }

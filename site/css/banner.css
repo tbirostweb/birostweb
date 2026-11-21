@@ -1,4 +1,6 @@
-/* Bandeau d'annonce défilant (géré dans /admin, clé `banner` du ContentStore). */
+/* Bandeau d'annonce défilant (géré dans /admin, clé `banner` du ContentStore).
+   Placé dans <header class="nav"> : il reste collé sous le menu quand on descend. */
+html:has(.promo-bar){scroll-padding-top:128px}
 .promo-bar{background:var(--ink,#1c1a1a);color:#fff;font-family:var(--fm,ui-monospace,monospace);font-size:13px;letter-spacing:.04em;overflow:hidden;white-space:nowrap}
 .promo-bar a{display:block;color:inherit;text-decoration:none}
 .promo-bar__track{display:inline-flex;padding:9px 0;animation:promo-scroll 40s linear infinite;will-change:transform}

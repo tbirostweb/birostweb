@@ -464,7 +464,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
   <script defer src="https://umami.birostweb.fr/script.js" data-do-not-track="true" data-website-id="0ee73c30-9df2-4d1a-99fc-1ae604e9562c"></script>
 </head>
 <body>
-<?= cs_banner_html(cs_banner($siteContent)) ?>
+
 <!-- ============ NAV ============ -->
 <header class="nav">
   <div class="wrap nav__in">
@@ -479,6 +479,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
     </nav>
     <button class="nav__toggle" id="toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
+<?= cs_banner_html(cs_banner($siteContent)) ?>
 </header>
 
 <main id="top">

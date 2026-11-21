@@ -98,3 +98,24 @@ altcha-widget{--altcha-border-radius:3px;--altcha-color-base:var(--surface);--al
 
 /* Lien « Cookies » du pied de page : masqué tant que Google Analytics n'est pas configuré */
 [data-consent-open][hidden]{display:none!important}
+
+/* ===== Cartes d'offres plus compactes (bureau) : prix sur une ligne, moins de hauteur ===== */
+@media (min-width:641px){
+  .offer,.plan{padding:22px 22px 20px}
+  .offer__top{margin-bottom:8px}
+  .offer__n{white-space:nowrap}
+  .offer h3{font-size:clamp(20px,1.9vw,23px)}
+  .offer__promise{font-size:14px;line-height:1.4;margin:8px 0 12px;padding-bottom:12px}
+  .offer__inc{font-size:13px;line-height:1.45}
+  .offer__inc b{margin-bottom:4px}
+  .offer__price{padding-top:12px}
+  .offer__price .lbl{font-size:10px}
+  .offer__price .amt{font-size:clamp(20px,1.8vw,23px);padding:2px 0;white-space:nowrap}
+  .offer__price .amt .price-was{display:inline;font-size:13px;margin:0 6px 0 0}
+  .offer__price .amt .promo-tag{display:block;width:fit-content;margin:5px 0 0;font-size:10.5px;padding:3px 6px}
+  .offer__price .note{font-size:11px;margin-top:3px}
+  .offer__price .indic{font-size:10px;margin-top:6px;padding-top:6px}
+  .offer .btn,.plan .btn{margin-top:14px;padding-top:11px;padding-bottom:11px}
+  .plan__price{font-size:clamp(25px,2.3vw,30px);margin:8px 0 2px}
+  .plan__list li{font-size:14px}
+}

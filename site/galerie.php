@@ -202,7 +202,6 @@ a.gal-card__hint:hover{text-decoration:underline;text-underline-offset:3px}
   <script defer src="https://umami.birostweb.fr/script.js" data-do-not-track="true" data-website-id="0ee73c30-9df2-4d1a-99fc-1ae604e9562c"></script>
 </head>
 <body id="top">
-<?= cs_banner_html(cs_banner($content)) ?>
 
 <!-- ============ NAV ============ -->
 <header class="nav">
@@ -218,6 +217,7 @@ a.gal-card__hint:hover{text-decoration:underline;text-underline-offset:3px}
     </nav>
     <button class="nav__toggle" id="toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
+<?= cs_banner_html(cs_banner($content)) ?>
 </header>
 
 <main class="section">

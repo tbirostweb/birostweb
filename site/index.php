@@ -388,6 +388,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 #bill-m:focus-visible~.tabs__panel label[for="bill-m"],#bill-y:focus-visible~.tabs__panel label[for="bill-y"]{outline:2px solid var(--accent);outline-offset:2px}
 .bill{font-style:normal}
 #bill-m:checked~.tabs__panel .bill--y,#bill-y:checked~.tabs__panel .bill--m{display:none}
+.skip-link{display:inline-block;margin-top:6px;color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .plan__annual{margin:0 0 6px;font-size:13.5px;color:var(--gray)}
 #bill-y:checked~.tabs__panel .plan__annual{color:var(--accent)}
 @media (max-width:640px){.bill-toggle{display:flex}.bill-toggle label{flex:1;justify-content:center;padding:9px 8px}}
@@ -726,7 +727,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 <?= offers_render_tab($offersByTab['seo'], 'seo') ?>
 
       </div>
-      <p class="maint__note">Une mise en place ponctuelle, sans abonnement ni suivi mensuel inclus. Les résultats et les délais varient selon votre site et la concurrence.</p>
+      <p class="maint__note">Une mise en place ponctuelle, sans abonnement ni suivi mensuel inclus. Les résultats et les délais varient selon votre site et la concurrence. <label for="tab-maint" class="skip-link">Pas besoin de référencement ? Passer à la suite →</label></p>
       </div>
 
       <!-- Onglet Maintenance -->
@@ -974,11 +975,13 @@ document.querySelectorAll('.faq__q').forEach(function(q){
    var d=btn.dataset;
    if(d.step==='offre'){state.offre={label:d.label,oneoff:parseInt(d.oneoff||'0',10)};setSelect('coffer',d.form);}
    else if(d.step==='heb'){state.heb=pick(d);setSelect('cheb',state.heb.form);
-    if(d.included){state.maint={label:"Incluse dans l'offre",mo:0};setSelect('cmaint','');}}
+    if(d.included){state.maint={label:"Incluse dans l'offre",mo:0};setSelect('cmaint','');}
+    else if(state.maint&&state.maint.label.indexOf('Incluse')===0){state.maint=null;}}
    else if(d.step==='seo'){state.seo={label:d.label,oneoff:parseInt(d.oneoff||'0',10)};setSelect('cseo',d.form);}
    else if(d.step==='maint'){state.maint=pick(d);setSelect('cmaint',state.maint.form);}
    refresh();
-   if(d.next){toTab(d.next);} else {var c=document.getElementById('contact'); if(c)c.scrollIntoView({behavior:'smooth'});}
+   var nx=d.next; if(d.step==='seo'&&state.maint&&state.maint.label.indexOf('Incluse')===0){nx='';}
+   if(nx){toTab(nx);} else {var c=document.getElementById('contact'); if(c)c.scrollIntoView({behavior:'smooth'});}
   });
  });
 })();

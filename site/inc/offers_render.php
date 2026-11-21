@@ -21,10 +21,14 @@ function oe(string $s): string
 const OFFERS_CUSTOM_QUOTE_VALUE = 'sur-mesure';
 const OFFERS_CUSTOM_QUOTE_LABEL = 'Devis sur-mesure';
 
-/** Prix de départ (1er nombre du prix, ex. « 999 € – 1 899 € » => 999), 0 si aucun. */
+/** Prix de départ (1er nombre du prix, ex. « 999 € – 1 899 € » => 999), 0 si aucun. Le prix promo prime s'il est actif. */
 function offers_start_price(array $offer): int
 {
-    if (preg_match('/\d[\d \x{00A0}\x{202F}]*/u', (string) ($offer['price'] ?? ''), $m)) {
+    $price = (string) ($offer['price'] ?? '');
+    if (cs_promo_active($offer) && trim((string) ($offer['promo']['price'] ?? '')) !== '') {
+        $price = (string) $offer['promo']['price'];
+    }
+    if (preg_match('/\d[\d \x{00A0}\x{202F}]*/u', $price, $m)) {
         return (int) preg_replace('/\D+/', '', $m[0]);
     }
     return 0;
@@ -35,15 +39,18 @@ const OFFERS_ANNUAL_MONTHS_PAID = 10;
 
 /**
  * Formule annuelle d'une offre mensuelle (onglets Hébergement et Maintenance), dérivée du prix mensuel
- * (data-mo) : null si l'offre n'est pas un abonnement mensuel ou si une promo est en cours.
+ * (data-mo, ou prix promo s'il est actif) : null si l'offre n'est pas un abonnement mensuel.
  */
 function offers_annual_info(array $o): ?array
 {
     $tab = (string) ($o['tab'] ?? '');
-    if (($tab !== 'heb' && $tab !== 'maint') || cs_promo_active($o)) {
+    if ($tab !== 'heb' && $tab !== 'maint') {
         return null;
     }
     $mo = (int) ($o['cta_data']['data-mo'] ?? 0);
+    if ($mo > 0 && cs_promo_active($o) && ($promoMo = offers_start_price($o)) > 0) {
+        $mo = $promoMo;
+    }
     if ($mo <= 0 || stripos((string) ($o['price_unit'] ?? ''), 'mois') === false) {
         return null;
     }
@@ -85,6 +92,7 @@ function offers_cta_attrs(array $offer): string
     if (($offer['tab'] ?? '') === 'seo') {
         $attrs = [
             'data-step'   => 'seo',
+            'data-next'   => 'tab-maint',
             'data-label'  => (string) ($offer['title'] ?? ''),
             'data-oneoff' => (string) offers_start_price($offer),
             'data-form'   => (string) ($offer['id'] ?? ''),
@@ -100,6 +108,13 @@ function offers_cta_attrs(array $offer): string
         ];
     } else {
         $attrs = is_array($offer['cta_data'] ?? null) ? $offer['cta_data'] : [];
+        // Parcours guidé : Création > Hébergement > Référencement > Maintenance > contact.
+        if (($offer['tab'] ?? '') === 'heb') {
+            $attrs['data-next'] = 'tab-seo';
+        }
+        if ((int) ($attrs['data-mo'] ?? 0) > 0 && cs_promo_active($offer) && offers_start_price($offer) > 0) {
+            $attrs['data-mo'] = (string) offers_start_price($offer);
+        }
         if (($yr = offers_annual_info($offer)) !== null) {
             $attrs['data-yr']       = (string) $yr['year'];
             $attrs['data-label-yr'] = $yr['label'];

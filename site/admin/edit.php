@@ -154,6 +154,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'active' => !empty($_POST['promo_active']),
             'price' => trim(mb_substr((string) ($_POST['promo_price'] ?? ''), 0, 60)),
             'label' => trim(mb_substr((string) ($_POST['promo_label'] ?? ''), 0, 40)),
+            'price_yr' => trim(mb_substr((string) ($_POST['promo_price_yr'] ?? ''), 0, 60)),
+            'label_yr' => trim(mb_substr((string) ($_POST['promo_label_yr'] ?? ''), 0, 40)),
             'until' => $until,
         ];
 
@@ -255,6 +257,15 @@ echo '<div><label for="p_price">Prix promo (ex. 799 €)</label>'
 echo '<div><label for="p_label">Étiquette (ex. -20%)</label>'
     . '<input type="text" id="p_label" name="promo_label" value="' . e((string) ($promo['label'] ?? '')) . '"></div>';
 echo '</div>';
+if (in_array((string) ($offer['tab'] ?? ''), ['heb', 'maint'], true)) {
+    echo '<div class="grid2">';
+    echo '<div><label for="p_price_yr">Prix promo annuel (optionnel, ex. 350 €)</label>'
+        . '<input type="text" id="p_price_yr" name="promo_price_yr" value="' . e((string) ($promo['price_yr'] ?? '')) . '"></div>';
+    echo '<div><label for="p_label_yr">Étiquette annuelle (optionnel, ex. Black Friday -22 %)</label>'
+        . '<input type="text" id="p_label_yr" name="promo_label_yr" value="' . e((string) ($promo['label_yr'] ?? '')) . '"></div>';
+    echo '</div>';
+    echo '<p class="hint">Vide : le prix annuel promo = prix promo mensuel × 10 (2 mois offerts).</p>';
+}
 echo '<label for="p_until">Fin de la promo (optionnel, AAAA-MM-JJ)</label>'
     . '<input type="date" id="p_until" name="promo_until" value="' . e((string) ($promo['until'] ?? '')) . '">';
 echo '<p class="hint">Si une promo est active et non expirée, le site affiche le prix d\'origine barré, le prix promo et l\'étiquette.</p>';

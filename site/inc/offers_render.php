@@ -59,15 +59,26 @@ function offers_annual_info(array $o): ?array
     $nb   = "\u{00A0}";
     $fmt  = static fn(float $n): string => str_replace(',00', '', number_format($n, 2, ',', $nb));
     $year = $mo * OFFERS_ANNUAL_MONTHS_PAID;
+    $labelYr = '';
+    if ($promo) {
+        // Promo annuelle dédiée (optionnelle) : prix et étiquette propres à la formule annuelle.
+        $yrPrice = (int) preg_replace('/\D+/', '', (string) preg_replace('/[^\d \x{00A0}\x{202F}].*$/u', '', (string) ($o['promo']['price_yr'] ?? '')));
+        if ($yrPrice > 0) {
+            $year = $yrPrice;
+        }
+        $labelYr = trim((string) ($o['promo']['label_yr'] ?? '')) ?: trim((string) ($o['promo']['label'] ?? ''));
+    }
     $title = trim((string) ($o['title'] ?? ''));
     return [
         'mo'    => $mo,
         'year'  => $year,
-        // Prix barré : l'ancien prix annuel pendant une promo, sinon 12 mois au tarif mensuel.
-        'full'  => $fmt($promo ? $regular * OFFERS_ANNUAL_MONTHS_PAID : $mo * 12) . $nb . '€',
+        // Prix barrés : 12 mois au tarif mensuel normal, puis (pendant une promo) l'ancien prix annuel.
+        'full'  => $fmt($regular * 12) . $nb . '€',
+        'tag'   => $labelYr,
+        'was'   => $promo ? $fmt($regular * OFFERS_ANNUAL_MONTHS_PAID) . $nb . '€' : '',
         'price' => $fmt($year) . $nb . '€',
         'permo' => $fmt($year / 12) . $nb . '€',
-        'saved' => $fmt($regular * 12 - $year) . $nb . '€',
+        'saved' => $fmt($regular * (12 - OFFERS_ANNUAL_MONTHS_PAID)) . $nb . '€',
         'label' => $title . ' (annuel)',
         'form'  => $title . ' · formule annuelle (' . $year . ' €/an)',
     ];
@@ -317,8 +328,9 @@ function offers_render_plan(array $o): string
     $yr = offers_annual_info($o);
     if ($yr !== null) {
         $h .= '          <div class="plan__price"><i class="bill bill--m">' . offers_price_html($o, $unit) . '</i>'
-            . '<i class="bill bill--y"><s class="price-was">' . oe($yr['full']) . '</s> ' . oe($yr['price']) . '<span> / an</span>'
-            . (cs_promo_active($o) && trim((string) ($o['promo']['label'] ?? '')) !== '' ? ' <span class="promo-tag">' . oe(trim((string) $o['promo']['label'])) . '</span>' : '')
+            . '<i class="bill bill--y"><s class="price-was">' . oe($yr['full']) . '</s> '
+            . ($yr['was'] !== '' ? '<s class="price-was">' . oe($yr['was']) . '</s> ' : '') . oe($yr['price']) . '<span> / an</span>'
+            . ($yr['tag'] !== '' ? ' <span class="promo-tag">' . oe($yr['tag']) . '</span>' : '')
             . '</i></div>' . "\n";
         $h .= '          <div class="plan__annual"><i class="bill bill--m">Ou ' . oe($yr['price']) . ' / an : 2 mois offerts</i>'
             . '<i class="bill bill--y">Soit ' . oe($yr['permo']) . ' / mois, vous économisez ' . oe($yr['saved']) . '</i></div>' . "\n";

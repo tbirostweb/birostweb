@@ -47,9 +47,11 @@ function offers_annual_info(array $o): ?array
     if ($tab !== 'heb' && $tab !== 'maint') {
         return null;
     }
-    $mo = (int) ($o['cta_data']['data-mo'] ?? 0);
+    $mo = $regular = (int) ($o['cta_data']['data-mo'] ?? 0);
+    $promo = false;
     if ($mo > 0 && cs_promo_active($o) && ($promoMo = offers_start_price($o)) > 0) {
         $mo = $promoMo;
+        $promo = true;
     }
     if ($mo <= 0 || stripos((string) ($o['price_unit'] ?? ''), 'mois') === false) {
         return null;
@@ -61,10 +63,11 @@ function offers_annual_info(array $o): ?array
     return [
         'mo'    => $mo,
         'year'  => $year,
-        'full'  => $fmt($mo * 12) . $nb . '€',
+        // Prix barré : l'ancien prix annuel pendant une promo, sinon 12 mois au tarif mensuel.
+        'full'  => $fmt($promo ? $regular * OFFERS_ANNUAL_MONTHS_PAID : $mo * 12) . $nb . '€',
         'price' => $fmt($year) . $nb . '€',
         'permo' => $fmt($year / 12) . $nb . '€',
-        'saved' => $fmt($mo * (12 - OFFERS_ANNUAL_MONTHS_PAID)) . $nb . '€',
+        'saved' => $fmt($regular * 12 - $year) . $nb . '€',
         'label' => $title . ' (annuel)',
         'form'  => $title . ' · formule annuelle (' . $year . ' €/an)',
     ];

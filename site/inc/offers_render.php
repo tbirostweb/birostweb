@@ -314,7 +314,9 @@ function offers_render_plan(array $o): string
     $yr = offers_annual_info($o);
     if ($yr !== null) {
         $h .= '          <div class="plan__price"><i class="bill bill--m">' . offers_price_html($o, $unit) . '</i>'
-            . '<i class="bill bill--y"><s class="price-was">' . oe($yr['full']) . '</s> ' . oe($yr['price']) . '<span> / an</span></i></div>' . "\n";
+            . '<i class="bill bill--y"><s class="price-was">' . oe($yr['full']) . '</s> ' . oe($yr['price']) . '<span> / an</span>'
+            . (cs_promo_active($o) && trim((string) ($o['promo']['label'] ?? '')) !== '' ? ' <span class="promo-tag">' . oe(trim((string) $o['promo']['label'])) . '</span>' : '')
+            . '</i></div>' . "\n";
         $h .= '          <div class="plan__annual"><i class="bill bill--m">Ou ' . oe($yr['price']) . ' / an : 2 mois offerts</i>'
             . '<i class="bill bill--y">Soit ' . oe($yr['permo']) . ' / mois, vous économisez ' . oe($yr['saved']) . '</i></div>' . "\n";
     } else {

@@ -449,6 +449,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
 .estimate__note{font-family:var(--fm);font-size:11px;color:var(--d-dim);margin-top:8px;line-height:1.5}
 </style>
 <link rel="stylesheet" href="<?= asset('/css/studio.css') ?>">
+<link rel="stylesheet" href="<?= asset('/css/banner.css') ?>">
 <!-- Animations : GSAP auto-hébergé (CSP 'self'), voir js/motion/ -->
 <link rel="stylesheet" href="<?= asset('/css/motion.css') ?>">
 <script src="<?= asset('/js/no-track.js') ?>"></script>
@@ -463,7 +464,7 @@ altcha-widget{display:block;margin:2px 0;--altcha-max-width:100%;--altcha-border
   <script defer src="https://umami.birostweb.fr/script.js" data-do-not-track="true" data-website-id="0ee73c30-9df2-4d1a-99fc-1ae604e9562c"></script>
 </head>
 <body>
-
+<?= cs_banner_html(cs_banner($siteContent)) ?>
 <!-- ============ NAV ============ -->
 <header class="nav">
   <div class="wrap nav__in">

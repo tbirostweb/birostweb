@@ -766,6 +766,57 @@ function cs_promo_active(array $offer): bool
 }
 
 /* ============================================================
+ *  Bandeau d'annonce (défilant, tout en haut du site) — géré dans /admin
+ * ============================================================ */
+
+/** Bandeau stocké (clé `banner`), avec valeurs par défaut : désactivé tant que rien n'est saisi. */
+function cs_banner(array $content): array
+{
+    $b = is_array($content['banner'] ?? null) ? $content['banner'] : [];
+    return [
+        'active' => !empty($b['active']),
+        'text'   => trim((string) ($b['text'] ?? '')),
+        'link'   => trim((string) ($b['link'] ?? '')),
+        'until'  => trim((string) ($b['until'] ?? '')),
+    ];
+}
+
+/** Actif, avec un texte, et non expiré (date de fin AAAA-MM-JJ incluse). */
+function cs_banner_active(array $b): bool
+{
+    if (empty($b['active']) || (string) ($b['text'] ?? '') === '') {
+        return false;
+    }
+    $until = (string) ($b['until'] ?? '');
+    if ($until === '') {
+        return true;
+    }
+    $ts = strtotime($until . ' 23:59:59');
+    return $ts === false ? false : ($ts >= time());
+}
+
+/** Lien autorisé : ancre de la page, chemin du site ou https. Sinon ''. */
+function cs_banner_link_ok(string $link): bool
+{
+    return (bool) preg_match('~^(#[A-Za-z0-9_-]*|/[^\s"\'<>]*|https://[^\s"\'<>]+)$~', $link);
+}
+
+/** HTML du bandeau défilant ('' si inactif). Le texte est répété pour remplir la largeur ; la 2e moitié est masquée aux lecteurs d'écran. */
+function cs_banner_html(array $b): string
+{
+    if (!cs_banner_active($b)) {
+        return '';
+    }
+    $esc = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+    $items = str_repeat('<span class="promo-bar__item">' . $esc($b['text']) . '</span>', 4);
+    $track = '<span class="promo-bar__track"><span class="promo-bar__grp">' . $items . '</span>'
+        . '<span class="promo-bar__grp" aria-hidden="true">' . $items . '</span></span>';
+    $link = (string) $b['link'];
+    $inner = cs_banner_link_ok($link) ? '<a href="' . $esc($link) . '">' . $track . '</a>' : $track;
+    return '<div class="promo-bar" role="region" aria-label="Annonce">' . $inner . '</div>' . "\n";
+}
+
+/* ============================================================
  *  Helpers métier Galerie
  * ============================================================ */
 

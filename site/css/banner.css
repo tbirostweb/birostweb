@@ -1,0 +1,17 @@
+/* Bandeau d'annonce défilant (géré dans /admin, clé `banner` du ContentStore). */
+.promo-bar{background:var(--ink,#1c1a1a);color:#fff;font-family:var(--fm,ui-monospace,monospace);font-size:13px;letter-spacing:.04em;overflow:hidden;white-space:nowrap}
+.promo-bar a{display:block;color:inherit;text-decoration:none}
+.promo-bar__track{display:inline-flex;padding:9px 0;animation:promo-scroll 40s linear infinite;will-change:transform}
+.promo-bar:hover .promo-bar__track{animation-play-state:paused}
+.promo-bar__grp{display:inline-flex;flex:none}
+.promo-bar__item{padding:0 28px}
+.promo-bar__item::after{content:"\2726";margin-left:56px;color:var(--accent,#f0451a)}
+@keyframes promo-scroll{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){
+  .promo-bar{text-align:center;white-space:normal}
+  .promo-bar__track{animation:none;padding:9px 16px}
+  .promo-bar__grp[aria-hidden]{display:none}
+  .promo-bar__item{display:none;padding:0}
+  .promo-bar__item:first-child{display:inline}
+  .promo-bar__item::after{content:none}
+}

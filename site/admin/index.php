@@ -75,7 +75,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $content = admin_store()->get();
             $offers  = cs_offers($content);
-            if ($action === 'toggle') {
+            if ($action === 'save_banner') {
+                $until = trim((string) ($_POST['banner_until'] ?? ''));
+                $link  = trim(mb_substr((string) ($_POST['banner_link'] ?? ''), 0, 300));
+                $content['banner'] = [
+                    'active' => !empty($_POST['banner_active']),
+                    'text'   => trim(mb_substr(strip_tags((string) ($_POST['banner_text'] ?? '')), 0, 200)),
+                    'link'   => cs_banner_link_ok($link) ? $link : '',
+                    'until'  => preg_match('/^\d{4}-\d{2}-\d{2}$/', $until) ? $until : '',
+                ];
+            } elseif ($action === 'toggle') {
                 foreach ($offers as &$o) {
                     if (($o['id'] ?? '') === $id) {
                         $o['active'] = empty($o['active']);
@@ -300,6 +309,23 @@ if (($_GET['err'] ?? '') === 'create') {
 
 $base = e(admin_base());
 $csrf = admin_csrf_field();
+
+$banner = cs_banner($content);
+echo '<div class="card" style="margin-top:18px">';
+echo '<h2 style="margin-top:0">Bandeau d\'annonce (en haut du site)</h2>';
+echo '<form method="post" action="' . $base . '/">' . $csrf . '<input type="hidden" name="action" value="save_banner">';
+echo '<div class="check"><input type="checkbox" id="b_active" name="banner_active" value="1"' . ($banner['active'] ? ' checked' : '') . '><label for="b_active">Afficher le bandeau défilant</label></div>';
+echo '<label for="b_text">Texte (200 caractères max)</label>'
+    . '<input type="text" id="b_text" name="banner_text" maxlength="200" value="' . e($banner['text']) . '" placeholder="Black Friday : jusqu\'à -22 % sur les sites, l\'hébergement et le référencement, jusqu\'au 30 novembre">';
+echo '<div class="grid2">';
+echo '<div><label for="b_link">Lien au clic (optionnel, ex. #offres)</label>'
+    . '<input type="text" id="b_link" name="banner_link" maxlength="300" value="' . e($banner['link']) . '" placeholder="#offres"></div>';
+echo '<div><label for="b_until">Fin d\'affichage (optionnel)</label>'
+    . '<input type="date" id="b_until" name="banner_until" value="' . e($banner['until']) . '"></div>';
+echo '</div>';
+echo '<p class="hint">Le bandeau défile tout en haut de la page d\'accueil et de la galerie. Avec une date de fin, il disparaît tout seul le lendemain.</p>';
+echo '<div style="margin-top:16px"><button class="btn" type="submit">Enregistrer le bandeau</button></div>';
+echo '</form></div>';
 
 echo '<div class="card" style="margin-top:18px">';
 echo '<h2 style="margin-top:0">+ Nouvelle offre</h2>';

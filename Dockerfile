@@ -62,6 +62,18 @@ RUN chown -R root:root /var/www/html && find /var/www/html -type d -exec chmod 7
 COPY entrypoint.sh /usr/local/bin/
 RUN chmod 755 /usr/local/bin/entrypoint.sh
 
+# Contenu du site (offres, promos, bandeau) : hors de la racine web, sur un volume persistant.
+# Dokploy : monter un volume NOMMÉ sur /var/lib/birostweb (Docker y recopie ces droits www-data
+# à la première création) et définir CONTENT_BACKEND=local. Pas d'instruction VOLUME : un volume
+# anonyme serait recréé vide à chaque redéploiement.
+RUN mkdir -p /var/lib/birostweb/data/backups \
+    && chown -R www-data:www-data /var/lib/birostweb \
+    && chmod 700 /var/lib/birostweb/data /var/lib/birostweb/data/backups
+ENV DATA_DIR=/var/lib/birostweb/data
+
+# Outil de migration / sauvegarde du contenu (hors racine web) : voir README.
+COPY tools/content-migrate.php /opt/birostweb/content-migrate.php
+
 USER www-data
 EXPOSE 8080
 

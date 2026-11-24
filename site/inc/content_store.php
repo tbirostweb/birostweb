@@ -8,8 +8,11 @@ declare(strict_types=1);
  * Un document de contenu = un tableau PHP sérialisé en JSON.
  * ContentStore expose get(): array et save(array): void, avec un petit cache
  * mémoire par requête. Deux backends interchangeables via l'env CONTENT_BACKEND :
- *   - local  : fichier DATA_DIR/content.json (implémenté, écriture atomique).
- *   - bunny  : squelette, à brancher sur Bunny Storage en prod (voir TODO).
+ *   - local  : fichier DATA_DIR/content.json (écriture atomique + sauvegardes horodatées).
+ *              En production, DATA_DIR est un volume Docker persistant hors de la racine web.
+ *              Tant que les clés Bunny Storage sont présentes, un contenu local absent est
+ *              importé depuis Bunny (lecture seule) au lieu d'être réamorcé (migration).
+ *   - bunny  : ancien stockage Bunny Storage (conservé pour la migration et le retour arrière).
  *
  * Ce fichier ne charge PAS Dotenv : l'appelant (index.php / admin) a déjà
  * peuplé l'environnement. On lit juste getenv()/$_ENV/$_SERVER.
@@ -50,7 +53,12 @@ interface ContentStoreBackend
  */
 final class LocalFileStore implements ContentStoreBackend
 {
+    /** Nombre de sauvegardes horodatées conservées dans DATA_DIR/backups. */
+    public const BACKUP_KEEP = 30;
+
     private string $dir;
+    /** True si le fichier existe mais n'a pas pu être lu : le contenu n'est PAS prouvé absent. */
+    private bool $lastReadFailed = false;
 
     public function __construct(?string $dir = null)
     {
@@ -65,6 +73,45 @@ final class LocalFileStore implements ContentStoreBackend
     public function path(): string
     {
         return $this->dir . '/content.json';
+    }
+
+    public function dir(): string
+    {
+        return $this->dir;
+    }
+
+    public function exists(): bool
+    {
+        return is_file($this->path());
+    }
+
+    public function lastReadFailed(): bool
+    {
+        return $this->lastReadFailed;
+    }
+
+    /**
+     * Copie horodatée d'un contenu dans DATA_DIR/backups (0600), puis ne garde que les
+     * BACKUP_KEEP plus récentes. Best-effort : ne lève jamais.
+     */
+    public function backup(string $json, string $tag = 'save'): ?string
+    {
+        $dir = $this->dir . '/backups';
+        if (!is_dir($dir) && !@mkdir($dir, 0700, true) && !is_dir($dir)) {
+            return null;
+        }
+        $tag = preg_replace('/[^a-z0-9-]+/', '', strtolower($tag)) ?: 'save';
+        $file = $dir . '/content-' . gmdate('Ymd-His') . '-' . $tag . '-' . bin2hex(random_bytes(3)) . '.json';
+        if (@file_put_contents($file, $json, LOCK_EX) === false) {
+            return null;
+        }
+        @chmod($file, 0600);
+        $all = glob($dir . '/content-*.json') ?: [];
+        sort($all);
+        foreach (array_slice($all, 0, max(0, count($all) - self::BACKUP_KEEP)) as $old) {
+            @unlink($old);
+        }
+        return $file;
     }
 
     private function ensureDir(): void
@@ -87,18 +134,31 @@ final class LocalFileStore implements ContentStoreBackend
 
     public function read(): ?string
     {
+        $this->lastReadFailed = false;
         $file = $this->path();
         if (!is_file($file)) {
             return null;
         }
         $raw = @file_get_contents($file);
-        return $raw === false ? null : $raw;
+        if ($raw === false) {
+            // Fichier présent mais illisible (droits, disque) : ne jamais le réamorcer.
+            $this->lastReadFailed = true;
+            return null;
+        }
+        return $raw;
     }
 
     public function write(string $json): void
     {
         $this->ensureDir();
         $file = $this->path();
+        // Sauvegarde de la version précédente avant de la remplacer.
+        if (is_file($file)) {
+            $prev = @file_get_contents($file);
+            if ($prev !== false && $prev !== '' && $prev !== $json) {
+                $this->backup($prev, 'avant-enregistrement');
+            }
+        }
         // Écriture atomique : fichier temporaire dans le même dossier + rename().
         $tmp = $this->dir . '/.content.' . bin2hex(random_bytes(6)) . '.tmp';
         $h = @fopen($tmp, 'wb');
@@ -286,6 +346,39 @@ final class BunnyStore implements ContentStoreBackend
         return $this->lastReadFailed;
     }
 
+    /** Clés Storage présentes. */
+    public function configured(): bool
+    {
+        return $this->zone !== '' && $this->key !== '';
+    }
+
+    /**
+     * Lecture directe chez Bunny, SANS cache (migration) :
+     *   ok      : 200 et JSON valide avec `offers` ;
+     *   absent  : 404 (rien chez Bunny) ;
+     *   failed  : réseau, clé, 5xx ou JSON invalide (ne rien importer, ne rien réamorcer).
+     * @return array{state:string, body:?string, detail:string}
+     */
+    public function fetchFresh(): array
+    {
+        if (!$this->configured()) {
+            return ['state' => 'failed', 'body' => null, 'detail' => 'clés Bunny Storage absentes'];
+        }
+        $res = $this->request('GET');
+        if ($res['status'] === 404) {
+            return ['state' => 'absent', 'body' => null, 'detail' => 'HTTP 404'];
+        }
+        if ($res['status'] !== 200) {
+            $detail = $res['error'] !== null ? ('réseau : ' . $res['error']) : ('HTTP ' . $res['status']);
+            return ['state' => 'failed', 'body' => null, 'detail' => $detail];
+        }
+        $d = json_decode($res['body'], true);
+        if (!is_array($d) || !isset($d['offers']) || !is_array($d['offers'])) {
+            return ['state' => 'failed', 'body' => null, 'detail' => 'JSON Bunny invalide'];
+        }
+        return ['state' => 'ok', 'body' => $res['body'], 'detail' => 'HTTP 200'];
+    }
+
     public function read(): ?string
     {
         $this->lastReadFailed = false;
@@ -346,6 +439,87 @@ final class BunnyStore implements ContentStoreBackend
     }
 }
 
+/**
+ * Stockage local avec import unique depuis Bunny (migration sans perte).
+ *
+ * - Contenu local présent : seul le fichier local est lu et écrit (Bunny n'est plus appelé).
+ * - Contenu local absent : lecture DIRECTE de Bunny (sans cache), copie locale + sauvegarde.
+ * - Bunny injoignable ou JSON invalide : lecture signalée en échec, donc le ContentStore
+ *   sert le seed en mémoire SANS l'écrire (le vrai contenu n'est jamais remplacé).
+ * Bunny n'est jamais modifié par ce backend.
+ */
+final class ImportingLocalStore implements ContentStoreBackend
+{
+    private bool $lastReadFailed = false;
+
+    public function __construct(private LocalFileStore $local, private BunnyStore $remote)
+    {
+    }
+
+    public function lastReadFailed(): bool
+    {
+        return $this->lastReadFailed;
+    }
+
+    public function read(): ?string
+    {
+        $this->lastReadFailed = false;
+        $raw = $this->local->read();
+        if ($raw !== null || $this->local->lastReadFailed()) {
+            $this->lastReadFailed = $this->local->lastReadFailed();
+            return $raw;
+        }
+        $r = $this->remote->fetchFresh();
+        if ($r['state'] === 'ok') {
+            try {
+                $this->local->write((string) $r['body']);
+                $this->local->backup((string) $r['body'], 'import-bunny');
+            } catch (\Throwable $e) {
+                // DATA_DIR non inscriptible : on sert quand même le contenu Bunny (l'admin signalera l'échec d'écriture).
+                error_log('[ContentStore] import Bunny non copié localement : ' . $e->getMessage());
+            }
+            return (string) $r['body'];
+        }
+        if ($r['state'] === 'failed') {
+            $this->lastReadFailed = true;
+            error_log('[ContentStore] import Bunny impossible (' . $r['detail'] . ') : seed servi sans écriture.');
+        }
+        return null;
+    }
+
+    public function write(string $json): void
+    {
+        $this->local->write($json);
+    }
+}
+
+/**
+ * DATA_DIR (ou un de ses parents, hors « / ») est-il un point de montage (volume Docker) ?
+ * null si /proc/self/mountinfo est indisponible (poste de développement).
+ */
+function cs_dir_is_mounted(string $dir): ?bool
+{
+    $info = @file_get_contents('/proc/self/mountinfo');
+    if ($info === false) {
+        return null;
+    }
+    $mounts = [];
+    foreach (explode("\n", $info) as $line) {
+        $f = explode(' ', $line);
+        if (isset($f[4]) && $f[4] !== '/') {
+            $mounts[str_replace('\\040', ' ', $f[4])] = true;
+        }
+    }
+    $p = rtrim($dir, '/');
+    while ($p !== '' && $p !== '/') {
+        if (isset($mounts[$p])) {
+            return true;
+        }
+        $p = dirname($p);
+    }
+    return false;
+}
+
 /* ============================================================
  *  Store de haut niveau
  * ============================================================ */
@@ -354,6 +528,8 @@ final class ContentStore
 {
     private ContentStoreBackend $backend;
     private ?array $cache = null;
+    /** True si get() a servi le seed faute de pouvoir lire le vrai contenu. */
+    private bool $degraded = false;
 
     public function __construct(ContentStoreBackend $backend)
     {
@@ -391,6 +567,8 @@ final class ContentStore
         }
         if ($data === null) {
             $data = cs_default_content();
+            // Seed de secours (vrai contenu illisible) : toute sauvegarde l'écraserait, on la bloque.
+            $this->degraded = $readFailed || $mayBeCorrupt;
             // Le seed n'est persisté que si le contenu est PROUVÉ absent (404 / fichier inexistant).
             // Panne de lecture ou JSON illisible : seed en mémoire uniquement, aucune écriture.
             if (!$readFailed && !$mayBeCorrupt) {
@@ -408,6 +586,9 @@ final class ContentStore
     /** Persiste le document ; met à jour le cache. Lève ContentStoreException si l'écriture échoue. */
     public function save(array $data): void
     {
+        if ($this->degraded) {
+            throw new ContentStoreException('Contenu actuel illisible : enregistrement bloqué pour ne pas le remplacer par le contenu par défaut. Réessayez plus tard.');
+        }
         $this->backend->write($this->encode($data));
         $this->cache = $data;
     }
@@ -434,272 +615,10 @@ function cs_make_store(): ContentStore
             return new ContentStore(new BunnyStore());
         case 'local':
         default:
-            return new ContentStore(new LocalFileStore());
-    }
-}
-
-/* ============================================================
- *  Abstraction média (galerie — upload d'images)
- * ============================================================ */
-
-/** Échec d'opération média : l'admin doit le remonter (fail-closed). */
-class MediaException extends RuntimeException
-{
-}
-
-/**
- * Stockage des fichiers médias (images de la galerie).
- *
- * Un « destPath » est un chemin relatif propre dans le stockage, p.ex.
- *   gallery/{itemId}/{nomGenere}.webp
- * Les segments sont contrôlés côté serveur (jamais le nom fourni par le client).
- */
-interface MediaUploader
-{
-    /**
-     * Stocke le fichier local $localTmpPath à l'emplacement $destPath et
-     * renvoie son URL publique (CDN en prod, chemin local servi en dev).
-     * Lève MediaException en cas d'échec.
-     */
-    public function upload(string $localTmpPath, string $destPath, string $contentType): string;
-
-    /** Supprime l'objet $destPath du stockage. Tolère l'absence. Lève MediaException sur erreur dure. */
-    public function delete(string $destPath): void;
-
-    /** URL publique d'un objet déjà stocké (sans accès réseau). */
-    public function publicUrl(string $destPath): string;
-}
-
-/** Normalise/valide un destPath : segments [a-z0-9._-], pas de '..', pas de slash initial. */
-function cs_media_safe_path(string $destPath): string
-{
-    $destPath = str_replace('\\', '/', $destPath);
-    $destPath = ltrim($destPath, '/');
-    $segments = [];
-    foreach (explode('/', $destPath) as $seg) {
-        if ($seg === '' || $seg === '.' || $seg === '..') {
-            throw new MediaException('Chemin média invalide : ' . $destPath);
-        }
-        if (!preg_match('/^[A-Za-z0-9._-]+$/', $seg)) {
-            throw new MediaException('Segment de chemin média invalide : ' . $seg);
-        }
-        $segments[] = $seg;
-    }
-    if (!$segments) {
-        throw new MediaException('Chemin média vide.');
-    }
-    return implode('/', $segments);
-}
-
-/**
- * Uploader local : écrit les fichiers sous MEDIA_DIR (défaut site/media) et
- * renvoie une URL locale servie par le site (base '/media/'). Permet de tester
- * toute l'UX galerie sans Bunny.
- */
-final class LocalMediaUploader implements MediaUploader
-{
-    private string $dir;
-    private string $base;
-
-    public function __construct(?string $dir = null, ?string $baseUrl = null)
-    {
-        $dir = $dir ?? (cs_env('MEDIA_DIR') ?? (dirname(__DIR__) . '/media'));
-        $this->dir  = rtrim($dir, '/');
-        $base = $baseUrl ?? (cs_env('MEDIA_BASE_URL') ?? '/media/');
-        $this->base = '/' . trim($base, '/') . '/';
-    }
-
-    public function upload(string $localTmpPath, string $destPath, string $contentType): string
-    {
-        $rel  = cs_media_safe_path($destPath);
-        $full = $this->dir . '/' . $rel;
-        $sub  = dirname($full);
-        if (!is_dir($sub) && !@mkdir($sub, 0755, true) && !is_dir($sub)) {
-            throw new MediaException('Dossier média non créable : ' . $sub);
-        }
-        if (!@copy($localTmpPath, $full)) {
-            throw new MediaException('Copie média impossible : ' . $rel);
-        }
-        @chmod($full, 0644);
-        return $this->publicUrl($rel);
-    }
-
-    public function delete(string $destPath): void
-    {
-        $rel  = cs_media_safe_path($destPath);
-        $full = $this->dir . '/' . $rel;
-        if (is_file($full) && !@unlink($full)) {
-            throw new MediaException('Suppression média impossible : ' . $rel);
-        }
-        // Nettoyage best-effort du dossier de l'item s'il est vide.
-        $sub = dirname($full);
-        if (is_dir($sub) && $sub !== $this->dir) {
-            @rmdir($sub);
-        }
-    }
-
-    public function publicUrl(string $destPath): string
-    {
-        $rel = cs_media_safe_path($destPath);
-        // On encode chaque segment mais on préserve les slashes.
-        $parts = array_map('rawurlencode', explode('/', $rel));
-        return $this->base . implode('/', $parts);
-    }
-}
-
-/**
- * Uploader Bunny Storage.
- *
- * Même modèle que BunnyStore :
- *   - PUT   https://{BUNNY_STORAGE_ENDPOINT}/{BUNNY_STORAGE_ZONE}/{destPath}
- *           en-tête AccessKey: {BUNNY_STORAGE_KEY}, corps = fichier (201 = OK).
- *   - DELETE même URL (200/204 = OK, 404 toléré).
- * L'URL publique renvoyée pointe sur la Pull Zone CDN : https://{BUNNY_CDN_HOST}/{destPath}.
- *
- * NB prod : BUNNY_STORAGE_ENDPOINT DOIT être un hôte https. Le schéma http n'est
- * toléré que pour un hôte de test local (comme BunnyStore).
- */
-final class BunnyMediaUploader implements MediaUploader
-{
-    private string $zone;
-    private string $key;
-    private string $endpoint;
-    private string $cdnHost;
-
-    public function __construct()
-    {
-        $this->zone     = cs_env('BUNNY_STORAGE_ZONE', '') ?? '';
-        $this->key      = cs_env('BUNNY_STORAGE_KEY', '') ?? '';
-        $this->endpoint = rtrim(cs_env('BUNNY_STORAGE_ENDPOINT', 'storage.bunnycdn.com') ?? 'storage.bunnycdn.com', '/');
-        $this->cdnHost  = rtrim(cs_env('BUNNY_CDN_HOST', '') ?? '', '/');
-    }
-
-    private function isLocalTestHost(string $endpoint): bool
-    {
-        $host = strtolower(explode(':', $endpoint, 2)[0]);
-        return $host === '127.0.0.1'
-            || $host === 'localhost'
-            || $host === '::1'
-            || substr($host, -10) === '.localhost'
-            || substr($host, -5) === '.test';
-    }
-
-    /** URL de l'objet sur l'API Storage. */
-    private function storageUrl(string $rel): string
-    {
-        $scheme = $this->isLocalTestHost($this->endpoint) ? 'http' : 'https';
-        $parts  = array_map('rawurlencode', explode('/', $rel));
-        return $scheme . '://' . $this->endpoint . '/' . rawurlencode($this->zone) . '/' . implode('/', $parts);
-    }
-
-    public function publicUrl(string $destPath): string
-    {
-        $rel = cs_media_safe_path($destPath);
-        if ($this->cdnHost === '') {
-            throw new MediaException('BUNNY_CDN_HOST manquant : URL publique indisponible.');
-        }
-        $scheme = $this->isLocalTestHost($this->cdnHost) ? 'http' : 'https';
-        $parts  = array_map('rawurlencode', explode('/', $rel));
-        return $scheme . '://' . $this->cdnHost . '/' . implode('/', $parts);
-    }
-
-    public function upload(string $localTmpPath, string $destPath, string $contentType): string
-    {
-        if ($this->zone === '' || $this->key === '') {
-            throw new MediaException('Bunny mal configuré : BUNNY_STORAGE_ZONE / BUNNY_STORAGE_KEY manquant.');
-        }
-        $rel = cs_media_safe_path($destPath);
-        $fh  = @fopen($localTmpPath, 'rb');
-        if ($fh === false) {
-            throw new MediaException('Fichier source illisible : ' . $localTmpPath);
-        }
-        $size = @filesize($localTmpPath);
-        $ch   = curl_init($this->storageUrl($rel));
-        if ($ch === false) {
-            fclose($fh);
-            throw new MediaException('curl_init a échoué.');
-        }
-        $ct = $contentType !== '' ? $contentType : 'application/octet-stream';
-        curl_setopt_array($ch, [
-            CURLOPT_CUSTOMREQUEST  => 'PUT',
-            CURLOPT_UPLOAD         => true,
-            CURLOPT_INFILE         => $fh,
-            CURLOPT_INFILESIZE     => $size !== false ? $size : 0,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_TIMEOUT        => 30,
-            CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_HTTPHEADER     => [
-                'AccessKey: ' . $this->key,
-                'Content-Type: ' . $ct,
-            ],
-        ]);
-        $resp = curl_exec($ch);
-        if ($resp === false) {
-            $err = curl_error($ch) ?: 'curl error';
-            curl_close($ch);
-            fclose($fh);
-            throw new MediaException('Upload Bunny impossible (réseau) : ' . $err);
-        }
-        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        curl_close($ch);
-        fclose($fh);
-        if ($status === 201 || $status === 200) {
-            return $this->publicUrl($rel);
-        }
-        if ($status === 401) {
-            throw new MediaException('Upload Bunny refusé (401) : AccessKey invalide.');
-        }
-        throw new MediaException('Upload Bunny échoué : HTTP ' . $status . '.');
-    }
-
-    public function delete(string $destPath): void
-    {
-        if ($this->zone === '' || $this->key === '') {
-            throw new MediaException('Bunny mal configuré : BUNNY_STORAGE_ZONE / BUNNY_STORAGE_KEY manquant.');
-        }
-        $rel = cs_media_safe_path($destPath);
-        $ch  = curl_init($this->storageUrl($rel));
-        if ($ch === false) {
-            throw new MediaException('curl_init a échoué.');
-        }
-        curl_setopt_array($ch, [
-            CURLOPT_CUSTOMREQUEST  => 'DELETE',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_TIMEOUT        => 20,
-            CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_HTTPHEADER     => ['AccessKey: ' . $this->key],
-        ]);
-        $resp = curl_exec($ch);
-        if ($resp === false) {
-            $err = curl_error($ch) ?: 'curl error';
-            curl_close($ch);
-            throw new MediaException('Suppression Bunny impossible (réseau) : ' . $err);
-        }
-        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        curl_close($ch);
-        // 200/204 = supprimé ; 404 = déjà absent (toléré).
-        if ($status === 200 || $status === 204 || $status === 404) {
-            return;
-        }
-        if ($status === 401) {
-            throw new MediaException('Suppression Bunny refusée (401) : AccessKey invalide.');
-        }
-        throw new MediaException('Suppression Bunny échouée : HTTP ' . $status . '.');
-    }
-}
-
-/** Fabrique l'uploader média selon CONTENT_BACKEND (local par défaut). */
-function cs_make_media_uploader(): MediaUploader
-{
-    $backend = strtolower(cs_env('CONTENT_BACKEND', 'local') ?? 'local');
-    switch ($backend) {
-        case 'bunny':
-            return new BunnyMediaUploader();
-        case 'local':
-        default:
-            return new LocalMediaUploader();
+            $local = new LocalFileStore();
+            $bunny = new BunnyStore();
+            // Migration : tant que les clés Bunny Storage existent, un contenu local absent est importé.
+            return new ContentStore($bunny->configured() ? new ImportingLocalStore($local, $bunny) : $local);
     }
 }
 
@@ -816,77 +735,14 @@ function cs_banner_html(array $b): string
     return '<div class="promo-bar" role="region" aria-label="Annonce">' . $inner . '</div>' . "\n";
 }
 
-/* ============================================================
- *  Helpers métier Galerie
- * ============================================================ */
-
-/** Types de galerie reconnus. La vidéo est posée (phase 2) mais non implémentée. */
-const CS_GALLERY_TYPES = ['carousel', 'video'];
-
-/** Liste brute des items de galerie (défaut vide si absent — rétro-compatible). */
-function cs_gallery(array $content): array
-{
-    return isset($content['gallery']) && is_array($content['gallery']) ? $content['gallery'] : [];
-}
-
-/** Retrouve un item de galerie par id (ou null). */
-function cs_find_gallery_item(array $content, string $id): ?array
-{
-    foreach (cs_gallery($content) as $it) {
-        if (($it['id'] ?? null) === $id) {
-            return $it;
-        }
-    }
-    return null;
-}
-
-/**
- * Items de galerie, triés par `sort` croissant.
- * @param bool        $activeOnly  ne garder que les items actifs.
- * @param string|null $type        filtrer par type ('carousel'|'video'), ou null pour tous.
- */
-function cs_gallery_items(array $content, bool $activeOnly = false, ?string $type = null): array
-{
-    $items = [];
-    foreach (cs_gallery($content) as $it) {
-        if (!is_array($it)) {
-            continue;
-        }
-        if ($activeOnly && empty($it['active'])) {
-            continue;
-        }
-        if ($type !== null && ($it['type'] ?? '') !== $type) {
-            continue;
-        }
-        $items[] = $it;
-    }
-    usort($items, static function ($a, $b) {
-        return ((int) ($a['sort'] ?? 0)) <=> ((int) ($b['sort'] ?? 0));
-    });
-    return $items;
-}
-
-/** Images d'un item carousel, triées par `sort` croissant (liste vide sinon). */
-function cs_gallery_item_images(array $item): array
-{
-    $imgs = (isset($item['images']) && is_array($item['images'])) ? $item['images'] : [];
-    $imgs = array_values(array_filter($imgs, 'is_array'));
-    usort($imgs, static function ($a, $b) {
-        return ((int) ($a['sort'] ?? 0)) <=> ((int) ($b['sort'] ?? 0));
-    });
-    return $imgs;
-}
-
 /**
  * Seed par défaut : reproduit EXACTEMENT les offres codées en dur dans index.php
  * (onglets Création / Hébergement / Maintenance de la section #offres).
- * `gallery` démarre vide (les items sont créés depuis l'admin).
  */
 function cs_default_content(): array
 {
     return [
         'version' => 1,
-        'gallery' => [],
         'offers' => [
             /* ---------- Onglet Création ---------- */
             [

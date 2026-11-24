@@ -297,10 +297,16 @@ if ($flash === '1') {
     echo '<div class="alert alert--ok" style="margin-top:18px">Offre enregistrée.</div>';
 }
 
-// Garde-fou : en production (HTTPS), un stockage local est éphémère -> les modifications seraient perdues au redéploiement.
+// Garde-fou : en production (HTTPS), le contenu local doit vivre sur un volume persistant inscriptible,
+// sinon les modifications seraient perdues à la recréation du conteneur.
 if (admin_is_https() && strtolower((string) (cs_env('CONTENT_BACKEND', 'local') ?? 'local')) !== 'bunny') {
-    echo '<div class="alert" style="margin-top:18px"><b>Attention :</b> <code>CONTENT_BACKEND</code> n\'est pas « bunny ». '
-        . 'Les modifications sont enregistrées sur le disque du conteneur et seront perdues au prochain déploiement.</div>';
+    $dataDir = (new LocalFileStore())->dir();
+    $mounted = cs_dir_is_mounted($dataDir);
+    if ($mounted === false || !is_dir($dataDir) || !is_writable($dataDir)) {
+        echo '<div class="alert" style="margin-top:18px"><b>Attention :</b> le dossier de données <code>' . e($dataDir) . '</code> '
+            . ($mounted === false ? 'n\'est pas sur un volume persistant' : 'n\'est pas inscriptible')
+            . ' : les modifications risquent d\'être perdues au prochain déploiement.</div>';
+    }
 }
 
 if (($_GET['err'] ?? '') === 'create') {
@@ -323,7 +329,7 @@ echo '<div><label for="b_link">Lien au clic (optionnel, ex. #offres)</label>'
 echo '<div><label for="b_until">Fin d\'affichage (optionnel)</label>'
     . '<input type="date" id="b_until" name="banner_until" value="' . e($banner['until']) . '"></div>';
 echo '</div>';
-echo '<p class="hint">Le bandeau défile tout en haut de la page d\'accueil et de la galerie. Avec une date de fin, il disparaît tout seul le lendemain.</p>';
+echo '<p class="hint">Le bandeau défile tout en haut de la page d\'accueil. Avec une date de fin, il disparaît tout seul le lendemain.</p>';
 echo '<div style="margin-top:16px"><button class="btn" type="submit">Enregistrer le bandeau</button></div>';
 echo '</form></div>';
 

@@ -29,4 +29,9 @@ $check('contenu absent : seed amorcé (1 écriture)', $b->writes === 1);
 $b = new FakeBackend('{"offers":[]}');
 (new ContentStore($b))->get();
 $check('contenu valide : 0 écriture', $b->writes === 0);
+$b = new FakeBackend(null, true);
+$st = new ContentStore($b);
+$st->get();
+try { $st->save(['offers' => []]); $blocked = false; } catch (ContentStoreException $e) { $blocked = true; }
+$check('seed de secours : enregistrement admin bloqué', $blocked && $b->writes === 0);
 exit($fail ? 1 : 0);

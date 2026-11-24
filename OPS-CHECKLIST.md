@@ -19,17 +19,16 @@
 4. **Rotation des secrets** : à confirmer et à tracer (date, secrets concernés : `CONTACT_FORM_SECRET`, hash admin, mot de passe SMTP, clés Bunny Storage/Stream, éventuel `ADMIN_PASSWORD` inutilisé à supprimer) ; les valeurs apparues dans des sorties techniques sont à considérer comme compromises tant que la rotation n'est pas faite.
 5. **Umami** : exemption de consentement **non établie** (la page publique ne la revendique pas) ; à confirmer par l'absence de colonne IP en base (`\d session`) et par le contrôle de la purge mensuelle (première exécution). Transferts et sous-traitants (OVH, Bunny.net) à garder à jour dans le registre.
 6. **E-mail** : SPF, DKIM, DMARC du domaine d'envoi à vérifier.
-7. **Sauvegardes** : restauration de la sauvegarde VPS OVH non testée ; copie de `data/content.json` hors Bunny.
+7. **Sauvegardes** : restauration de la sauvegarde VPS OVH non testée ; copie régulière de `/var/lib/birostweb/data` hors du VPS.
 8. **Google Analytics 4 (code prêt, non déployé)** : réglages GA4 faits et vérifiés (conservation 14 mois, signaux Google désactivés, filtre de trafic interne actif sur l'IP actuelle — à mettre à jour si ton IP change). Reste : pousser le code, ajouter `GA4_MEASUREMENT_ID` dans Dokploy, redéployer, puis vérifier en production que la CSP laisse passer le bandeau et `gtag` après acceptation. Détails : `ANALYTICS.md`.
-9. **Autres** : limites CPU/RAM Dokploy, notifications/alertes (aucune configurée), CSP `img-src` à resserrer sur l'hôte exact de la Pull Zone, registre des traitements et procédure de violation (CNIL 72 h), audit d'accessibilité.
+9. **Autres** : limites CPU/RAM Dokploy, notifications/alertes (aucune configurée), registre des traitements et procédure de violation (CNIL 72 h), audit d'accessibilité.
 
 ---
 
 ## Variables d'environnement à ajouter (Dokploy → Environment)
 - `ADMIN_TOTP_SECRET` : secret **base32** (A-Z, 2-7). Génération correcte : `php -r '$a="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";$b=random_bytes(20);$bits="";foreach(str_split($b) as $c)$bits.=str_pad(decbin(ord($c)),8,"0",STR_PAD_LEFT);echo implode("",array_map(fn($x)=>$a[bindec($x)],str_split($bits,5))),PHP_EOL;'` (32 caractères), à saisir dans une appli TOTP (SHA-1, 6 chiffres, 30 s). **À ajouter seulement APRÈS le déploiement de la nouvelle image** (l'image actuelle ignore cette variable). Sans la variable, la connexion reste inchangée.
-- `BUNNY_STREAM_HOST` (hôte des vignettes Bunny Stream) si ce n'est pas déjà fait.
 - `CONTACT_LOG_DIR` + volume persistant si l'on veut garder les journaux après redéploiement (le conteneur tourne maintenant en `www-data` : le volume doit lui être inscriptible, uid 33).
-- Vérifier `CONTENT_BACKEND=bunny` (le back-office affiche désormais un avertissement sinon).
+- Contenu : volume nommé `birostweb-data` sur `/var/lib/birostweb`, puis migration Bunny → local (README, « Contenu du site ») ; `CONTENT_BACKEND=local` ; variables `BUNNY_*` à retirer après validation.
 
 ## Tâches planifiées
 - `php /var/www/html/purge-contact.php` : **en place** (Dokploy, tous les jours à 04 h UTC, testé).
@@ -38,13 +37,13 @@
 - `curl -sI https://birostweb.fr/` : HSTS, CSP, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy ; `http://` → redirection `https://` ; `www` → apex.
 - `/.git/config`, `/.env`, `/vendor/autoload.php`, `/composer.json`, `/inc/content_store.php` : 403/404.
 - Cookie `bwadmin` : HttpOnly, Secure, SameSite=Strict, path `/admin`.
-- CSP `img-src` : remplacer `https://*.b-cdn.net` par l'hôte exact de la Pull Zone (`BUNNY_CDN_HOST`) et de Bunny Stream dans `site/.htaccess`.
+- `/galerie` : redirection 301 vers `/#realisations` (galerie supprimée).
 
 ## DNS / e-mail
 - SPF, DKIM, DMARC du domaine d'envoi (OVH `theo-birost.fr` ; Gmail si encore utilisé) ; envoyer un message de test et lire les en-têtes.
 
 ## Sauvegarde / reprise
-- Exporter régulièrement `data/content.json` depuis Bunny Storage (copie hors Bunny) ; tester une restauration dans une zone de test. Objectifs à noter : RPO, RTO.
+- Contenu : 30 versions dans `/var/lib/birostweb/data/backups` (volume) ; copie hors VPS par `docker cp` (README). Restaurer = recopier une sauvegarde en `content.json`. Objectifs à noter : RPO, RTO.
 
 ## VPS / Dokploy
 - SSH par clé uniquement, mot de passe et root désactivés ; pare-feu limité à 22/80/443 ; mises à jour OS et Docker ; pas de `docker.sock` monté dans l'app ; limites CPU/RAM et redémarrage automatique sur l'application ; monitoring (uptime, certificat, 5xx, disque) avec une alerte de test reçue.

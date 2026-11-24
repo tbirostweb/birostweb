@@ -18,13 +18,11 @@ Options -Indexes
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "DENY"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    # autoplay/fullscreen/encrypted-media ouverts au lecteur Bunny Stream (galerie vidéo),
-    # pour que la lecture démarre au clic sur la façade (iframe mediadelivery.net).
-    Header always set Permissions-Policy "accelerometer=(), autoplay=(self \"https://iframe.mediadelivery.net\"), camera=(), display-capture=(), encrypted-media=(self \"https://iframe.mediadelivery.net\"), fullscreen=(self \"https://iframe.mediadelivery.net\"), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), interest-cohort=()"
+    Header always set Permissions-Policy "accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), interest-cohort=()"
     Header always set Cross-Origin-Opener-Policy "same-origin"
     Header always set Cross-Origin-Resource-Policy "same-origin"
     # CSP : script-src verrouillé par le hash du <script> inline (pas de 'unsafe-inline' JS)
-    Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; script-src 'self' 'sha256-1eNASIQFF5TAFMrp3wPYMPcFzClaqwA6Q/zZgHi3zPc=' https://umami.birostweb.fr https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://birostweb-media.b-cdn.net https://vz-d2d4bddf-622.b-cdn.net https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; connect-src 'self' https://umami.birostweb.fr https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; form-action 'self'; frame-src https://iframe.mediadelivery.net https://*.mediadelivery.net; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests"
+    Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; script-src 'self' 'sha256-1eNASIQFF5TAFMrp3wPYMPcFzClaqwA6Q/zZgHi3zPc=' https://umami.birostweb.fr https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; connect-src 'self' https://umami.birostweb.fr https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; form-action 'self'; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests"
     # Ne pas exposer la techno serveur
     Header always unset X-Powered-By
     Header unset X-Powered-By
@@ -93,11 +91,8 @@ RewriteRule ^\.well-known/ - [L]
 RewriteCond %{THE_REQUEST} "\s/+index\.php[?\s]"
 RewriteRule ^index\.php$ https://birostweb.fr/ [R=301,L]
 
-RewriteCond %{THE_REQUEST} "\s/+galerie(?:\.php|/)[?\s]"
-RewriteRule ^galerie(?:\.php|/)$ https://birostweb.fr/galerie [R=301,L]
-
-# Route propre pour la galerie : pas de redirection lors du passage interne en PHP.
-RewriteRule ^galerie$ galerie.php [L]
+# Ancienne galerie (supprimée) : redirection permanente vers les réalisations de l'accueil.
+RewriteRule ^galerie(?:\.php|/)?$ https://birostweb.fr/#realisations [R=301,L,NE]
 
 # ---------------- Compression ----------------
 # Brotli si le module est présent (meilleure compression que gzip sur le texte).

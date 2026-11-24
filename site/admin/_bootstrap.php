@@ -555,8 +555,8 @@ HTML;
 }
 
 /**
- * Barre supérieure commune : marque + navigation (Offres / Galerie) +
- * lien « Voir le site » + bouton de déconnexion. $current ∈ {'offers','gallery'}.
+ * Barre supérieure commune : marque + navigation (Offres) +
+ * lien « Voir le site » + bouton de déconnexion. $current ∈ {'offers'}.
  */
 function admin_topbar(string $current = ''): void
 {
@@ -565,7 +565,6 @@ function admin_topbar(string $current = ''): void
     echo '<span class="brand"><b>BW</b> Admin</span>';
     echo '<span class="actions">';
     echo '<a class="navlink' . ($current === 'offers' ? ' is-active' : '') . '" href="' . $base . '/">Offres</a> ';
-    echo '<a class="navlink' . ($current === 'gallery' ? ' is-active' : '') . '" href="' . $base . '/gallery.php">Galerie</a> ';
     echo '<a class="muted" href="/" target="_blank" rel="noopener">Voir le site ↗</a> ';
     echo '<form class="inline" method="post" action="' . $base . '/logout.php">' . admin_csrf_field()
         . '<button class="btn btn--ghost btn--sm" type="submit">Déconnexion</button></form>';

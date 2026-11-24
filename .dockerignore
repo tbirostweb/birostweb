@@ -15,3 +15,6 @@ node_modules
 vendor
 npm-debug.log
 site/fonts/google.css
+# Données locales de développement : jamais dans l image (le contenu vit sur le volume du VPS)
+site/data
+site/media

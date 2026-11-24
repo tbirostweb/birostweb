@@ -20,8 +20,7 @@ Options -Indexes
 
 # ============================================================
 #  Limites d'upload : strictes pour tout /admin (dont la connexion, accessible
-#  sans authentification), relâchées UNIQUEMENT pour gallery_edit.php (photos et
-#  vidéos de la galerie, derrière l'authentification).
+#  sans authentification). Aucun upload de fichier n'est prévu dans l'admin.
 #  mod_php est actif : php_value est pris en compte ici. file_uploads est
 #  PHP_INI_SYSTEM (non modifiable en .htaccess) ; on joue sur les directives
 #  PERDIR (upload_max_filesize, post_max_size) + LimitRequestBody.
@@ -31,16 +30,3 @@ LimitRequestBody 1048576
     php_value upload_max_filesize 1M
     php_value post_max_size 1M
 </IfModule>
-
-<Files "gallery_edit.php">
-    # Vidéos de la galerie : upload médié par le serveur vers Bunny Stream.
-    LimitRequestBody 220000000
-    <IfModule mod_php.c>
-        php_value upload_max_filesize 200M
-        php_value post_max_size 210M
-        # Transfert serveur -> Bunny : laisse le temps pour un clip de ~200 Mo.
-        php_value max_execution_time 300
-        # Décodage GD des images (jusqu'à 30 Mpx) : marge mémoire.
-        php_value memory_limit 256M
-    </IfModule>
-</Files>
